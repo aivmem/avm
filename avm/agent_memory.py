@@ -805,3 +805,206 @@ class AgentMemory:
         
         export_mgr = ExportManager(self.avm.store)
         return export_mgr.import_jsonl(jsonl)
+    
+    # ─── Navigation & Discovery ─────────────────────────────────────────
+    
+    def browse(self, path: str = "/memory", depth: int = 2) -> Dict[str, Any]:
+        """
+        Browse memory structure like a directory tree.
+        Helps agent discover memories without knowing exact keywords.
+        
+        Args:
+            path: Starting path (default: /memory)
+            depth: How deep to traverse (default: 2)
+            
+        Returns:
+            Tree structure with paths and summaries
+        """
+        nodes = self.avm.list(path, limit=100)
+        
+        # Build tree structure
+        tree = {"path": path, "children": {}, "count": 0}
+        
+        for node in nodes:
+            if not self._can_read(node.path):
+                continue
+                
+            # Get relative path parts
+            rel_path = node.path[len(path):].lstrip("/")
+            parts = rel_path.split("/")
+            
+            # Only include up to depth levels
+            if len(parts) > depth:
+                parts = parts[:depth]
+            
+            # Build nested structure
+            current = tree
+            for i, part in enumerate(parts):
+                if part not in current["children"]:
+                    current["children"][part] = {
+                        "path": path + "/" + "/".join(parts[:i+1]),
+                        "children": {},
+                        "count": 0
+                    }
+                current = current["children"][part]
+                current["count"] += 1
+        
+        return self._format_tree(tree, depth=0)
+    
+    def _format_tree(self, tree: Dict, depth: int = 0) -> str:
+        """Format tree as readable string"""
+        lines = []
+        indent = "  " * depth
+        
+        for name, subtree in sorted(tree.get("children", {}).items()):
+            count = subtree.get("count", 0)
+            icon = "📁" if subtree.get("children") else "📄"
+            lines.append(f"{indent}{icon} {name} ({count})")
+            
+            if subtree.get("children"):
+                lines.append(self._format_tree(subtree, depth + 1))
+        
+        return "\n".join(lines)
+    
+    def explore(self, path: str, depth: int = 2) -> str:
+        """
+        Explore from a memory node via knowledge graph.
+        Follows links to discover related memories.
+        
+        Args:
+            path: Starting node path
+            depth: How many hops to follow (default: 2)
+            
+        Returns:
+            Related memories with relationship types
+        """
+        if not self._can_read(path):
+            return f"Cannot access: {path}"
+        
+        # Get the starting node
+        node = self.avm.read(path)
+        if not node:
+            return f"Not found: {path}"
+        
+        # BFS to explore graph
+        visited = {path}
+        current_level = [path]
+        results = [f"## Starting from: {path}\n{node.content[:200]}...\n"]
+        
+        for d in range(depth):
+            next_level = []
+            level_results = []
+            
+            for p in current_level:
+                edges = self.avm.links(p)
+                for edge in edges:
+                    target = edge.source if edge.source != p else edge.target
+                    if target not in visited and self._can_read(target):
+                        visited.add(target)
+                        next_level.append(target)
+                        
+                        target_node = self.avm.read(target)
+                        if target_node:
+                            rel_type = edge.edge_type.value if hasattr(edge.edge_type, 'value') else str(edge.edge_type)
+                            preview = target_node.content[:100].replace("\n", " ")
+                            level_results.append(f"  [{rel_type}] {target}\n    {preview}...")
+            
+            if level_results:
+                results.append(f"\n### Hop {d + 1}:")
+                results.extend(level_results)
+            
+            current_level = next_level
+            if not current_level:
+                break
+        
+        if len(results) == 1:
+            results.append("\nNo linked memories found. Try creating links with avm.link()")
+        
+        return "\n".join(results)
+    
+    def topics(self, limit: int = 10) -> str:
+        """
+        Get high-level topic overview based on tags and paths.
+        Helps agent understand what's in memory without keywords.
+        
+        Args:
+            limit: Max topics to return
+            
+        Returns:
+            Topic summary with counts
+        """
+        # Get tag cloud
+        cloud = self.tag_cloud()
+        
+        # Get path prefixes
+        nodes = self.avm.list("/memory", limit=200)
+        prefix_counts = {}
+        
+        for node in nodes:
+            if not self._can_read(node.path):
+                continue
+            # Extract second-level path as category
+            parts = node.path.split("/")
+            if len(parts) >= 3:
+                category = parts[2]  # e.g., "private", "shared", "market", etc.
+                prefix_counts[category] = prefix_counts.get(category, 0) + 1
+        
+        # Format output
+        lines = ["## Memory Topics\n"]
+        
+        lines.append("### By Category:")
+        for cat, count in sorted(prefix_counts.items(), key=lambda x: x[1], reverse=True)[:limit]:
+            lines.append(f"  📁 {cat}: {count} memories")
+        
+        lines.append("\n### By Tag:")
+        for tag, count in list(cloud.items())[:limit]:
+            lines.append(f"  🏷️ {tag}: {count} occurrences")
+        
+        return "\n".join(lines)
+    
+    def timeline(self, days: int = 7, limit: int = 20) -> str:
+        """
+        View memories by time.
+        Helps recall "what did I observe/learn recently?"
+        
+        Args:
+            days: How many days back to look
+            limit: Max memories to return
+            
+        Returns:
+            Timeline of recent memories
+        """
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        nodes = self.avm.query_time(
+            prefix="/memory",
+            time_range=f"last_{days}d"
+        )
+        
+        # Filter by permission
+        accessible = [n for n in nodes if self._can_read(n.path)][:limit]
+        
+        if not accessible:
+            return f"No memories in the last {days} days."
+        
+        # Group by date
+        by_date = {}
+        for node in accessible:
+            date_str = node.created_at.strftime("%Y-%m-%d")
+            if date_str not in by_date:
+                by_date[date_str] = []
+            by_date[date_str].append(node)
+        
+        # Format output
+        lines = [f"## Timeline (last {days} days)\n"]
+        
+        for date_str in sorted(by_date.keys(), reverse=True):
+            lines.append(f"### {date_str}")
+            for node in by_date[date_str]:
+                time_str = node.created_at.strftime("%H:%M")
+                title = node.meta.get("title", node.path.split("/")[-1])
+                preview = node.content[:60].replace("\n", " ")
+                lines.append(f"  [{time_str}] {title}: {preview}...")
+            lines.append("")
+        
+        return "\n".join(lines)
