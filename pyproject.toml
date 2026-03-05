@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vfs"
-version = "0.4.0"
+version = "0.9.0"
 description = "AI Virtual Filesystem - structured knowledge access for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,10 +25,12 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
+fuse = ["fusepy>=3.0"]
 
 [project.scripts]
-vfs = "vfs.cli:main"
-vfs-mcp = "vfs.mcp_server:main"
+avm = "vfs.cli:main"
+avm-mcp = "vfs.mcp_server:main"
+avm-mount = "vfs.fuse_mount:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vfs"]

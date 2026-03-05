@@ -1,4 +1,4 @@
-# VFS - AI Virtual Filesystem
+# AVM - AI Virtual Memory
 
 A config-driven virtual filesystem for AI agents to read/write structured knowledge via file paths.
 
