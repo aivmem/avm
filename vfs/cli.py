@@ -81,6 +81,12 @@ def _get_provider(store, path, force_refresh=False):
         provider = NewsProvider(store)
         return provider.get(path, force_refresh=force_refresh), None
     
+    # Watchlist
+    if path.startswith("/live/watchlist"):
+        from .providers import WatchlistProvider
+        provider = WatchlistProvider(store)
+        return provider.get(path, force_refresh=force_refresh), None
+    
     # Default: direct store access
     return store.get_node(path), None
 

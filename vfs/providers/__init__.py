@@ -7,6 +7,7 @@ from .alpaca import AlpacaPositionsProvider, AlpacaOrdersProvider
 from .indicators import TechnicalIndicatorsProvider
 from .memory import MemoryProvider
 from .news import NewsProvider
+from .watchlist import WatchlistProvider
 
 __all__ = [
     "VFSProvider",
@@ -17,4 +18,5 @@ __all__ = [
     "TechnicalIndicatorsProvider",
     "MemoryProvider",
     "NewsProvider",
+    "WatchlistProvider",
 ]
