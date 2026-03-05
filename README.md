@@ -267,19 +267,19 @@ Access metadata via special suffixes:
 | `:search?q=` | Search results | - |
 | `:recall?q=` | Token-aware recall | - |
 
-## Two-Pe Retrieval
+## Two-Phase Retrieval
 
 For large result sets, use two-pe retrieval to save tokens:
 
 ```bash
-# Pe 1: Get paths + summaries (~200 tokens)
+# Phase 1: Get paths + summaries (~200 tokens)
 cat "/mnt/avm/memory/:search?q=NVDA"
 # → [0.85] /memory/market/NVDA.md
 # →     RSI overbought warning...
 # → [0.72] /memory/lessons/nvda_q4.md
 # →     Down 15% after Q4 earnings...
 
-# Pe 2: Get selected content (~300 tokens)
+# Phase 2: Get selected content (~300 tokens)
 cat /mnt/avm/memory/market/NVDA.md
 
 # Total: 500 tokens vs 2000 tokens (75% saved)
