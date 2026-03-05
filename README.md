@@ -295,6 +295,83 @@ permissions:
 └─────────────────────────────────────────────────────┘
 ```
 
+## MCP Server (AI Agent Integration)
+
+VFS can be used as an MCP server for AI agents.
+
+### Start Server
+
+```bash
+# One MCP per bot (recommended)
+vfs-mcp --user akashi --db /shared/vfs.db
+vfs-mcp --user yuze --db /shared/vfs.db
+```
+
+### MCP Configuration
+
+```yaml
+# mcp_servers.yaml (per agent)
+vfs-memory:
+  command: vfs-mcp
+  args:
+    - --user
+    - akashi
+    - --db
+    - /shared/vfs.db
+```
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `vfs_recall` | Token-controlled memory retrieval |
+| `vfs_remember` | Store memory with tags/importance |
+| `vfs_search` | Full-text search |
+| `vfs_list` | List memories by prefix |
+| `vfs_read` | Read specific path |
+| `vfs_tags` | Tag cloud |
+| `vfs_recent` | Time-based queries |
+| `vfs_stats` | Memory statistics |
+
+### Example Usage
+
+```json
+// Retrieve context
+{
+  "name": "vfs_recall",
+  "arguments": {
+    "query": "NVDA risk",
+    "max_tokens": 4000
+  }
+}
+
+// Store insight
+{
+  "name": "vfs_remember",
+  "arguments": {
+    "content": "NVDA showing overbought signals",
+    "tags": ["market", "nvda"],
+    "importance": 0.8
+  }
+}
+```
+
+### Multi-Bot Architecture
+
+```
+┌─────────────────────────────────────────┐
+│           OpenClaw Gateway              │
+├─────────────────────────────────────────┤
+│ Akashi → vfs-mcp --user akashi ─┐       │
+│ Yuze   → vfs-mcp --user yuze   ─┼─→ DB  │
+│ Laffey → vfs-mcp --user laffey ─┘       │
+└─────────────────────────────────────────┘
+```
+
+- Each bot has its own MCP process
+- Shared database for cross-bot memory
+- Auth at startup, no token per request
+
 ## Linux-Style Permissions
 
 Unix-like permission system with rwx bits, ownership, and capabilities.
