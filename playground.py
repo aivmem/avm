@@ -1,295 +1,432 @@
 #!/usr/bin/env python3
 """
-AVM Playground - Interactive Demo
+AVM Playground - Interactive Demo with Rich UI
 
-Run this script to experience AVM's core features:
-    python playground.py
-
-This demo shows:
-1. Basic read/write operations
-2. Full-text search
-3. Knowledge graph (linking)
-4. Agent Memory with token-aware recall
-5. Multi-agent collaboration
-6. Virtual nodes (metadata, tags, links)
+Run: python playground.py
 """
 
 import os
+import sys
 import tempfile
-from datetime import datetime
+import time
 
-# Use a temp database for the demo
+# Check for rich, offer to install
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.tree import Tree
+    from rich.syntax import Syntax
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+    from rich.markdown import Markdown
+    from rich.layout import Layout
+    from rich import box
+    HAS_RICH = True
+except ImportError:
+    HAS_RICH = False
+    print("Installing rich for better visualization...")
+    os.system(f"{sys.executable} -m pip install rich -q")
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.tree import Tree
+    from rich.syntax import Syntax
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+    from rich.markdown import Markdown
+    from rich.layout import Layout
+    from rich import box
+
+# Use temp database
 os.environ["XDG_DATA_HOME"] = tempfile.mkdtemp()
 
 from avm import AVM
 from avm.graph import EdgeType
 
-
-def print_section(title: str):
-    print(f"\n{'='*60}")
-    print(f"  {title}")
-    print('='*60)
+console = Console()
 
 
-def print_result(label: str, value):
-    print(f"\n📌 {label}:")
-    if isinstance(value, str):
-        for line in value.split('\n')[:15]:
-            print(f"   {line}")
+def banner():
+    console.print(Panel.fit("""
+[bold cyan]
+     █████╗ ██╗   ██╗███╗   ███╗
+    ██╔══██╗██║   ██║████╗ ████║
+    ███████║██║   ██║██╔████╔██║
+    ██╔══██║╚██╗ ██╔╝██║╚██╔╝██║
+    ██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║
+    ╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝
+[/bold cyan]
+[dim]AI Virtual Memory - Interactive Playground[/dim]
+    """, border_style="cyan"))
+
+
+def section(title: str, icon: str = "📦"):
+    console.print()
+    console.rule(f"[bold yellow]{icon} {title}[/bold yellow]")
+    console.print()
+
+
+def show_code(code: str, language: str = "python"):
+    console.print(Syntax(code, language, theme="monokai", line_numbers=False))
+
+
+def show_result(label: str, content: str, style: str = "green"):
+    console.print(Panel(content, title=f"[bold]{label}[/bold]", border_style=style))
+
+
+def show_table(title: str, columns: list, rows: list):
+    table = Table(title=title, box=box.ROUNDED)
+    for col in columns:
+        table.add_column(col, style="cyan")
+    for row in rows:
+        table.add_row(*[str(x) for x in row])
+    console.print(table)
+
+
+AUTO_MODE = "--auto" in sys.argv or "-a" in sys.argv
+
+def pause():
+    if AUTO_MODE:
+        console.print()
+        time.sleep(0.3)
     else:
-        print(f"   {value}")
+        console.print("\n[dim]Press Enter to continue...[/dim]")
+        input()
 
 
 def main():
-    print("""
-    ╔═══════════════════════════════════════════════════════════╗
-    ║                                                           ║
-    ║     █████╗ ██╗   ██╗███╗   ███╗                          ║
-    ║    ██╔══██╗██║   ██║████╗ ████║                          ║
-    ║    ███████║██║   ██║██╔████╔██║                          ║
-    ║    ██╔══██║╚██╗ ██╔╝██║╚██╔╝██║                          ║
-    ║    ██║  ██║ ╚████╔╝ ██║ ╚═╝ ██║                          ║
-    ║    ╚═╝  ╚═╝  ╚═══╝  ╚═╝     ╚═╝                          ║
-    ║                                                           ║
-    ║    AI Virtual Memory - Playground                         ║
-    ║                                                           ║
-    ╚═══════════════════════════════════════════════════════════╝
-    """)
+    banner()
     
-    # Initialize AVM
-    avm = AVM()
-    print(f"✓ AVM initialized (DB: {avm.store.db_path})")
+    console.print("[bold green]Welcome to the AVM Playground![/bold green]")
+    console.print("This demo will walk you through AVM's core features.\n")
     
-    # ─────────────────────────────────────────────────────────
-    print_section("1. BASIC READ/WRITE")
-    # ─────────────────────────────────────────────────────────
+    # Initialize
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Initializing AVM...", total=None)
+        avm = AVM()
+        time.sleep(0.5)
+        progress.remove_task(task)
     
-    # Write some memories
-    avm.write("/memory/lessons/risk_management.md", """# Risk Management Rules
+    console.print(f"[green]✓[/green] AVM initialized")
+    console.print(f"[dim]Database: {avm.store.db_path}[/dim]\n")
+    
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("1. BASIC READ/WRITE", "📝")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Let's store some knowledge:\n")
+    
+    show_code('''avm.write("/memory/lessons/trading_rules.md", """
+# Trading Rules
 
-## Position Sizing
-- Never risk more than 2% of portfolio on a single trade
-- Use stop-loss orders religiously
-- Scale into positions, don't go all-in
+## Risk Management
+- Never risk more than 2% per trade
+- Always use stop-loss orders
+- Scale into positions gradually
 
-## Market Conditions
-- Reduce position size in high volatility
-- RSI > 70 indicates overbought conditions
-- RSI < 30 indicates oversold conditions
+## Technical Analysis  
+- RSI > 70 = Overbought (consider selling)
+- RSI < 30 = Oversold (consider buying)
+- MACD crossover = Trend change signal
+""")''')
+    
+    avm.write("/memory/lessons/trading_rules.md", """# Trading Rules
 
-## Emotional Control
-- Never revenge trade after a loss
-- Take breaks after 3 consecutive losses
-- Stick to the plan, ignore FOMO
+## Risk Management
+- Never risk more than 2% per trade
+- Always use stop-loss orders
+- Scale into positions gradually
+
+## Technical Analysis  
+- RSI > 70 = Overbought (consider selling)
+- RSI < 30 = Oversold (consider buying)
+- MACD crossover = Trend change signal
 """)
-    print("✓ Written: /memory/lessons/risk_management.md")
     
-    avm.write("/memory/market/NVDA_analysis.md", """# NVDA Technical Analysis
+    console.print("\n[green]✓[/green] Written: /memory/lessons/trading_rules.md")
+    
+    # Write more content
+    avm.write("/memory/market/NVDA.md", """# NVDA Analysis
 
-**Date**: 2026-03-05
-**Price**: $892.50
-**RSI**: 72.3 (Overbought)
+**Price**: $892.50 | **RSI**: 72.3 (Overbought)
 
 ## Signals
-- MACD showing bearish divergence
-- Volume declining on recent highs
-- Approaching resistance at $900
+- 📉 MACD bearish divergence
+- 📊 Volume declining on highs
+- ⚠️ Approaching $900 resistance
 
-## Recommendation
-Reduce position size by 50%. Set stop-loss at $850.
-Watch for break below 20-day MA as exit signal.
+## Action
+Reduce position by 50%. Stop-loss at $850.
 """)
-    print("✓ Written: /memory/market/NVDA_analysis.md")
+    console.print("[green]✓[/green] Written: /memory/market/NVDA.md")
     
-    avm.write("/memory/market/BTC_update.md", """# BTC Market Update
+    avm.write("/memory/market/BTC.md", """# BTC Update
 
-**Price**: $67,250
-**Trend**: Bullish continuation
+**Price**: $67,250 | **RSI**: 58 (Neutral)
 
 ## Key Levels
 - Support: $65,000
 - Resistance: $70,000
-- RSI: 58 (Neutral)
 
-## Notes
-ETF inflows remain strong. Halving in 45 days.
-Accumulate on dips to $65K support.
+## Outlook
+Bullish structure. ETF inflows strong. Accumulate dips.
 """)
-    print("✓ Written: /memory/market/BTC_update.md")
+    console.print("[green]✓[/green] Written: /memory/market/BTC.md")
     
     # Read back
-    node = avm.read("/memory/lessons/risk_management.md")
-    print_result("Read content (first 200 chars)", node.content[:200] + "...")
+    console.print("\nReading back the content:\n")
+    node = avm.read("/memory/lessons/trading_rules.md")
+    show_result("Content Preview", node.content[:300] + "...", "blue")
     
-    # ─────────────────────────────────────────────────────────
-    print_section("2. FULL-TEXT SEARCH")
-    # ─────────────────────────────────────────────────────────
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("2. FULL-TEXT SEARCH", "🔍")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Search across all memories:\n")
+    
+    show_code('results = avm.search("RSI overbought", limit=5)')
     
     results = avm.search("RSI overbought", limit=5)
-    print_result("Search: 'RSI overbought'", 
-                 "\n".join([f"[{score:.2f}] {node.path}" for node, score in results]))
     
-    results = avm.search("position sizing", limit=5)
-    print_result("Search: 'position sizing'",
-                 "\n".join([f"[{score:.2f}] {node.path}" for node, score in results]))
-    
-    # ─────────────────────────────────────────────────────────
-    print_section("3. KNOWLEDGE GRAPH (LINKING)")
-    # ─────────────────────────────────────────────────────────
-    
-    # Create relationships
-    avm.link("/memory/market/NVDA_analysis.md", 
-             "/memory/lessons/risk_management.md", 
-             EdgeType.RELATED)
-    print("✓ Linked: NVDA_analysis → risk_management (related)")
-    
-    avm.link("/memory/market/BTC_update.md",
-             "/memory/lessons/risk_management.md",
-             EdgeType.RELATED)
-    print("✓ Linked: BTC_update → risk_management (related)")
-    
-    # Query links
-    edges = avm.links("/memory/lessons/risk_management.md")
-    print_result("Links from risk_management.md",
-                 "\n".join([f"→ {e.source} ({e.edge_type})" for e in edges]))
-    
-    # ─────────────────────────────────────────────────────────
-    print_section("4. AGENT MEMORY (TOKEN-AWARE RECALL)")
-    # ─────────────────────────────────────────────────────────
-    
-    # Create agent memory for "trader" agent
-    mem = avm.agent_memory("trader")
-    
-    # Store some insights
-    mem.remember(
-        "NVDA showing weakness. RSI at 72, reduce exposure.",
-        title="nvda_warning",
-        importance=0.9,
-        tags=["market", "nvda", "warning"]
+    show_table(
+        "Search Results: 'RSI overbought'",
+        ["Score", "Path", "Preview"],
+        [(f"{score:.2f}", node.path, node.content[:40] + "...") for node, score in results]
     )
-    print("✓ Remembered: NVDA warning (importance: 0.9)")
     
-    mem.remember(
-        "BTC holding above $65K support. Bullish structure intact.",
-        title="btc_observation",
+    console.print()
+    results2 = avm.search("risk management", limit=5)
+    show_table(
+        "Search Results: 'risk management'",
+        ["Score", "Path", "Preview"],
+        [(f"{score:.2f}", node.path, node.content[:40] + "...") for node, score in results2]
+    )
+    
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("3. KNOWLEDGE GRAPH", "🔗")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Create relationships between memories:\n")
+    
+    show_code('''avm.link("/memory/market/NVDA.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)
+avm.link("/memory/market/BTC.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)''')
+    
+    avm.link("/memory/market/NVDA.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)
+    avm.link("/memory/market/BTC.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)
+    
+    console.print("[green]✓[/green] Links created\n")
+    
+    # Visualize as tree
+    tree = Tree("[bold]📁 /memory/lessons/trading_rules.md[/bold]")
+    edges = avm.links("/memory/lessons/trading_rules.md")
+    for edge in edges:
+        tree.add(f"[cyan]→ {edge.source}[/cyan] [dim]({edge.edge_type})[/dim]")
+    
+    console.print(Panel(tree, title="Knowledge Graph", border_style="magenta"))
+    
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("4. AGENT MEMORY", "🤖")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Create an AI agent with its own memory space:\n")
+    
+    show_code('''trader = avm.agent_memory("trader")
+
+trader.remember(
+    "NVDA showing weakness at resistance. RSI overbought.",
+    title="nvda_alert",
+    importance=0.9,
+    tags=["market", "nvda", "alert"]
+)''')
+    
+    trader = avm.agent_memory("trader")
+    
+    trader.remember(
+        "NVDA showing weakness at resistance. RSI overbought at 72.",
+        title="nvda_alert",
+        importance=0.9,
+        tags=["market", "nvda", "alert"]
+    )
+    console.print("[green]✓[/green] Remembered: NVDA alert (importance: 0.9)")
+    
+    trader.remember(
+        "BTC holding $65K support. Structure remains bullish.",
+        title="btc_note",
         importance=0.7,
         tags=["market", "btc", "bullish"]
     )
-    print("✓ Remembered: BTC observation (importance: 0.7)")
+    console.print("[green]✓[/green] Remembered: BTC note (importance: 0.7)")
     
-    mem.remember(
-        "General market sentiment turning cautious. Fed minutes tomorrow.",
-        title="macro_note",
+    trader.remember(
+        "Fed minutes tomorrow. Market may be volatile.",
+        title="macro_alert",
         importance=0.6,
-        tags=["macro", "fed"]
+        tags=["macro", "fed", "volatility"]
     )
-    print("✓ Remembered: Macro note (importance: 0.6)")
+    console.print("[green]✓[/green] Remembered: Macro alert (importance: 0.6)")
     
-    # Recall with token budget
-    print_result("Recall: 'NVDA risk' (max 500 tokens)", 
-                 mem.recall("NVDA risk", max_tokens=500))
+    pause()
     
-    print_result("Recall: 'market overview' (max 1000 tokens)",
-                 mem.recall("market overview", max_tokens=1000))
+    # ═══════════════════════════════════════════════════════════
+    section("5. TOKEN-AWARE RECALL", "🧠")
+    # ═══════════════════════════════════════════════════════════
     
-    # ─────────────────────────────────────────────────────────
-    print_section("5. MULTI-AGENT ISOLATION")
-    # ─────────────────────────────────────────────────────────
+    console.print("Recall memories with token budget (perfect for LLM context):\n")
     
-    # Create another agent - each has private memory
+    show_code('context = trader.recall("NVDA risk", max_tokens=500)')
+    
+    context = trader.recall("market overview", max_tokens=800)
+    
+    show_result("Recall Result (max 800 tokens)", context, "green")
+    
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("6. MULTI-AGENT ISOLATION", "👥")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Each agent has isolated private memory:\n")
+    
+    show_code('''analyst = avm.agent_memory("analyst")
+analyst.remember("SPY head-and-shoulders pattern forming", ...)
+
+# Trader cannot see analyst's private memory
+trader.recall("SPY pattern")  # Returns nothing''')
+    
     analyst = avm.agent_memory("analyst")
-    
-    # Analyst stores in private space
     analyst.remember(
-        "Technical setup: Head and shoulders forming on SPY daily.",
+        "SPY showing head-and-shoulders pattern on daily chart.",
         title="spy_pattern",
         importance=0.8,
         tags=["pattern", "spy"]
     )
-    print("✓ Analyst stored: SPY pattern (private to analyst)")
+    console.print("[green]✓[/green] Analyst stored: SPY pattern\n")
     
-    # Trader cannot see analyst's private memory
-    trader_recall = mem.recall("SPY pattern", max_tokens=500)
-    print_result("Trader tries to recall analyst's memory", 
-                 "Cannot access - private to analyst" if "No relevant" in trader_recall else trader_recall)
+    # Show isolation
+    table = Table(title="Agent Memory Isolation", box=box.ROUNDED)
+    table.add_column("Agent", style="cyan")
+    table.add_column("Private Memories", style="green")
+    table.add_column("Can See Each Other?", style="red")
     
-    # Each agent has isolated stats
-    print_result("Trader stats", f"Private: {mem.stats()['private_count']}")
-    print_result("Analyst stats", f"Private: {analyst.stats()['private_count']}")
+    table.add_row("trader", str(trader.stats()['private_count']), "❌ No")
+    table.add_row("analyst", str(analyst.stats()['private_count']), "❌ No")
     
-    # ─────────────────────────────────────────────────────────
-    print_section("6. METADATA & TAGS")
-    # ─────────────────────────────────────────────────────────
+    console.print(table)
     
-    # Get tag cloud
-    cloud = mem.tag_cloud()
-    print_result("Tag Cloud", 
-                 "\n".join([f"{tag}: {count}" for tag, count in list(cloud.items())[:10]]))
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("7. TAGS & METADATA", "🏷️")
+    # ═══════════════════════════════════════════════════════════
+    
+    console.print("Organize memories with tags:\n")
+    
+    # Tag cloud
+    cloud = trader.tag_cloud()
+    
+    tag_visual = " ".join([
+        f"[{'bold ' if count > 1 else ''}cyan]{tag}[/] [dim]({count})[/dim]"
+        for tag, count in cloud.items()
+    ])
+    
+    console.print(Panel(tag_visual, title="Tag Cloud", border_style="cyan"))
     
     # Search by tag
-    tagged = mem.by_tag("market")
-    print_result("Memories tagged 'market'",
-                 "\n".join([n.path for n in tagged[:5]]))
+    console.print("\nMemories tagged 'market':")
+    tagged = trader.by_tag("market")
+    for node in tagged[:5]:
+        console.print(f"  [green]•[/green] {node.path}")
     
-    # Stats
-    stats = mem.stats()
-    print_result("Agent Stats", 
-                 f"Private: {stats['private_count']}, Shared: {stats['shared_accessible']}")
+    pause()
     
-    # ─────────────────────────────────────────────────────────
-    print_section("7. LISTING & HISTORY")
-    # ─────────────────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════
+    section("8. FILE STRUCTURE", "📂")
+    # ═══════════════════════════════════════════════════════════
     
-    # List all nodes
-    nodes = avm.list("/memory", limit=10)
-    print_result("All memories (first 10)",
-                 "\n".join([n.path for n in nodes]))
+    console.print("View the virtual filesystem:\n")
     
-    # View history
-    history = avm.history("/memory/lessons/risk_management.md", limit=3)
-    print_result("Change history",
-                 "\n".join([f"[{h.timestamp[:19] if hasattr(h, 'timestamp') else ''}] {h.change_type if hasattr(h, 'change_type') else 'update'}" 
-                           for h in history]))
+    # Build tree
+    root = Tree("[bold]📁 /memory[/bold]")
     
-    # Storage stats
+    lessons = root.add("📁 lessons")
+    lessons.add("📄 trading_rules.md")
+    
+    market = root.add("📁 market")
+    market.add("📄 NVDA.md")
+    market.add("📄 BTC.md")
+    
+    private = root.add("📁 private")
+    trader_dir = private.add("📁 trader")
+    trader_dir.add("📄 nvda_alert.md")
+    trader_dir.add("📄 btc_note.md")
+    trader_dir.add("📄 macro_alert.md")
+    analyst_dir = private.add("📁 analyst")
+    analyst_dir.add("📄 spy_pattern.md")
+    
+    console.print(Panel(root, title="Virtual Filesystem", border_style="blue"))
+    
+    pause()
+    
+    # ═══════════════════════════════════════════════════════════
+    section("9. STATISTICS", "📊")
+    # ═══════════════════════════════════════════════════════════
+    
     stats = avm.stats()
-    print_result("Storage Stats",
-                 f"Nodes: {stats['nodes']}, Edges: {stats['edges']}")
     
-    # ─────────────────────────────────────────────────────────
-    print_section("8. CLEANUP")
-    # ─────────────────────────────────────────────────────────
+    table = Table(title="Storage Statistics", box=box.ROUNDED)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
     
-    # Delete a node
-    avm.delete("/memory/market/BTC_update.md")
-    print("✓ Deleted: /memory/market/BTC_update.md")
+    table.add_row("Total Nodes", str(stats['nodes']))
+    table.add_row("Total Edges", str(stats['edges']))
+    table.add_row("Database", stats['db_path'].split('/')[-1])
     
-    # Verify
-    node = avm.read("/memory/market/BTC_update.md")
-    print(f"✓ Verified deletion: {node is None}")
+    console.print(table)
     
-    # ─────────────────────────────────────────────────────────
-    print_section("DEMO COMPLETE")
-    # ─────────────────────────────────────────────────────────
+    pause()
     
-    print("""
-    🎉 You've experienced AVM's core features:
+    # ═══════════════════════════════════════════════════════════
+    section("DEMO COMPLETE!", "🎉")
+    # ═══════════════════════════════════════════════════════════
     
-    ✓ Read/Write structured memories
-    ✓ Full-text search with ranking
-    ✓ Knowledge graph with relationships
-    ✓ Token-aware recall for AI agents
-    ✓ Multi-agent collaboration
-    ✓ Metadata and tagging
-    
-    Next steps:
-    - Mount as filesystem: avm-mount /mnt/avm --user myagent
-    - Use MCP server: avm-mcp --user myagent
-    - Read the docs: https://github.com/bkmashiro/avm
-    
-    Happy hacking! 🚀
-    """)
+    console.print(Panel.fit("""
+[bold green]You've experienced AVM's core features:[/bold green]
+
+  ✅ Read/Write structured memories
+  ✅ Full-text search with ranking
+  ✅ Knowledge graph relationships
+  ✅ Token-aware recall for AI agents
+  ✅ Multi-agent memory isolation
+  ✅ Tags and metadata
+
+[bold yellow]Next Steps:[/bold yellow]
+
+  [cyan]# Mount as filesystem[/cyan]
+  avm-mount /mnt/avm --user myagent
+  
+  [cyan]# Start MCP server[/cyan]
+  avm-mcp --user myagent
+  
+  [cyan]# Read the docs[/cyan]
+  https://github.com/bkmashiro/avm
+
+[dim]Happy hacking! 🚀[/dim]
+    """, border_style="green"))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Demo interrupted.[/yellow]")
