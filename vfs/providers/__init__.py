@@ -8,6 +8,7 @@ from .indicators import TechnicalIndicatorsProvider
 from .memory import MemoryProvider
 from .news import NewsProvider
 from .watchlist import WatchlistProvider
+from .http_json import HttpJsonProvider
 
 __all__ = [
     "VFSProvider",
@@ -19,4 +20,5 @@ __all__ = [
     "MemoryProvider",
     "NewsProvider",
     "WatchlistProvider",
+    "HttpJsonProvider",
 ]

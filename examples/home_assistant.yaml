@@ -1,0 +1,46 @@
+# VFS Config: Home Assistant Bot
+#
+# 家居自动化机器人 VFS
+
+db_path: "${HOME}/.vfs/home.db"
+default_ttl: 60
+default_access: ro
+
+providers:
+  # 传感器数据 (需要自定义 provider)
+  - pattern: "/sensors/*"
+    type: http_json
+    ttl: 30
+    config:
+      base_url: "http://homeassistant.local:8123/api"
+      token: "${HA_TOKEN}"
+  
+  # 设备状态
+  - pattern: "/devices/*"
+    type: http_json
+    ttl: 60
+    config:
+      base_url: "http://homeassistant.local:8123/api"
+      token: "${HA_TOKEN}"
+  
+  # 自动化规则
+  - pattern: "/automations/*"
+    type: static
+    ttl: 0
+
+permissions:
+  # Bot 可以写日志和学习
+  - pattern: "/memory/*"
+    access: rw
+  
+  # Bot 可以控制设备（需谨慎）
+  - pattern: "/devices/*/control"
+    access: rw
+  
+  # 传感器只读
+  - pattern: "/sensors/*"
+    access: ro
+  
+  # 自动化规则只读
+  - pattern: "/automations/*"
+    access: ro

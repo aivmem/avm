@@ -1,0 +1,58 @@
+# VFS Config: Trading Bot
+# 
+# 配置驱动的交易机器人 VFS
+
+db_path: "${HOME}/.openclaw/vfs/trading.db"
+default_ttl: 300
+default_access: ro
+
+providers:
+  # Alpaca 持仓数据
+  - pattern: "/trading/positions*"
+    type: alpaca_positions
+    ttl: 60
+    config:
+      env_file: "${HOME}/.openclaw/workspace/trading/.env"
+  
+  # Alpaca 订单
+  - pattern: "/trading/orders*"
+    type: alpaca_orders
+    ttl: 30
+    config:
+      env_file: "${HOME}/.openclaw/workspace/trading/.env"
+  
+  # 技术指标
+  - pattern: "/market/indicators/*"
+    type: technical_indicators
+    ttl: 300
+  
+  # 新闻
+  - pattern: "/market/news/*"
+    type: news
+    ttl: 600
+  
+  # 自选股
+  - pattern: "/market/watchlist*"
+    type: watchlist
+    ttl: 300
+
+permissions:
+  # Bot 记忆区 - 可读写
+  - pattern: "/memory/*"
+    access: rw
+  
+  # 交易经验 - 可读写
+  - pattern: "/lessons/*"
+    access: rw
+  
+  # 市场数据 - 只读
+  - pattern: "/market/*"
+    access: ro
+  
+  # 交易数据 - 只读
+  - pattern: "/trading/*"
+    access: ro
+  
+  # 研究报告 - 只读
+  - pattern: "/research/*"
+    access: ro
