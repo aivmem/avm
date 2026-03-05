@@ -1,6 +1,8 @@
 # AVM - AI Virtual Memory
 
-A config-driven virtual filesystem for AI agents to read/write structured knowledge.
+**Memory for LLMs that won't break the bank.** 💸
+
+A config-driven virtual filesystem for AI agents to read/write structured knowledge — without burning tokens on every memory operation.
 
 ## Why You Need AVM
 
