@@ -35,6 +35,28 @@ trader.recall("market patterns")  # sees analyst's shared memory
 
 **One-liner value prop:** *"Persistent, structured, token-aware memory for AI agents."*
 
+## AVM vs MemGPT
+
+| | **MemGPT/Letta** | **AVM** |
+|---|---|---|
+| **Philosophy** | LLM manages its own memory | Explicit API, you control |
+| **Memory decisions** | LLM decides when to store/retrieve | Agent calls `remember()`/`recall()` |
+| **Architecture** | Agent framework | Pure storage layer |
+| **LLM dependency** | Needs LLM for every memory op | No LLM needed |
+| **Multi-agent** | Single agent focus | Built-in isolation + sharing |
+| **Interface** | Python SDK | FUSE mount, MCP, CLI, Python |
+| **Integration** | Self-contained | Works with shell, editors, any tool |
+
+**Analogy:**
+- MemGPT = **Autopilot** (LLM drives)
+- AVM = **Manual transmission** (you drive)
+
+**When to use which:**
+- **MemGPT**: Want autonomous memory, single agent, hands-off
+- **AVM**: Want explicit control, multi-agent, integrate with existing tools
+
+**They can work together:** Use AVM as storage backend, add MemGPT-style logic on top for automatic memory management.
+
 <details>
 <summary><b>🎮 See it in action (click to expand)</b></summary>
 
