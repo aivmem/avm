@@ -350,11 +350,11 @@ class AgentMemory:
         if path:
             target_path = path
         elif namespace:
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")  # 加微秒
             slug = self._make_slug(title) if title else timestamp
             target_path = f"{self.shared_prefix}/{namespace}/{slug}.md"
         else:
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")  # 加微秒
             slug = self._make_slug(title) if title else ""
             filename = f"{timestamp}_{slug}.md" if slug else f"{timestamp}.md"
             target_path = f"{self.private_prefix}/{filename}"
@@ -700,17 +700,41 @@ class AgentMemory:
         from .advanced import TagManager
         
         tag_mgr = TagManager(self.vfs.store)
-        nodes = tag_mgr.by_tag(tag, prefix="/memory", limit=limit)
         
-        # 过滤权限
-        return [n for n in nodes if self._can_read(n.path)]
+        # 搜索私有和共享空间
+        private_nodes = tag_mgr.by_tag(tag, prefix=self.private_prefix, limit=limit)
+        shared_nodes = tag_mgr.by_tag(tag, prefix=self.shared_prefix, limit=limit)
+        
+        all_nodes = private_nodes + shared_nodes
+        
+        # 过滤权限并去重
+        seen = set()
+        result = []
+        for n in all_nodes:
+            if n.path not in seen and self._can_read(n.path):
+                seen.add(n.path)
+                result.append(n)
+        
+        return result[:limit]
     
     def tag_cloud(self) -> Dict[str, int]:
         """获取标签词云（频率分布）"""
         from .advanced import TagManager
         
         tag_mgr = TagManager(self.vfs.store)
-        return tag_mgr.tag_cloud(prefix="/memory")
+        
+        # 合并私有和共享空间的标签
+        private_cloud = tag_mgr.tag_cloud(prefix=self.private_prefix)
+        shared_cloud = tag_mgr.tag_cloud(prefix=self.shared_prefix)
+        
+        # 合并计数
+        combined = {}
+        for tag, count in private_cloud.items():
+            combined[tag] = combined.get(tag, 0) + count
+        for tag, count in shared_cloud.items():
+            combined[tag] = combined.get(tag, 0) + count
+        
+        return dict(sorted(combined.items(), key=lambda x: x[1], reverse=True))
     
     def suggest_tags(self, content: str, top_k: int = 5) -> List[str]:
         """为内容建议标签"""
