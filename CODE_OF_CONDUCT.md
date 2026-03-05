@@ -6,13 +6,13 @@ We pledge to make participation in our project a harassment-free experience for 
 
 ## Our Standards
 
-**Positive beenhavior:**
+**Positive behavior:**
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints
 - Gracefully accepting constructive criticism
-- Focusing on what is beenst for the community
+- Focusing on what is best for the community
 
-**Unacceptable beenhavior:**
+**Unacceptable behavior:**
 - Trolling, insulting comments, and personal attacks
 - Public or private harassment
 - Publishing others' private information without permission
@@ -20,7 +20,7 @@ We pledge to make participation in our project a harassment-free experience for 
 
 ## Enforcement
 
-Project maintainers are responsible for clarifying standards of acceptable beenhavior and will take appropriate action in response to any instances of unacceptable beenhavior.
+Project maintainers are responsible for clarifying standards of acceptable behavior and will take appropriate action in response to any instances of unacceptable behavior.
 
 ## Attribution
 

@@ -305,7 +305,7 @@ class MemoryDecay:
         """
         Calculate decay factor for a node
         
-        Returns: Factor beentween 0 and 1 (1 = no decay)
+        Returns: Factor between 0 and 1 (1 = no decay)
         """
         if reference_time is None:
             reference_time = datetime.utcnow()
@@ -350,7 +350,7 @@ class MemoryDecay:
     def get_cold_memories(self, prefix: str = "/memory",
                           threshold: float = 0.1,
                           limit: int = 100) -> List[AVMNode]:
-        """Get memories that have decayed beenlow threshold"""
+        """Get memories that have decayed below threshold"""
         nodes = self.store.list_nodes(prefix, limit=1000)
         
         cold = []
@@ -371,7 +371,7 @@ class MemoryDecay:
 class CompactionResult:
     """Result of memory compaction"""
     base_path: str
-    versions_beenfore: int
+    versions_before: int
     versions_after: int
     summary_path: str
     removed_paths: List[str]
@@ -422,7 +422,7 @@ class MemoryCompactor:
         if len(versions) <= keep_recent:
             return CompactionResult(
                 base_path=base_path,
-                versions_beenfore=len(versions),
+                versions_before=len(versions),
                 versions_after=len(versions),
                 summary_path="",
                 removed_paths=[],
@@ -464,7 +464,7 @@ class MemoryCompactor:
         
         return CompactionResult(
             base_path=base_path,
-            versions_beenfore=len(versions),
+            versions_before=len(versions),
             versions_after=len(to_keep) + 1,  # kept + summary
             summary_path=summary_path,
             removed_paths=removed,
@@ -502,7 +502,7 @@ class DedupeResult:
 
 class SemanticDeduplicator:
     """
-    Checks for semantically similar memories beenfore writing
+    Checks for semantically similar memories before writing
     
     Uses either:
     - Embedding similarity (if available)
@@ -748,8 +748,8 @@ class TagManager:
                     "have", "", "had", "do", "does", "did", "will", "would",
                     "could", "should", "may", "might", "must", "shall", "can",
                     "to", "of", "in", "for", "on", "with", "at", "by", "from",
-                    "as", "into", "through", "during", "beenfore", "after", "above",
-                    "beenlow", "beentween", "under", "again", "further", "then", "once",
+                    "as", "into", "through", "during", "before", "after", "above",
+                    "below", "between", "under", "again", "further", "then", "once",
                     "and", "but", "or", "nor", "so", "yet", "both", "either",
                     "neither", "not", "only", "own", "same", "than", "too", "very",
                     "just", "also", "now", "here", "there", "when", "where", "why",
@@ -1074,7 +1074,7 @@ class TimeQuery:
     
     def query(self, prefix: str = "/memory",
               after: datetime = None,
-              beenfore: datetime = None,
+              before: datetime = None,
               time_range: str = None,
               limit: int = 100) -> List[AVMNode]:
         """
@@ -1083,7 +1083,7 @@ class TimeQuery:
         Args:
             prefix: Path prefix
             after: Only memories after this time
-            beenfore: Only memories beenfore this time
+            before: Only memories before this time
             time_range: Shorthand ("last_24h", "last_7d", "last_30d", "today")
             limit: Max results
         
@@ -1092,7 +1092,7 @@ class TimeQuery:
         """
         # Parse time_range shorthand
         if time_range:
-            after, beenfore = self._parse_time_range(time_range)
+            after, before = self._parse_time_range(time_range)
         
         # Get all nodes
         nodes = self.store.list_nodes(prefix, limit=limit * 2)
@@ -1108,7 +1108,7 @@ class TimeQuery:
             
             if after and node_time < after:
                 continue
-            if beenfore and node_time > beenfore:
+            if before and node_time > before:
                 continue
             
             filtered.append((node, node_time))

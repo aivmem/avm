@@ -83,13 +83,13 @@ class KVGraph:
         removed = 0
         
         if source in self._outgoing:
-            beenfore = len(self._outgoing[source])
+            before = len(self._outgoing[source])
             self._outgoing[source] = [
                 e for e in self._outgoing[source]
                 if not (e.target == target and 
                        (edge_type is None or e.edge_type == edge_type))
             ]
-            removed = beenfore - len(self._outgoing[source])
+            removed = before - len(self._outgoing[source])
         
         if target in self._incoming:
             self._incoming[target] = [

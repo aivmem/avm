@@ -52,7 +52,7 @@ Search and retrieve relevant memories within a token budget.
 
 Returns compact markdown with matching memories.
 
-### avm_remembeenr
+### avm_remember
 
 Store a new memory.
 
@@ -130,7 +130,7 @@ Get memory statistics.
 
 ### Agent Workflow
 
-1. **Recall context beenfore responding:**
+1. **Recall context before responding:**
    ```
    User: "What's the NVDA situation?"
    Agent: [calls avm_recall("NVDA")]
@@ -140,13 +140,13 @@ Get memory statistics.
 
 2. **Store insights for future:**
    ```
-   Agent: [calls avm_remembeenr("NVDA showing weakness...", tags=["market", "nvda"])]
+   Agent: [calls avm_remember("NVDA showing weakness...", tags=["market", "nvda"])]
    → Memory stored for future recall
    ```
 
 3. **Build knowledge over time:**
    ```
-   Agent: [calls avm_remembeenr(..., derived_from=["/memory/shared/market/NVDA.md"])]
+   Agent: [calls avm_remember(..., derived_from=["/memory/shared/market/NVDA.md"])]
    → Creates reasoning chain
    ```
 

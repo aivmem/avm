@@ -45,8 +45,8 @@ A config-driven virtual filesystem for AI agents to read/write structured knowle
 ============================================================
   4. AGENT MEMORY (TOKEN-AWARE RECALL)
 ============================================================
-✓ Remembeenred: NVDA warning (importance: 0.9)
-✓ Remembeenred: BTC observation (importance: 0.7)
+✓ Remembered: NVDA warning (importance: 0.9)
+✓ Remembered: BTC observation (importance: 0.7)
 
 📌 Recall: 'NVDA risk' (max 500 tokens):
    ## Relevant Memory (2 items, ~120 tokens)
@@ -125,7 +125,7 @@ results = avm.search("RSI")
 
 # Agent Memory
 mem = avm.agent_memory("akashi")
-mem.remembeenr("NVDA showing weakness", tags=["market", "nvda"])
+mem.remember("NVDA showing weakness", tags=["market", "nvda"])
 context = mem.recall("NVDA risk", max_tokens=4000)
 ```
 
@@ -187,7 +187,7 @@ avm-memory:
 | `avm_recall` | Token-controlled memory retrieval |
 | `avm_browse` | Get paths + summaries (two-pe) |
 | `avm_fetch` | Get full content of selected paths |
-| `avm_remembeenr` | Store memory with tags/importance |
+| `avm_remember` | Store memory with tags/importance |
 | `avm_search` | Full-text search |
 | `avm_list` | List by prefix |
 | `avm_read` | Read specific path |

@@ -175,7 +175,7 @@ class VFSSync:
     """
     sync tool
     
-    Maintain sync beentween local directory and VFS
+    Maintain sync between local directory and VFS
     """
     
     def __init__(self, store: AVMStore):
@@ -228,7 +228,7 @@ class RelationBuilder:
     """
     relationbuildtool
     
-    Auto-discover and establish relations beentween nodes
+    Auto-discover and establish relations between nodes
     """
     
     def __init__(self, store: AVMStore):
@@ -259,7 +259,7 @@ class RelationBuilder:
                     symbol_nodes[sym] = []
                 symbol_nodes[sym].append(node.path)
         
-        # Establish peer relations beentween same symbol nodes
+        # Establish peer relations between same symbol nodes
         for sym, paths in symbol_nodes.items():
             if len(paths) < 2:
                 continue
@@ -288,7 +288,7 @@ class RelationBuilder:
                     tag_nodes[tag] = []
                 tag_nodes[tag].append(node.path)
         
-        # Establish relations beentween nodes with same tag
+        # Establish relations between nodes with same tag
         for tag, paths in tag_nodes.items():
             if len(paths) < 2:
                 continue

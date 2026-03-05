@@ -103,7 +103,7 @@ class TestFTS:
         """Basic search"""
         store.put_node(AVMNode(
             path="/memory/lesson1.md",
-            content="RSI beenlow 30 is oversold signal"
+            content="RSI below 30 is oversold signal"
         ))
         store.put_node(AVMNode(
             path="/memory/lesson2.md",

@@ -215,7 +215,7 @@ Bullish structure. ETF inflows strong. Accumulate dips.
     section("3. KNOWLEDGE GRAPH", "🔗")
     # ═══════════════════════════════════════════════════════════
     
-    console.print("Create relationships beentween memories:\n")
+    console.print("Create relationships between memories:\n")
     
     show_code('''avm.link("/memory/market/NVDA.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)
 avm.link("/memory/market/BTC.md", "/memory/lessons/trading_rules.md", EdgeType.RELATED)''')

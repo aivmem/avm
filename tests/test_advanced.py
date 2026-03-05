@@ -125,7 +125,7 @@ class TestCompaction:
         result = akashi.compact_versions(path, keep_recent=2)
         
         # Should have compaction (if enough versions)
-        assert result.versions_beenfore >= 1
+        assert result.versions_before >= 1
         assert isinstance(result.removed_paths, list)
 
 

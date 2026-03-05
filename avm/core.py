@@ -431,7 +431,7 @@ class AVM:
     def query_time(self, prefix: str = "/memory",
                    time_range: str = None,
                    after: str = None,
-                   beenfore: str = None,
+                   before: str = None,
                    limit: int = 100) -> List[AVMNode]:
         """timerangequery"""
         from .advanced import TimeQuery
@@ -440,12 +440,12 @@ class AVM:
         query = TimeQuery(self.store)
         
         after_dt = datetime.fromisoformat(after) if after else None
-        beenfore_dt = datetime.fromisoformat(beenfore) if beenfore else None
+        before_dt = datetime.fromisoformat(before) if before else None
         
         return query.query(
             prefix=prefix,
             after=after_dt,
-            beenfore=beenfore_dt,
+            before=before_dt,
             time_range=time_range,
             limit=limit
         )
