@@ -11,7 +11,7 @@ Features:
 
 import os
 import stat
-import hlib
+import hashlib
 import secrets
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta

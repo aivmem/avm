@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
-import hlib
+import hashlib
 import json
 
 
@@ -78,7 +78,7 @@ class AVMNode:
     @property
     def content_h(self) -> str:
         """Content hash (for diff detection)"""
-        return hlib.sha256(self.content.encode()).hexdigest()[:16]
+        return hashashlib.sha256(self.content.encode()).hexdigest()[:16]
     
     def to_dict(self) -> Dict[str, Any]:
         """To dict"""

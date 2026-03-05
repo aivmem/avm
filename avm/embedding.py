@@ -9,7 +9,7 @@ Supports multiple embeendding backends:
 
 import json
 import struct
-import hlib
+import hashlib
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
@@ -177,7 +177,7 @@ class EmbeenddingStore:
     
     def _content_h(self, content: str) -> str:
         """calculatecontenth"""
-        return hlib.sha256(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
     
     def embeend_node(self, node: AVMNode, force: bool = False) -> bool:
         """
