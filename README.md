@@ -211,25 +211,39 @@ avm recall "NVDA risk" --agent akashi --max-tokens 4000
 
 ### FUSE Mount
 
+Mount AVM as a filesystem for shell access.
+
+**Requirements:**
+- macOS: `brew install macfuse` (approve system extension in System Settings → Privacy & Security)
+- Linux: `apt install fuse3`
+
 ```bash
-# Mount
-avm-mount /mnt/avm --user akashi
+# Mount in foreground
+avm-mount mount /mnt/avm
+
+# Mount as daemon (background)
+avm-mount mount /mnt/avm --daemon
+
+# Check status
+avm-mount status
+
+# Stop daemon
+avm-mount stop /mnt/avm
 
 # Use standard shell commands
 ls /mnt/avm/memory/
 cat /mnt/avm/memory/lesson.md
-echo "New insight" >> /mnt/avm/memory/log.md
+echo "New insight" > /mnt/avm/memory/log.md
 
-# Virtual nodes
+# Virtual nodes (append suffix to any file path)
 cat /mnt/avm/memory/lesson.md:meta      # Metadata (JSON)
 cat /mnt/avm/memory/lesson.md:links     # Related nodes
 cat /mnt/avm/memory/lesson.md:tags      # Tags
+cat /mnt/avm/memory/lesson.md:history   # Version history
 cat /mnt/avm/memory/:list               # Directory listing
-cat "/mnt/avm/memory/:search?q=RSI"     # Search
-cat "/mnt/avm/memory/:recall?q=NVDA"    # Token-aware recall
-
-# Write metadata
-echo "market,trading" > /mnt/avm/memory/lesson.md:tags
+cat /mnt/avm/memory/:stats              # Statistics
+cat "/mnt/avm/:search?q=RSI"            # Search
+cat "/mnt/avm/:recall?q=NVDA"           # Token-aware recall
 ```
 
 ### MCP Server
