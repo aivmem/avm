@@ -23,8 +23,11 @@ from .config import load_config
 from .node import AVMNode, NodeType
 from .graph import EdgeType
 
+# Alias for backwards compatibility
+VFS = AVM
 
-def get_vfs(config_path: Optional[str] = None, db_path: Optional[str] = None) -> VFS:
+
+def get_vfs(config_path: Optional[str] = None, db_path: Optional[str] = None) -> AVM:
     """Get VFS instance"""
     config = load_config(config_path)
     if db_path:
