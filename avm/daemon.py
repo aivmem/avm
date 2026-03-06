@@ -40,41 +40,51 @@ def _lazy_imports():
 # Configuration
 # ═══════════════════════════════════════════════════════════════
 
-CONFIG_DIR = Path.home() / ".local" / "share" / "avm"
-DAEMON_CONFIG = CONFIG_DIR / "daemon.json"
-DAEMON_PID = CONFIG_DIR / "daemon.pid"
+DATA_DIR = Path.home() / ".local" / "share" / "avm"
+CONFIG_DIR = Path.home() / ".config" / "avm"
+MOUNTS_CONFIG = CONFIG_DIR / "mounts.yaml"
+DAEMON_PID = DATA_DIR / "daemon.pid"
 
 
 @dataclass
 class MountConfig:
     """Configuration for a single mount point"""
-    mountpoint: str
-    agent_id: str
+    path: str
+    agent: str
     enabled: bool = True
 
 
 @dataclass
 class DaemonConfig:
     """Daemon configuration"""
-    mounts: Dict[str, MountConfig] = field(default_factory=dict)
+    mounts: list = field(default_factory=list)
     
     def save(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        import yaml
         data = {
-            "mounts": {k: asdict(v) for k, v in self.mounts.items()}
+            "mounts": [
+                {"path": m.path, "agent": m.agent, "enabled": m.enabled}
+                for m in self.mounts
+            ]
         }
-        DAEMON_CONFIG.write_text(json.dumps(data, indent=2))
+        MOUNTS_CONFIG.write_text(yaml.dump(data, default_flow_style=False, allow_unicode=True))
     
     @classmethod
     def load(cls) -> "DaemonConfig":
-        if not DAEMON_CONFIG.exists():
+        if not MOUNTS_CONFIG.exists():
             return cls()
         try:
-            data = json.loads(DAEMON_CONFIG.read_text())
-            mounts = {
-                k: MountConfig(**v) 
-                for k, v in data.get("mounts", {}).items()
-            }
+            import yaml
+            data = yaml.safe_load(MOUNTS_CONFIG.read_text())
+            mounts = [
+                MountConfig(
+                    path=str(Path(m["path"]).expanduser()),
+                    agent=m["agent"],
+                    enabled=m.get("enabled", True)
+                )
+                for m in data.get("mounts", [])
+            ]
             return cls(mounts=mounts)
         except Exception:
             return cls()
@@ -167,13 +177,13 @@ class AVMDaemon:
                 pass  # Stale pid file
         
         # Write PID
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
         DAEMON_PID.write_text(str(os.getpid()))
         
         self._running = True
         
         # Start all enabled mounts
-        for name, mount_config in self.config.mounts.items():
+        for mount_config in self.config.mounts:
             if mount_config.enabled:
                 self._start_mount(mount_config)
         
@@ -196,12 +206,12 @@ class AVMDaemon:
     def _start_mount(self, mount_config: MountConfig):
         """Start a single mount"""
         proc = MountProcess(
-            mount_config.mountpoint,
-            mount_config.agent_id,
+            mount_config.path,
+            mount_config.agent,
         )
         proc.start()
-        self.mounts[mount_config.mountpoint] = proc
-        print(f"  Mounted: {mount_config.mountpoint} (agent={mount_config.agent_id}, pid={proc.pid})")
+        self.mounts[mount_config.path] = proc
+        print(f"  Mounted: {mount_config.path} (agent={mount_config.agent}, pid={proc.pid})")
     
     def _handle_signal(self, signum, frame):
         """Handle shutdown signals"""
@@ -216,25 +226,30 @@ class AVMDaemon:
         if DAEMON_PID.exists():
             DAEMON_PID.unlink()
     
-    def add_mount(self, mountpoint: str, agent_id: str):
+    def add_mount(self, path: str, agent: str):
         """Add a mount configuration"""
-        mountpoint = str(Path(mountpoint).resolve())
-        self.config.mounts[mountpoint] = MountConfig(
-            mountpoint=mountpoint,
-            agent_id=agent_id,
-        )
+        path = str(Path(path).expanduser().resolve())
+        # Check if already exists
+        for m in self.config.mounts:
+            if m.path == path:
+                m.agent = agent
+                self.config.save()
+                print(f"Updated: {path} (agent={agent})")
+                return
+        self.config.mounts.append(MountConfig(path=path, agent=agent))
         self.config.save()
-        print(f"Added: {mountpoint} (agent={agent_id})")
+        print(f"Added: {path} (agent={agent})")
     
-    def remove_mount(self, mountpoint: str):
+    def remove_mount(self, path: str):
         """Remove a mount configuration"""
-        mountpoint = str(Path(mountpoint).resolve())
-        if mountpoint in self.config.mounts:
-            del self.config.mounts[mountpoint]
-            self.config.save()
-            print(f"Removed: {mountpoint}")
-        else:
-            print(f"Not found: {mountpoint}")
+        path = str(Path(path).expanduser().resolve())
+        for i, m in enumerate(self.config.mounts):
+            if m.path == path:
+                del self.config.mounts[i]
+                self.config.save()
+                print(f"Removed: {path}")
+                return
+        print(f"Not found: {path}")
     
     def list_mounts(self):
         """List configured mounts"""
@@ -243,9 +258,10 @@ class AVMDaemon:
             return
         
         print("Configured mounts:")
-        for mp, mc in self.config.mounts.items():
-            status = "✓" if mc.enabled else "○"
-            print(f"  {status} {mp} → {mc.agent_id}")
+        for m in self.config.mounts:
+            status = "✓" if m.enabled else "○"
+            short_path = m.path.replace(str(Path.home()), "~")
+            print(f"  {status} {short_path} → {m.agent}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -316,11 +332,10 @@ def cmd_status(args):
     else:
         print(f"\n  Mounts: {len(config.mounts)}")
         print("  ─────────────────────────────────────")
-        for mp, mc in config.mounts.items():
-            status = "●" if mc.enabled else "○"
-            agent = mc.agent_id
-            short_path = mp.replace(str(Path.home()), "~")
-            print(f"  {status} {agent:<12} → {short_path}")
+        for m in config.mounts:
+            status = "●" if m.enabled else "○"
+            short_path = m.path.replace(str(Path.home()), "~")
+            print(f"  {status} {m.agent:<12} → {short_path}")
     
     print()
     return 0
@@ -348,7 +363,7 @@ def cmd_inspect(args):
     else:
         print("  Status:  ⭘ not running")
     
-    print(f"  Config:  {DAEMON_CONFIG}")
+    print(f"  Config:  {MOUNTS_CONFIG}")
     print(f"  PID file: {DAEMON_PID}")
     
     # Database info
@@ -389,23 +404,22 @@ def cmd_inspect(args):
         result = subprocess.run(["/sbin/mount"], capture_output=True, text=True)
         mounted = result.stdout
         
-        for mp, mc in config.mounts.items():
-            short_path = mp.replace(str(Path.home()), "~")
-            is_mounted = mp in mounted or mp.replace("/Users/", "/private/var/") in mounted
+        for m in config.mounts:
+            short_path = m.path.replace(str(Path.home()), "~")
+            is_mounted = m.path in mounted or m.path.replace("/Users/", "/private/var/") in mounted
             
             status_icon = "●" if is_mounted else "○"
             status_text = "mounted" if is_mounted else "not mounted"
             
-            print(f"\n  {status_icon} {mc.agent_id}")
+            print(f"\n  {status_icon} {m.agent}")
             print(f"    Path:   {short_path}")
             print(f"    Status: {status_text}")
             
             # Check if accessible
             if is_mounted:
                 try:
-                    list_path = Path(mp) / ":stats"
+                    list_path = Path(m.path) / ":stats"
                     if list_path.exists():
-                        import json
                         stats = json.loads(list_path.read_text())
                         print(f"    Nodes:  {stats.get('nodes', '?')}")
                 except Exception:
