@@ -223,5 +223,5 @@ avm-mcp --db /path/to/custom.db
 
 ## More Info
 
-- Wiki: https://github.com/bkmashiro/avm/wiki
-- README: https://github.com/bkmashiro/avm
+- Wiki: https://github.com/aivmem/avm/wiki
+- README: https://github.com/aivmem/avm
