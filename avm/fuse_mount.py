@@ -173,9 +173,9 @@ class AVMFuse(Operations):
             return node.content or ''
         
         if suffix == ':path':
-            # Return VFS path (use with cd inside mount point)
-            parent = '/'.join(real_path.split('/')[:-1]) or '/'
-            return f"{real_path}\n"
+            # Return path relative to mount point (without leading /)
+            rel_path = real_path.lstrip('/')
+            return f"{rel_path}\n"
         
         if suffix == ':info':
             # List available virtual suffixes for this file
