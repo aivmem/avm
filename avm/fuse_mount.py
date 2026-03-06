@@ -374,7 +374,9 @@ class AVMFuse(Operations):
                         entries.append(f"{name}:meta")
                         entries.append(f"{name}:links")
                         entries.append(f"{name}:tags")
-                        entries.append(f"{name}:shared")
+                        # :shared only for /memory/shared/ files
+                        if real_path.startswith("/memory/shared"):
+                            entries.append(f"{name}:shared")
         
         return entries
     
