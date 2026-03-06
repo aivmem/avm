@@ -274,8 +274,10 @@ class AVMFuse(Operations):
                     # Store shortcut in meta
                     node.meta['shortcut'] = shortcut
                     self.vfs.write(node.path, node.content, meta=node.meta)
-                # Get filename
+                # Get filename (truncate if too long)
                 filename = node.path.split('/')[-1]
+                if len(filename) > 30:
+                    filename = filename[:27] + '...'
                 # Generate summary (first line, skip headers)
                 content = node.content or ''
                 summary = content.lstrip('#').strip()
