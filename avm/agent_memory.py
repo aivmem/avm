@@ -50,6 +50,10 @@ class MemoryConfig:
     # Token estimate
     chars_per_token: float = 4.0  # roughestimate
     
+    # Duplicate detection
+    duplicate_check: bool = False
+    duplicate_threshold: float = 0.85
+    
     @classmethod
     def from_dict(cls, data: Dict) -> "MemoryConfig":
         return cls(
@@ -59,6 +63,8 @@ class MemoryConfig:
             recency_weight=data.get("scoring_weights", {}).get("recency", 0.2),
             relevance_weight=data.get("scoring_weights", {}).get("relevance", 0.5),
             max_chars_per_node=data.get("compression", {}).get("max_chars_per_node", 300),
+            duplicate_check=data.get("duplicate_check", False),
+            duplicate_threshold=data.get("duplicate_threshold", 0.85),
         )
 
 
@@ -72,6 +78,29 @@ class ScoredNode:
     final_score: float = 0.0
     estimated_tokens: int = 0
     summary: str = ""
+
+
+@dataclass
+class SimilarMatch:
+    """A similar existing memory"""
+    path: str
+    similarity: float
+    preview: str = ""
+
+
+@dataclass
+class RememberResult:
+    """Result of remember operation"""
+    node: AVMNode
+    similar: List[SimilarMatch] = field(default_factory=list)
+    
+    @property
+    def path(self) -> str:
+        return self.node.path
+    
+    @property
+    def has_similar(self) -> bool:
+        return len(self.similar) > 0
 
 
 class AgentMemory:
@@ -387,7 +416,71 @@ class AgentMemory:
         # recordauditlog
         self._log_operation("write", node.path)
         
-        return node
+        # Check for similar content (after write)
+        similar = []
+        if self.config.duplicate_check:
+            similar = self._find_similar(content, exclude_path=node.path)
+        
+        return RememberResult(node=node, similar=similar)
+    
+    def _find_similar(self, content: str, exclude_path: str = None, 
+                       limit: int = 3) -> List[SimilarMatch]:
+        """Find similar existing memories using text overlap."""
+        matches = []
+        try:
+            # Extract keywords for FTS (skip numbers, short words)
+            words = content.lower().split()
+            keywords = [w for w in words if len(w) > 2 and not w.isdigit()]
+            if not keywords:
+                keywords = words[:3]
+            
+            # Search with single most important keyword to get candidates
+            # Then filter locally with Jaccard
+            candidates = set()
+            for kw in keywords[:3]:  # Top 3 keywords
+                results = self.avm.store.search(kw, limit=limit * 2)
+                for node, _ in results:
+                    candidates.add(node.path)
+            
+            # Calculate text overlap similarity for each candidate
+            content_words = set(words)
+            
+            for path in candidates:
+                if exclude_path and path == exclude_path:
+                    continue
+                
+                node = self.avm.store.get_node(path)
+                if not node or not node.content:
+                    continue
+                
+                # Extract core content (after --- separator)
+                node_text = node.content
+                if '---' in node_text:
+                    parts = node_text.split('---', 1)
+                    if len(parts) > 1:
+                        node_text = parts[1]
+                
+                # Jaccard similarity on words
+                node_words = set(node_text.lower().split())
+                intersection = content_words & node_words
+                union = content_words | node_words
+                similarity = len(intersection) / len(union) if union else 0
+                
+                if similarity >= self.config.duplicate_threshold:
+                    # Get preview from core content
+                    preview = node_text.strip()[:100]
+                    matches.append(SimilarMatch(
+                        path=path,
+                        similarity=round(similarity, 3),
+                        preview=preview
+                    ))
+            
+            # Sort by similarity
+            matches.sort(key=lambda m: m.similarity, reverse=True)
+            matches = matches[:limit]
+        except Exception:
+            pass
+        return matches
     
     def _make_slug(self, title: str) -> str:
         """generate URL-safe slug"""
