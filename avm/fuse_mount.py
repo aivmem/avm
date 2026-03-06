@@ -245,8 +245,15 @@ class AVMFuse(Operations):
         elif suffix == ':list':
             limit = int(params.get('limit', 50)) if params else 50
             offset = int(params.get('offset', 0)) if params else 0
-            # Get more nodes to account for filtering (5x to be safe)
-            nodes = self.vfs.list(real_path, limit=(limit + offset) * 5)
+            query = params.get('q', '') if params else ''
+            
+            if query:
+                # Search mode: use full-text search
+                results = self.vfs.search(query, limit=(limit + offset) * 5)
+                nodes = [node for node, score in results]
+            else:
+                # List mode: get nodes from path
+                nodes = self.vfs.list(real_path, limit=(limit + offset) * 5)
             lines = []
             skipped = 0
             for node in nodes:
