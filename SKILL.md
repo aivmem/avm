@@ -159,6 +159,58 @@ The server respects VFS permissions:
 - **Group**: Based on mode bits
 - **API Keys**: Scoped access for skills
 
+## Navigation & Discovery
+
+When you don't know what to search for:
+
+```python
+mem = avm.agent_memory("trader")
+
+# See what's in memory
+mem.topics()
+# → technical: 5, macro: 3, lessons: 2
+
+# Browse structure
+mem.browse("/memory", depth=2)
+# → 📁 private/trader (15 items)
+
+# View timeline
+mem.timeline(days=7)
+# → [Mon 14:30] nvda_alert...
+
+# Follow graph links
+mem.explore(path, depth=2)
+# → Hop 1: [related] macd.md
+```
+
+**Workflow:** topics() → browse() → explore() → recall()
+
+## Custom Handlers
+
+Extend AVM with custom providers:
+
+```python
+from avm import BaseHandler, register_handler
+
+class RedisHandler(BaseHandler):
+    def read(self, path, context):
+        key = self.extract_vars(path)['key']
+        return self.redis.get(key)
+
+register_handler('redis', RedisHandler)
+```
+
+Config:
+```yaml
+providers:
+  - pattern: "/cache/{key}"
+    handler: redis
+    config:
+      host: localhost
+```
+
+Built-in handlers: `file`, `http`, `script`, `plugin`, `sqlite`
+
 ## Database
 
 Default location: `~/.local/share/avm/avm.db`
@@ -168,3 +220,8 @@ Override with `--db`:
 ```bash
 avm-mcp --db /path/to/custom.db
 ```
+
+## More Info
+
+- Wiki: https://github.com/bkmashiro/avm/wiki
+- README: https://github.com/bkmashiro/avm
