@@ -5,6 +5,26 @@ All notable changes to AVM will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-03-06
+
+### Added
+- **Index Handler**: Structured project indexing with status tracking
+  - Code signature extraction (Python, JS, Go, Rust)
+  - Watch mode for auto-updates
+  - Status tracking: clean/dirty/missing
+- **Config Handler**: Agent-writable configuration
+  - Layered config: defaults → user → runtime
+  - `/.config/` for settings, `/.meta/` for system info
+- **Duplicate Detection**: Write-time similarity check
+  - `RememberResult` with `similar` field
+  - Jaccard word overlap with FTS candidate retrieval
+- **Mount Daemon**: Background FUSE mount management
+  - `avm-mount --daemon`, `stop`, `status`, `restart`
+
+### Changed
+- 69 tests (13 new handler tests)
+- Benchmark results: 89% token savings
+
 ## [0.9.0] - 2026-03-05
 
 ### Added

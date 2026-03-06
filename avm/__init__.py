@@ -5,7 +5,7 @@ A config-driven virtual filesystem for AI agents to read/write structured knowle
 Supports custom providers, permissions, and multi-agent collaboration.
 """
 
-__version__ = "0.9.0"
+__version__ = "1.0.0"
 
 from .node import AVMNode
 from .graph import KVGraph
