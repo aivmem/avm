@@ -212,6 +212,24 @@ class AVM:
                 node_type=NodeType.FILE,
             )
         
+        if path.startswith("/:handlers/"):
+            from .handlers import HANDLERS
+            handler_name = path.split("/")[-1]
+            if handler_name in HANDLERS:
+                handler_class = HANDLERS[handler_name]
+                return AVMNode(
+                    path=path,
+                    content=handler_class.skill_info(),
+                    node_type=NodeType.FILE,
+                )
+            else:
+                available = ", ".join(HANDLERS.keys())
+                return AVMNode(
+                    path=path,
+                    content=f"Handler '{handler_name}' not found.\n\nAvailable: {available}",
+                    node_type=NodeType.FILE,
+                )
+        
         if not self.config.check_permission(path, "read"):
             raise PermissionError(f"No read permission for {path}")
         
