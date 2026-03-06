@@ -539,7 +539,7 @@ def cmd_mount(args):
         sys.stderr = open(os.devnull, 'w')
     
     # Create AVM AFTER fork (SQLite connections can't cross fork)
-    avm = AVM(config=config)
+    avm = AVM(config=config, agent_id=args.agent)
     
     if not args.daemon:
         print(f"Mounting AVM at {mountpoint}")
