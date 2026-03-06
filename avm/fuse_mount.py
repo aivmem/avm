@@ -369,12 +369,20 @@ class AVMFuse(Operations):
                 if name and name not in seen:
                     seen.add(name)
                     entries.append(name)
-                    # Add virtual suffixes for files
+                    # Add virtual suffixes for files (on-demand)
                     if '.' in name:  # Likely a file
-                        entries.append(f"{name}:meta")
-                        entries.append(f"{name}:links")
-                        entries.append(f"{name}:tags")
-                        # :shared only if file has shared_with set
+                        entries.append(f"{name}:meta")  # Always show meta
+                        # :links only if has links
+                        try:
+                            links = self.vfs.links(node.path, direction="both")
+                            if links:
+                                entries.append(f"{name}:links")
+                        except Exception:
+                            pass
+                        # :tags only if has tags
+                        if node.meta.get('tags'):
+                            entries.append(f"{name}:tags")
+                        # :shared only if shared_with set
                         if 'shared_with' in node.meta:
                             entries.append(f"{name}:shared")
         
