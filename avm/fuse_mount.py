@@ -241,11 +241,20 @@ class AVMFuse(Operations):
             if not node:
                 raise FuseOSError(errno.ENOENT)
             
+            # Only creator can modify shared_with
+            creator = node.meta.get('created_by')
+            if creator and self.user and creator != self.user:
+                raise FuseOSError(errno.EACCES)
+            
             agents = content.strip()
             if agents == 'all' or not agents:
                 node.meta['shared_with'] = []
             else:
                 node.meta['shared_with'] = [a.strip() for a in agents.split(',')]
+            
+            # Record creator if not set
+            if not creator and self.user:
+                node.meta['created_by'] = self.user
             
             self.vfs.write(real_path, node.content, meta=node.meta)
             return True
@@ -414,8 +423,11 @@ class AVMFuse(Operations):
         self._write_buffers[self.fd] = b''
         
         if not suffix:
-            # Create empty node
-            self.vfs.write(real_path, '')
+            # Create empty node with creator metadata
+            meta = {}
+            if self.user:
+                meta['created_by'] = self.user
+            self.vfs.write(real_path, '', meta=meta)
         
         return self.fd
     
@@ -434,7 +446,15 @@ class AVMFuse(Operations):
             if suffix:
                 self._set_virtual_content(real_path, suffix, content)
             else:
-                self.vfs.write(real_path, content)
+                # Preserve existing meta or create new with creator
+                existing = self.vfs.read(real_path)
+                if existing:
+                    meta = existing.meta
+                else:
+                    meta = {}
+                    if self.user:
+                        meta['created_by'] = self.user
+                self.vfs.write(real_path, content, meta=meta)
         
         self._write_buffers.pop(fh, None)
         self._open_files.pop(fh, None)
