@@ -580,6 +580,47 @@ def register_handler(name: str, handler_class: Type[BaseHandler]):
     HANDLERS[name] = handler_class
 
 
+def handler(name: str, description: str = "", usage: str = "", examples: List[str] = None):
+    """
+    Decorator to register a handler with auto-generated skill info.
+    
+    Usage:
+        @handler("redis", 
+                 description="Redis key-value store",
+                 usage="pattern: /cache/{key}\\nhandler: redis",
+                 examples=["cat /cache/session"])
+        class RedisHandler(BaseHandler):
+            def read(self, path, context):
+                ...
+    
+    Or minimal:
+        @handler("redis")
+        class RedisHandler(BaseHandler):
+            '''Redis key-value store for caching.'''
+            ...
+    """
+    def decorator(cls: Type[BaseHandler]) -> Type[BaseHandler]:
+        # Auto-extract from docstring if not provided
+        cls.name = name
+        cls.description = description or (cls.__doc__ or "").strip().split('\n')[0]
+        cls.usage = usage
+        cls.examples = examples or []
+        
+        # Auto-generate usage from __init__ signature if not provided
+        if not usage and hasattr(cls, '__init__'):
+            import inspect
+            sig = inspect.signature(cls.__init__)
+            params = [p for p in sig.parameters.keys() if p not in ('self', 'config')]
+            if params:
+                cls.usage = f"# Config params: {', '.join(params)}"
+        
+        # Register
+        HANDLERS[name] = cls
+        return cls
+    
+    return decorator
+
+
 def get_handlers_skill_info() -> str:
     """
     Get skill info for all registered handlers.

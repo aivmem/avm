@@ -37,6 +37,7 @@ from .handlers import (
     PluginHandler,
     SQLiteHandler,
     register_handler,
+    handler,  # Decorator for registering handlers with skill info
     HANDLERS,
 )
 from .permissions import (
