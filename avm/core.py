@@ -77,16 +77,21 @@ class AVM:
     - relationgraph
     """
     
-    def __init__(self, config: AVMConfig = None, config_path: str = None):
+    def __init__(self, config: AVMConfig = None, config_path: str = None,
+                 agent_id: str = None):
         """
         Args:
             config: AVMConfig instance
             config_path: Configuration file path
+            agent_id: Current agent ID for private space isolation
         """
         if config:
             self.config = config
         else:
             self.config = load_config(config_path)
+        
+        # Agent isolation
+        self.agent_id = agent_id
         
         # initializestorage
         db_path = self.config.db_path or None
@@ -100,6 +105,20 @@ class AVM:
         
         # registerbuilt-in provider type
         self._register_builtin_providers()
+    
+    def _check_private_access(self, path: str) -> bool:
+        """Check if current agent can access path (private space isolation)"""
+        if not self.agent_id:
+            return True  # No agent context = admin mode
+        
+        # Check private space pattern: /memory/private/{agent_id}/...
+        if path.startswith("/memory/private/"):
+            parts = path.split("/")
+            if len(parts) >= 4:
+                path_agent = parts[3]
+                if path_agent != self.agent_id:
+                    return False
+        return True
     
     def _register_builtin_providers(self):
         """registerbuilt-in provider"""
@@ -233,6 +252,9 @@ class AVM:
         if not self.config.check_permission(path, "read"):
             raise PermissionError(f"No read permission for {path}")
         
+        if not self._check_private_access(path):
+            raise PermissionError(f"Agent {self.agent_id} cannot access {path}")
+        
         provider = self._get_provider(path)
         if provider:
             return provider.get(path, force_refresh=force_refresh)
@@ -250,6 +272,9 @@ class AVM:
         if not self.config.check_permission(path, "write"):
             raise PermissionError(f"No write permission for {path}")
         
+        if not self._check_private_access(path):
+            raise PermissionError(f"Agent {self.agent_id} cannot write to {path}")
+        
         node = AVMNode(
             path=path,
             content=content,
@@ -264,11 +289,18 @@ class AVM:
         if not self.config.check_permission(path, "write"):
             raise PermissionError(f"No write permission for {path}")
         
+        if not self._check_private_access(path):
+            raise PermissionError(f"Agent {self.agent_id} cannot delete {path}")
+        
         return self.store.delete_node(path)
     
     def list(self, prefix: str = "/", limit: int = 100) -> List[AVMNode]:
         """listnode"""
-        return self.store.list_nodes(prefix, limit)
+        nodes = self.store.list_nodes(prefix, limit)
+        # Filter by private access
+        if self.agent_id:
+            nodes = [n for n in nodes if self._check_private_access(n.path)]
+        return nodes
     
     # ─── search ─────────────────────────────────────────────
     
