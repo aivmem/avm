@@ -301,3 +301,193 @@ class TestMountStatus:
         
         result = _is_mounted("/tmp/test")
         assert result is True
+
+
+class TestShortcuts:
+    """Test shortcut functionality."""
+    
+    def test_generate_shortcut(self, fuse_instance):
+        """Test shortcut generation."""
+        shortcut = fuse_instance._generate_shortcut("/memory/test.md")
+        assert len(shortcut) >= 3
+        assert shortcut.isalnum()
+    
+    def test_shortcut_consistency(self, fuse_instance):
+        """Test same path generates same shortcut."""
+        s1 = fuse_instance._generate_shortcut("/memory/test.md")
+        s2 = fuse_instance._generate_shortcut("/memory/test.md")
+        assert s1 == s2
+    
+    def test_resolve_shortcut(self, avm_instance, fuse_instance):
+        """Test shortcut resolution."""
+        # Write a node with shortcut
+        avm_instance.write("/memory/shortcut_test.md", "test", 
+                          meta={"shortcut": "abc"})
+        
+        resolved = fuse_instance._resolve_shortcut("abc")
+        assert resolved == "/memory/shortcut_test.md"
+    
+    def test_resolve_nonexistent_shortcut(self, fuse_instance):
+        """Test resolving non-existent shortcut."""
+        resolved = fuse_instance._resolve_shortcut("zzz999")
+        assert resolved is None
+    
+    def test_parse_path_with_shortcut(self, avm_instance, fuse_instance):
+        """Test _parse_path resolves shortcuts."""
+        avm_instance.write("/memory/parse_test.md", "content",
+                          meta={"shortcut": "xyz"})
+        
+        real_path, suffix, params = fuse_instance._parse_path("/@xyz")
+        assert real_path == "/memory/parse_test.md"
+        assert suffix is None
+    
+    def test_shortcut_with_suffix(self, avm_instance, fuse_instance):
+        """Test shortcut with virtual suffix."""
+        avm_instance.write("/memory/suffix_test.md", "content",
+                          meta={"shortcut": "suf"})
+        
+        real_path, suffix, params = fuse_instance._parse_path("/@suf:meta")
+        assert real_path == "/memory/suffix_test.md"
+        assert suffix == ":meta"
+
+
+class TestListFeatures:
+    """Test :list functionality."""
+    
+    def test_list_basic(self, avm_instance, fuse_instance):
+        """Test basic :list output."""
+        avm_instance.write("/memory/list1.md", "Content one")
+        avm_instance.write("/memory/list2.md", "Content two")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":list", None)
+        assert "list1.md" in content
+        assert "list2.md" in content
+    
+    def test_list_with_limit(self, avm_instance, fuse_instance):
+        """Test :list with limit parameter."""
+        for i in range(5):
+            avm_instance.write(f"/memory/limit{i}.md", f"Content {i}")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":list", 
+                                                     {"limit": "2"})
+        lines = [l for l in content.strip().split('\n') if l]
+        assert len(lines) <= 2
+    
+    def test_list_with_offset(self, avm_instance, fuse_instance):
+        """Test :list with offset parameter."""
+        for i in range(5):
+            avm_instance.write(f"/memory/off{i}.md", f"Content {i}")
+        
+        content1 = fuse_instance._get_virtual_content("/memory", ":list",
+                                                      {"limit": "10"})
+        content2 = fuse_instance._get_virtual_content("/memory", ":list",
+                                                      {"limit": "10", "offset": "2"})
+        
+        lines1 = [l for l in content1.strip().split('\n') if l]
+        lines2 = [l for l in content2.strip().split('\n') if l]
+        
+        # Offset should reduce results
+        assert len(lines2) <= len(lines1)
+    
+    def test_list_with_search(self, avm_instance, fuse_instance):
+        """Test :list with search query."""
+        avm_instance.write("/memory/apple.md", "This is about apples")
+        avm_instance.write("/memory/banana.md", "This is about bananas")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":list",
+                                                     {"q": "apple"})
+        assert "apple" in content.lower()
+    
+    def test_list_shows_shortcut(self, avm_instance, fuse_instance):
+        """Test :list output includes shortcuts."""
+        avm_instance.write("/memory/shortcut_list.md", "Test content")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":list", None)
+        # Should contain @ shortcut prefix
+        assert "@" in content
+    
+    def test_list_truncates_long_filename(self, avm_instance, fuse_instance):
+        """Test :list truncates long filenames."""
+        long_name = "a" * 50 + ".md"
+        avm_instance.write(f"/memory/{long_name}", "content")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":list", None)
+        # Should be truncated with ...
+        assert "..." in content
+
+
+class TestSharedPermissions:
+    """Test shared file permissions."""
+    
+    def test_can_see_shared_no_restriction(self, avm_instance):
+        """Test can see shared file with no restrictions."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/open.md", "public",
+                          meta={})
+        
+        node = avm_instance.read("/memory/shared/open.md")
+        assert fuse._can_see_shared(node) is True
+    
+    def test_can_see_shared_with_permission(self, avm_instance):
+        """Test can see shared file when in shared_with list."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/restricted.md", "secret",
+                          meta={"shared_with": ["agent1", "agent2"]})
+        
+        node = avm_instance.read("/memory/shared/restricted.md")
+        assert fuse._can_see_shared(node) is True
+    
+    def test_cannot_see_shared_without_permission(self, avm_instance):
+        """Test cannot see shared file when not in shared_with list."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent3")
+        
+        avm_instance.write("/memory/shared/restricted.md", "secret",
+                          meta={"shared_with": ["agent1", "agent2"]})
+        
+        node = avm_instance.read("/memory/shared/restricted.md")
+        assert fuse._can_see_shared(node) is False
+    
+    def test_admin_bypasses_shared_check(self, avm_instance):
+        """Test admin mode bypasses shared_with check."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, None)  # Admin mode
+        
+        avm_instance.write("/memory/shared/restricted.md", "secret",
+                          meta={"shared_with": ["agent1"]})
+        
+        node = avm_instance.read("/memory/shared/restricted.md")
+        assert fuse._can_see_shared(node) is True
+
+
+class TestPathSuffix:
+    """Test :path suffix."""
+    
+    def test_path_returns_relative(self, avm_instance, fuse_instance):
+        """Test :path returns relative path."""
+        avm_instance.write("/memory/test/nested.md", "content")
+        
+        content = fuse_instance._get_virtual_content(
+            "/memory/test/nested.md", ":path", None)
+        
+        assert content.strip() == "memory/test/nested.md"
+        assert not content.startswith("/")
+
+
+class TestInfoSuffix:
+    """Test :info suffix."""
+    
+    def test_info_lists_suffixes(self, avm_instance, fuse_instance):
+        """Test :info lists available suffixes."""
+        avm_instance.write("/memory/info_test.md", "content",
+                          meta={"tags": ["test"]})
+        
+        content = fuse_instance._get_virtual_content(
+            "/memory/info_test.md", ":info", None)
+        
+        assert ":data" in content
+        assert ":tags" in content
