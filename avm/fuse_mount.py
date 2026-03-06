@@ -55,7 +55,7 @@ class AVMFuse(Operations):
     """
     
     # Virtual node suffixes
-    VIRTUAL_SUFFIXES = {':meta', ':links', ':tags', ':history', ':shared', ':data', ':info'}
+    VIRTUAL_SUFFIXES = {':meta', ':links', ':tags', ':history', ':shared', ':data', ':info', ':path'}
     VIRTUAL_DIR_FILES = {':list', ':stats'}
     VIRTUAL_QUERY_PATTERNS = {':search', ':recall'}
     
@@ -78,6 +78,7 @@ class AVMFuse(Operations):
         """
         # Handle shortcut (@xxx) - check if any path component starts with @
         # e.g., /@abc or /memory/private/@abc
+        # If path ends with @xxx/, resolve to parent directory
         parts = path.split('/')
         for i, part in enumerate(parts):
             if part.startswith('@') and len(part) > 1:
@@ -170,6 +171,11 @@ class AVMFuse(Operations):
             if not node:
                 raise FuseOSError(errno.ENOENT)
             return node.content or ''
+        
+        if suffix == ':path':
+            # Return VFS path (use with cd inside mount point)
+            parent = '/'.join(real_path.split('/')[:-1]) or '/'
+            return f"{real_path}\n"
         
         if suffix == ':info':
             # List available virtual suffixes for this file
@@ -353,9 +359,9 @@ class AVMFuse(Operations):
     
     def getattr(self, path, fh=None):
         """Get file attributes."""
-        real_path, suffix, params = self._parse_path(path)
-        
         now = datetime.now().timestamp()
+        
+        real_path, suffix, params = self._parse_path(path)
         
         # Root directory
         if path == '/':
