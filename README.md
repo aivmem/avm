@@ -1,8 +1,8 @@
 # AVM - AI Virtual Memory
 
-**Memory for LLMs that won't break the bank.** 💸
+**Inter-connected memory for AI agents.** 🔗
 
-A config-driven virtual filesystem for AI agents to read/write structured knowledge — without burning tokens on every memory operation.
+Shared knowledge, incremental sync, token-aware recall. Agents collaborate through a unified memory layer — each sees what they need, nothing more.
 
 ## Why You Need AVM
 
@@ -12,10 +12,10 @@ A config-driven virtual filesystem for AI agents to read/write structured knowle
 
 | Challenge | Without AVM | With AVM |
 |-----------|-------------|----------|
-| **Memory persistence** | Gone after session | Permanent, queryable |
-| **Context limits** | Fixed window, then truncate | Token-aware recall, fit any budget |
+| **Multi-agent sync** | Copy-paste, version chaos | Shared namespaces, `:delta` for changes |
+| **Memory isolation** | All-or-nothing access | Private + shared, per-agent permissions |
+| **Context limits** | Fixed window, truncate | Token-aware recall, fit any budget |
 | **Knowledge structure** | Flat vector chunks | Linked graph, typed relationships |
-| **Multi-agent** | Shared DB, no isolation | Private + shared namespaces |
 | **Discovery** | Need exact keywords | Browse, explore, timeline |
 
 **Real examples:**
@@ -35,7 +35,7 @@ analyst.remember("SPY pattern", namespace="shared")
 trader.recall("market patterns")  # sees analyst's shared memory
 ```
 
-**One-liner value prop:** *"Persistent, structured, token-aware memory for AI agents."*
+**One-liner value prop:** *"Inter-connected, token-aware memory for multi-agent collaboration."*
 
 ## When to Use AVM
 
