@@ -613,3 +613,150 @@ class TestTTL:
         
         node = avm_instance.read("/memory/ttl3.md")
         assert "expires_at" not in node.meta
+
+
+class TestDeltaFirstRead:
+    """Test :delta first read returns full content."""
+    
+    def test_delta_first_read_full_content(self, avm_instance):
+        """Test delta returns full content on first read."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "new_agent")
+        
+        avm_instance.write("/memory/shared/first.md", "Line 1\nLine 2\nLine 3")
+        
+        content = fuse._get_virtual_content("/memory/shared/first.md", ":delta", None)
+        assert "first read" in content
+        assert "Line 1" in content
+        assert "Line 2" in content
+    
+    def test_delta_updates_marker_on_read(self, avm_instance):
+        """Test delta updates marker after showing content."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "marker_agent")
+        
+        avm_instance.write("/memory/shared/marker.md", "content")
+        
+        # First read
+        fuse._get_virtual_content("/memory/shared/marker.md", ":delta", None,
+                                  update_markers=True)
+        
+        # Check marker was set
+        node = avm_instance.read("/memory/shared/marker.md")
+        assert node.meta.get("last_read", {}).get("marker_agent") == node.version
+
+
+class TestAutoMarkRead:
+    """Test auto-mark on shared file read."""
+    
+    def test_auto_mark_on_read(self, avm_instance):
+        """Test reading shared file auto-marks position."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "reader")
+        
+        avm_instance.write("/memory/shared/automark.md", "content")
+        
+        # Simulate read via FUSE read method
+        fuse.fd = 0
+        fuse._open_files = {}
+        fuse._write_buffers = {}
+        
+        fd = fuse.open("/memory/shared/automark.md", 0)
+        fuse.read("/memory/shared/automark.md", 1000, 0, fd)
+        
+        # Check marker was set
+        node = avm_instance.read("/memory/shared/automark.md")
+        assert "reader" in node.meta.get("last_read", {})
+    
+    def test_no_auto_mark_on_private(self, avm_instance):
+        """Test private files don't get auto-marked."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "reader")
+        
+        avm_instance.write("/memory/private/reader/note.md", "content",
+                          meta={"created_by": "reader"})
+        
+        fuse.fd = 0
+        fuse._open_files = {}
+        fuse._write_buffers = {}
+        
+        fd = fuse.open("/memory/private/reader/note.md", 0)
+        fuse.read("/memory/private/reader/note.md", 1000, 0, fd)
+        
+        # Private files should not have last_read
+        node = avm_instance.read("/memory/private/reader/note.md")
+        assert "last_read" not in node.meta
+
+
+class TestWriteAppend:
+    """Test write with append mode."""
+    
+    def test_write_loads_existing(self, avm_instance):
+        """Test write loads existing content."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "writer")
+        fuse.fd = 0
+        fuse._open_files = {}
+        fuse._write_buffers = {}
+        
+        # Create file with content
+        avm_instance.write("/memory/append.md", "Line 1\n")
+        
+        # Open for write
+        fd = fuse.open("/memory/append.md", 0)
+        
+        # Write at offset (simulating append)
+        fuse.write("/memory/append.md", b"Line 2\n", 7, fd)
+        
+        # Release to flush
+        fuse.release("/memory/append.md", fd)
+        
+        # Check content
+        node = avm_instance.read("/memory/append.md")
+        assert "Line 1" in node.content
+        assert "Line 2" in node.content
+    
+    def test_write_overwrite_at_position(self, avm_instance):
+        """Test write can overwrite at position."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "writer")
+        fuse.fd = 0
+        fuse._open_files = {}
+        fuse._write_buffers = {}
+        
+        avm_instance.write("/memory/overwrite.md", "AAABBBCCC")
+        
+        fd = fuse.open("/memory/overwrite.md", 0)
+        fuse.write("/memory/overwrite.md", b"XXX", 3, fd)
+        fuse.release("/memory/overwrite.md", fd)
+        
+        node = avm_instance.read("/memory/overwrite.md")
+        assert node.content == "AAAXXXCCC"
+
+
+class TestStoreVersioning:
+    """Test store version behavior."""
+    
+    def test_version_unchanged_same_content(self, avm_instance):
+        """Test version doesn't bump when content unchanged."""
+        avm_instance.write("/memory/version.md", "content")
+        node1 = avm_instance.read("/memory/version.md")
+        v1 = node1.version
+        
+        # Write same content with different meta
+        node1.meta["key"] = "value"
+        avm_instance.store.put_node(node1, save_diff=False)
+        
+        node2 = avm_instance.read("/memory/version.md")
+        assert node2.version == v1
+    
+    def test_version_bumps_on_content_change(self, avm_instance):
+        """Test version bumps when content changes."""
+        avm_instance.write("/memory/version2.md", "content1")
+        node1 = avm_instance.read("/memory/version2.md")
+        v1 = node1.version
+        
+        avm_instance.write("/memory/version2.md", "content2")
+        
+        node2 = avm_instance.read("/memory/version2.md")
+        assert node2.version == v1 + 1
