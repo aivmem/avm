@@ -163,7 +163,7 @@ class AVMFuse(Operations):
         
         return self.user in shared_with
     
-    def _get_virtual_content(self, real_path: str, suffix: str, params: dict) -> str:
+    def _get_virtual_content(self, real_path: str, suffix: str, params: dict, update_markers: bool = True) -> str:
         """Generate content for virtual nodes."""
         
         if suffix == ':data':
@@ -191,10 +191,15 @@ class AVMFuse(Operations):
             last_version = last_read.get(self.user, 0)
             
             if last_version == 0:
-                return f'(never read, current v{current_version})\n'
+                # First read - mark and tell them to read full content
+                if update_markers:
+                    last_read[self.user] = current_version
+                    node.meta['last_read'] = last_read
+                    self.vfs.store.put_node(node, save_diff=False)
+                return f'(first read, marked v{current_version})\n'
             
             if last_version >= current_version:
-                return '(no changes)\n'
+                return '(no changes)\n'  # Already up to date, no marker update needed
             
             # Get diffs from last_version to current
             history = self.vfs.history(real_path, limit=100)
@@ -207,9 +212,17 @@ class AVMFuse(Operations):
                         diffs.append(f"# v{h.version} ({h.changed_at.strftime('%Y-%m-%d %H:%M')})\n{h.diff_content}")
             
             if not diffs:
-                return f'(changed but no diff, v{last_version}→v{current_version})\n'
+                result = f'(changed but no diff, v{last_version}→v{current_version})\n'
+            else:
+                result = '\n'.join(diffs) + '\n'
             
-            return '\n'.join(diffs) + '\n'
+            # Auto-mark as read after showing delta
+            if update_markers:
+                last_read[self.user] = current_version
+                node.meta['last_read'] = last_read
+                self.vfs.store.put_node(node, save_diff=False)
+            
+            return result
         
         if suffix == ':mark':
             # Show current read marker for this agent
@@ -578,7 +591,8 @@ class AVMFuse(Operations):
         # Virtual node
         if suffix:
             try:
-                content = self._get_virtual_content(real_path, suffix, params)
+                # Don't update markers in getattr (only in read)
+                content = self._get_virtual_content(real_path, suffix, params, update_markers=False)
                 return {
                     'st_mode': stat.S_IFREG | 0o644,
                     'st_nlink': 1,
