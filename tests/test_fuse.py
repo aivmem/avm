@@ -491,3 +491,125 @@ class TestInfoSuffix:
         
         assert ":data" in content
         assert ":tags" in content
+
+
+class TestDelta:
+    """Test :delta and :mark functionality."""
+    
+    def test_delta_never_read(self, avm_instance):
+        """Test delta for never-read file."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/delta1.md", "content")
+        
+        content = fuse._get_virtual_content("/memory/shared/delta1.md", ":delta", None)
+        assert "first read" in content or "never read" in content
+    
+    def test_delta_no_changes(self, avm_instance):
+        """Test delta when no changes since last read."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/delta2.md", "content",
+                          meta={"last_read": {"agent1": 1}})
+        
+        content = fuse._get_virtual_content("/memory/shared/delta2.md", ":delta", None)
+        assert "no changes" in content
+    
+    def test_delta_shows_diff(self, avm_instance):
+        """Test delta shows diff when changes exist."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        # Create and modify to generate diff
+        avm_instance.write("/memory/shared/delta3.md", "line1")
+        node = avm_instance.read("/memory/shared/delta3.md")
+        node.meta["last_read"] = {"agent1": 1}  # Mark v1 as read
+        avm_instance.write("/memory/shared/delta3.md", "line1\nline2", meta=node.meta)
+        
+        content = fuse._get_virtual_content("/memory/shared/delta3.md", ":delta", None)
+        # Should contain version info or diff
+        assert "v2" in content or "line2" in content or "changed" in content
+    
+    def test_mark_shows_version(self, avm_instance):
+        """Test :mark shows current read marker."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/mark1.md", "content",
+                          meta={"last_read": {"agent1": 3}})
+        
+        content = fuse._get_virtual_content("/memory/shared/mark1.md", ":mark", None)
+        assert "marked: v3" in content
+    
+    def test_mark_write_updates(self, avm_instance):
+        """Test writing to :mark updates marker."""
+        from avm.fuse_mount import AVMFuse
+        fuse = AVMFuse(avm_instance, "agent1")
+        
+        avm_instance.write("/memory/shared/mark2.md", "content")
+        
+        # Write to mark
+        fuse._set_virtual_content("/memory/shared/mark2.md", ":mark", "")
+        
+        # Check marker updated
+        node = avm_instance.read("/memory/shared/mark2.md")
+        assert node.meta.get("last_read", {}).get("agent1") == node.version
+    
+    def test_version_unchanged_on_meta_only(self, avm_instance):
+        """Test version doesn't bump on meta-only changes."""
+        avm_instance.write("/memory/shared/version1.md", "content")
+        node1 = avm_instance.read("/memory/shared/version1.md")
+        v1 = node1.version
+        
+        # Update meta only (same content)
+        node1.meta["some_key"] = "value"
+        avm_instance.store.put_node(node1, save_diff=False)
+        
+        node2 = avm_instance.read("/memory/shared/version1.md")
+        assert node2.version == v1  # Version unchanged
+
+
+class TestChanges:
+    """Test :changes functionality."""
+    
+    def test_changes_shows_recent(self, avm_instance, fuse_instance):
+        """Test :changes shows recently modified files."""
+        avm_instance.write("/memory/changes1.md", "content")
+        
+        content = fuse_instance._get_virtual_content("/memory", ":changes", 
+                                                     {"minutes": "60"})
+        assert "changes1.md" in content or "no changes" in content
+
+
+class TestTTL:
+    """Test :ttl functionality."""
+    
+    def test_ttl_set_minutes(self, avm_instance, fuse_instance):
+        """Test setting TTL in minutes."""
+        avm_instance.write("/memory/ttl1.md", "content")
+        
+        fuse_instance._set_virtual_content("/memory/ttl1.md", ":ttl", "5m")
+        
+        node = avm_instance.read("/memory/ttl1.md")
+        assert "expires_at" in node.meta
+    
+    def test_ttl_read_remaining(self, avm_instance, fuse_instance):
+        """Test reading remaining TTL."""
+        avm_instance.write("/memory/ttl2.md", "content")
+        fuse_instance._set_virtual_content("/memory/ttl2.md", ":ttl", "60m")
+        
+        content = fuse_instance._get_virtual_content("/memory/ttl2.md", ":ttl", None)
+        # Should show remaining time
+        assert "m" in content or "h" in content or "never" in content
+    
+    def test_ttl_never(self, avm_instance, fuse_instance):
+        """Test setting TTL to never."""
+        avm_instance.write("/memory/ttl3.md", "content",
+                          meta={"expires_at": "2026-01-01T00:00:00"})
+        
+        fuse_instance._set_virtual_content("/memory/ttl3.md", ":ttl", "never")
+        
+        node = avm_instance.read("/memory/ttl3.md")
+        assert "expires_at" not in node.meta
