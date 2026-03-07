@@ -4,11 +4,18 @@ AI Virtual Memory for agents. Token-aware recall, knowledge graphs, multi-agent 
 
 ## Quick Start
 
-### 1. Mount AVM for an Agent
+### 1. Configure AVM Daemon
+
+```yaml
+# ~/.config/avm/mounts.yaml
+mounts:
+  - mountpoint: ~/.openclaw/workspace-{agent}/avm
+    agent_id: {agent}
+```
 
 ```bash
-# Mount to agent workspace
-avm-mount ~/.openclaw/workspace-{agent}/avm/ --agent {agent} --daemon
+# Start daemon
+avm-daemon start --daemon
 
 # Verify
 ls ~/.openclaw/workspace-{agent}/avm/
@@ -45,13 +52,18 @@ cat avm/:list
 
 When spawning a sub-agent that needs memory:
 
-### Step 1: Mount AVM
+### Step 1: Add to mounts.yaml
+
+```yaml
+# ~/.config/avm/mounts.yaml
+mounts:
+  - mountpoint: ~/.openclaw/workspace-{subagent}/avm
+    agent_id: {subagent}
+```
 
 ```bash
-avm-mount ~/.openclaw/workspace-{subagent}/avm/ \
-  --agent {subagent} \
-  --db ~/.local/share/avm/avm.db \
-  --daemon
+# Reload daemon
+avm-daemon reload
 ```
 
 ### Step 2: Add to AGENTS.md
@@ -87,28 +99,19 @@ cat "avm/:recall?q=test"
 ## Commands
 
 ```bash
-# Mount (foreground)
-avm-mount mount /path --agent {id}
-
-# Mount (daemon)
-avm-mount mount /path --agent {id} --daemon
-
-# Stop
-avm-mount stop /path
-
-# Status
-avm-mount status
-
-# Restart
-avm-mount restart /path --agent {id}
-
-# Import existing memories
-avm import /path/to/*.md --agent {id}
+# Daemon management
+avm-daemon start --daemon  # Start in background
+avm-daemon status          # Show mounts
+avm-daemon reload          # Reload config
+avm-daemon stop            # Stop all
 
 # CLI operations
 avm recall "query" --agent {id}
 avm remember "content" --title "name" --agent {id}
 avm topics --agent {id}
+
+# Import existing memories
+avm import /path/to/*.md --agent {id}
 ```
 
 ## Multi-Agent Setup
@@ -137,7 +140,8 @@ avm/
 
 ## Tips
 
-1. **Use recall, not search** - `cat avm/:recall?q=...` ranks by relevance + importance
+1. **Write in English** - FTS has no Chinese tokenizer; English searches work better
+2. **Use recall, not search** - `cat avm/:recall?q=...` ranks by relevance + importance
 2. **Set importance** - High importance memories surface first
 3. **Use tags** - Add tags via file content: `tags: [trading, risk]`
 4. **Link memories** - Use `avm link` to build knowledge graph
@@ -147,10 +151,16 @@ avm/
 
 ### Mount fails
 ```bash
-# Check if already mounted
-mount | grep avm
+# Check daemon status
+avm-daemon status
 
-# Force unmount
+# Restart daemon
+avm-daemon stop && avm-daemon start --daemon
+
+# Force unmount (macOS)
+umount -f /path/to/mount
+
+# Force unmount (Linux)
 fusermount -uz /path/to/mount
 ```
 
