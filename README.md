@@ -37,6 +37,20 @@ trader.recall("market patterns")  # sees analyst's shared memory
 
 **One-liner value prop:** *"Persistent, structured, token-aware memory for AI agents."*
 
+## When to Use AVM
+
+**Best for:**
+- 📦 **Shared knowledge** — Company docs, cron configs, market analysis that multiple agents access
+- 🤝 **Multi-agent collaboration** — Agent A writes analysis, Agent B recalls it
+- 🗂️ **External references** — Paths, schedules, entity descriptions (not file content itself)
+
+**Not needed for:**
+- 🔒 **Private agent memory** — Most agent frameworks have built-in memory tools
+- 📄 **Code indexing** — IDEs and LSP do this better
+- 📝 **Ephemeral notes** — Use TTL or just don't store
+
+**Rule of thumb:** If only one agent needs it, use the agent's native memory. If multiple agents need it, put it in AVM `/memory/shared/`.
+
 ## AVM vs MemGPT
 
 | | **MemGPT/Letta** | **AVM** |
