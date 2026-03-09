@@ -399,3 +399,96 @@ class TestHookConfig:
         config = HookConfig(type=HookType.SHELL, target='echo')
         assert config.enabled is True
         assert config.timeout == 10
+
+
+class TestHookParsing:
+    """Test hook string parsing"""
+    
+    def test_parse_simple(self):
+        """Test parsing simple hook string"""
+        hook = HookManager.parse_hook_string("shell:echo hello")
+        assert hook is not None
+        assert hook.type == HookType.SHELL
+        assert hook.target == "echo hello"
+    
+    def test_parse_http(self):
+        """Test parsing HTTP hook"""
+        hook = HookManager.parse_hook_string("http:http://localhost:3000/webhook")
+        assert hook is not None
+        assert hook.type == HookType.HTTP
+        assert hook.target == "http://localhost:3000/webhook"
+    
+    def test_parse_with_params(self):
+        """Test parsing with query params"""
+        hook = HookManager.parse_hook_string("shell:echo test?enabled=false&timeout=30")
+        assert hook is not None
+        assert hook.enabled is False
+        assert hook.timeout == 30
+    
+    def test_parse_invalid(self):
+        """Test parsing invalid string"""
+        assert HookManager.parse_hook_string("invalid") is None
+        assert HookManager.parse_hook_string("") is None
+    
+    def test_format_hook(self):
+        """Test formatting hook back to string"""
+        manager = HookManager()
+        hook = HookConfig(type=HookType.SHELL, target="echo hello")
+        manager.register('bob', hook)
+        
+        formatted = manager.format_hook('bob')
+        assert formatted == "shell:echo hello"
+    
+    def test_format_hook_with_params(self):
+        """Test formatting hook with non-default params"""
+        manager = HookManager()
+        hook = HookConfig(type=HookType.HTTP, target="http://example.com", enabled=False, timeout=30)
+        manager.register('bob', hook)
+        
+        formatted = manager.format_hook('bob')
+        assert "http:http://example.com" in formatted
+        assert "enabled=false" in formatted
+        assert "timeout=30" in formatted
+
+
+class TestHookPersistence:
+    """Test hook database persistence"""
+    
+    def test_persist_to_db(self):
+        """Test hooks are saved to database"""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+            db_path = f.name
+        
+        try:
+            # Create manager with DB
+            manager = HookManager(db_path=db_path)
+            hook = HookConfig(type=HookType.SHELL, target="echo hello")
+            manager.register('bob', hook)
+            
+            # Create new manager from same DB
+            manager2 = HookManager(db_path=db_path)
+            
+            # Should have loaded the hook
+            loaded = manager2.get_hook('bob')
+            assert loaded is not None
+            assert loaded.type == HookType.SHELL
+            assert loaded.target == "echo hello"
+        finally:
+            os.unlink(db_path)
+    
+    def test_delete_from_db(self):
+        """Test hooks are deleted from database"""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+            db_path = f.name
+        
+        try:
+            manager = HookManager(db_path=db_path)
+            hook = HookConfig(type=HookType.SHELL, target="echo hello")
+            manager.register('bob', hook)
+            manager.unregister('bob')
+            
+            # Create new manager - should not have hook
+            manager2 = HookManager(db_path=db_path)
+            assert manager2.get_hook('bob') is None
+        finally:
+            os.unlink(db_path)

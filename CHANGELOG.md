@@ -20,7 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - HTTP hooks: POST to webhook URL
   - OpenClaw hooks: Send via sessions_send
   - Config-driven via `hooks.yaml`
-- 27 new tests for tell + hook functionality (219 total)
+- **Virtual Hook Files**: Configure hooks via filesystem
+  - `/hooks/<agent>` - Read/write hook configuration
+  - `/hooks/:list` - List all registered hooks
+  - `rm /hooks/<agent>` - Delete a hook
+  - Format: `type:target?enabled=true&timeout=10`
+- 35 new tests for tell + hook functionality (227 total)
 
 ### Usage
 ```bash

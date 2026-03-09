@@ -74,6 +74,16 @@ class AVMFuse(Operations):
             self._tell_store = TellStore(self.vfs.store.db_path)
         return self._tell_store
     
+    def _get_hook_manager(self):
+        """Get or create HookManager with DB persistence"""
+        from .tell import HookManager, get_hook_manager, set_hook_manager
+        manager = get_hook_manager()
+        # Ensure it has DB path for persistence
+        if manager._db_path is None:
+            manager = HookManager(db_path=self.vfs.store.db_path)
+            set_hook_manager(manager)
+        return manager
+    
     def _parse_path(self, path: str) -> tuple:
         """
         Parse path into (real_path, virtual_suffix, query_params).
@@ -680,6 +690,36 @@ class AVMFuse(Operations):
                 'st_ctime': now,
             }
         
+        # Handle /hooks/ paths for hook configuration
+        if real_path.startswith('/hooks/'):
+            agent_id = real_path.split('/')[-1]
+            if agent_id and agent_id != ':list':
+                # /hooks/<agent> - readable/writable hook config
+                manager = self._get_hook_manager()
+                content = manager.format_hook(agent_id)
+                return {
+                    'st_mode': stat.S_IFREG | 0o644,
+                    'st_nlink': 1,
+                    'st_size': len(content.encode('utf-8')) if content else 0,
+                    'st_uid': os.getuid(),
+                    'st_gid': os.getgid(),
+                    'st_atime': now,
+                    'st_mtime': now,
+                    'st_ctime': now,
+                }
+        
+        if real_path == '/hooks':
+            # /hooks directory
+            return {
+                'st_mode': stat.S_IFDIR | 0o755,
+                'st_nlink': 2,
+                'st_uid': os.getuid(),
+                'st_gid': os.getgid(),
+                'st_atime': now,
+                'st_mtime': now,
+                'st_ctime': now,
+            }
+        
         # Check if it's a directory (prefix with children)
         children = self.vfs.list(real_path, limit=1)
         if children or real_path in ('/', '/memory', '/memory/private', '/memory/shared'):
@@ -712,9 +752,19 @@ class AVMFuse(Operations):
         # Add virtual directory files
         entries.extend([':list', ':stats', ':inbox'])
         
-        # Add /tell directory at root
+        # Add /tell and /hooks directories at root
         if real_path == '/':
             entries.append('tell')
+            entries.append('hooks')
+        
+        # List hooks in /hooks directory
+        if real_path == '/hooks':
+            try:
+                manager = self._get_hook_manager()
+                for agent_id in manager.list_hooks().keys():
+                    entries.append(agent_id)
+            except Exception:
+                pass
         
         # Add real children
         nodes = self.vfs.list(real_path)
@@ -757,6 +807,25 @@ class AVMFuse(Operations):
     def read(self, path, size, offset, fh):
         """Read file content."""
         real_path, suffix, params = self._parse_path(path)
+        
+        # Handle /hooks/<agent> reads
+        if real_path.startswith('/hooks/'):
+            agent_id = real_path.split('/')[-1]
+            if agent_id == ':list':
+                # List all hooks
+                manager = self._get_hook_manager()
+                hooks = manager.list_hooks()
+                lines = ["# Registered Hooks", ""]
+                for aid, hook in hooks.items():
+                    lines.append(f"- {aid}: {manager.format_hook(aid)}")
+                content = "\n".join(lines) + "\n" if hooks else "# No hooks registered\n"
+            else:
+                manager = self._get_hook_manager()
+                content = manager.format_hook(agent_id)
+                if not content:
+                    content = "# No hook configured\n"
+            encoded = content.encode('utf-8')
+            return encoded[offset:offset + size]
         
         if suffix:
             content = self._get_virtual_content(real_path, suffix, params)
@@ -892,6 +961,9 @@ class AVMFuse(Operations):
             # Handle /tell/<agent> paths for cross-agent messaging
             if real_path.startswith('/tell/'):
                 self._handle_tell_write(real_path, content, params)
+            # Handle /hooks/<agent> paths for hook configuration
+            elif real_path.startswith('/hooks/'):
+                self._handle_hook_write(real_path, content)
             elif suffix:
                 self._set_virtual_content(real_path, suffix, content)
             else:
@@ -948,6 +1020,28 @@ class AVMFuse(Operations):
         except Exception:
             pass  # Don't break writes if tell fails
     
+    def _handle_hook_write(self, path: str, content: str):
+        """Handle writes to /hooks/<agent> paths"""
+        # Parse path: /hooks/agentname
+        parts = path.strip('/').split('/')
+        if len(parts) < 2:
+            return
+        
+        agent_id = parts[1]
+        content = content.strip()
+        
+        manager = self._get_hook_manager()
+        
+        if not content:
+            # Empty content = delete hook
+            manager.unregister(agent_id)
+            return
+        
+        # Parse hook string
+        hook = manager.parse_hook_string(content)
+        if hook:
+            manager.register(agent_id, hook)
+    
     def truncate(self, path, length, fh=None):
         """Truncate file."""
         real_path, suffix, _ = self._parse_path(path)
@@ -968,6 +1062,13 @@ class AVMFuse(Operations):
         
         if suffix:
             raise FuseOSError(errno.EPERM)  # Can't delete virtual files
+        
+        # Handle /hooks/<agent> deletion
+        if real_path.startswith('/hooks/'):
+            agent_id = real_path.split('/')[-1]
+            manager = self._get_hook_manager()
+            manager.unregister(agent_id)
+            return
         
         if not self.vfs.delete(real_path):
             raise FuseOSError(errno.ENOENT)

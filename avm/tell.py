@@ -370,12 +370,71 @@ class HookManager:
           type: openclaw
           target: "agent:akashi"
     ```
+    
+    Or via virtual files:
+    ```bash
+    echo "shell:openclaw notify kearsarge" > avm/hooks/kearsarge
+    echo "http:http://localhost:3000/webhook" > avm/hooks/yuze
+    ```
     """
     
-    def __init__(self, config: Dict[str, Dict] = None):
+    def __init__(self, config: Dict[str, Dict] = None, db_path: str = None):
         self._hooks: Dict[str, HookConfig] = {}
+        self._db_path = db_path
+        if db_path:
+            self._init_db()
+            self._load_from_db()
         if config:
             self._load_config(config)
+    
+    def _init_db(self):
+        """Initialize hooks table"""
+        with sqlite3.connect(self._db_path) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS hooks (
+                    agent_id TEXT PRIMARY KEY,
+                    type TEXT NOT NULL,
+                    target TEXT NOT NULL,
+                    enabled INTEGER DEFAULT 1,
+                    timeout INTEGER DEFAULT 10,
+                    created_at TEXT
+                )
+            """)
+    
+    def _load_from_db(self):
+        """Load hooks from database"""
+        try:
+            with sqlite3.connect(self._db_path) as conn:
+                rows = conn.execute(
+                    "SELECT agent_id, type, target, enabled, timeout FROM hooks"
+                ).fetchall()
+                for row in rows:
+                    self._hooks[row[0]] = HookConfig(
+                        type=HookType(row[1]),
+                        target=row[2],
+                        enabled=bool(row[3]),
+                        timeout=row[4]
+                    )
+        except Exception:
+            pass  # Table might not exist yet
+    
+    def _save_to_db(self, agent_id: str, hook: HookConfig):
+        """Save hook to database"""
+        if not self._db_path:
+            return
+        now = datetime.now(timezone.utc).isoformat()
+        with sqlite3.connect(self._db_path) as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO hooks (agent_id, type, target, enabled, timeout, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (agent_id, hook.type.value, hook.target, int(hook.enabled), hook.timeout, now))
+    
+    def _delete_from_db(self, agent_id: str):
+        """Delete hook from database"""
+        if not self._db_path:
+            return
+        with sqlite3.connect(self._db_path) as conn:
+            conn.execute("DELETE FROM hooks WHERE agent_id = ?", (agent_id,))
     
     def _load_config(self, config: Dict):
         """Load hooks from config dict"""
@@ -400,10 +459,75 @@ class HookManager:
     def register(self, agent_id: str, hook: HookConfig):
         """Register a hook for an agent"""
         self._hooks[agent_id] = hook
+        self._save_to_db(agent_id, hook)
     
     def unregister(self, agent_id: str):
         """Unregister a hook"""
         self._hooks.pop(agent_id, None)
+        self._delete_from_db(agent_id)
+    
+    def list_hooks(self) -> Dict[str, HookConfig]:
+        """List all registered hooks"""
+        return dict(self._hooks)
+    
+    @staticmethod
+    def parse_hook_string(s: str) -> Optional[HookConfig]:
+        """
+        Parse hook from string format.
+        
+        Formats:
+            type:target
+            type:target?enabled=true&timeout=10
+        
+        Examples:
+            shell:echo hello
+            http:http://localhost:3000/webhook
+            openclaw:agent:akashi
+        """
+        s = s.strip()
+        if not s or ':' not in s:
+            return None
+        
+        # Parse query params if present
+        params = {}
+        if '?' in s:
+            s, query = s.split('?', 1)
+            for part in query.split('&'):
+                if '=' in part:
+                    k, v = part.split('=', 1)
+                    params[k] = v
+        
+        # Parse type:target
+        type_str, target = s.split(':', 1)
+        
+        try:
+            hook_type = HookType(type_str.lower())
+        except ValueError:
+            return None
+        
+        return HookConfig(
+            type=hook_type,
+            target=target,
+            enabled=params.get('enabled', 'true').lower() == 'true',
+            timeout=int(params.get('timeout', 10))
+        )
+    
+    def format_hook(self, agent_id: str) -> str:
+        """Format hook config as string"""
+        hook = self._hooks.get(agent_id)
+        if not hook:
+            return ""
+        
+        params = []
+        if not hook.enabled:
+            params.append("enabled=false")
+        if hook.timeout != 10:
+            params.append(f"timeout={hook.timeout}")
+        
+        base = f"{hook.type.value}:{hook.target}"
+        if params:
+            base += "?" + "&".join(params)
+        return base
     
     def get_hook(self, agent_id: str) -> Optional[HookConfig]:
         """Get hook config for an agent"""
