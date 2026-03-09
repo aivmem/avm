@@ -1,0 +1,245 @@
+# AVM Exec Handler Configuration
+# 
+# ⚠️ 安全配置 - 此文件只能通过直接编辑修改
+# 禁止通过FUSE/API/Agent修改
+#
+# 配置加载后会锁定，运行时无法更改
+
+version: 1
+
+# 全局设置
+global:
+  default_timeout: 30.0
+  default_rate_limit: 60  # per minute
+  max_output_bytes: 1048576  # 1MB
+  audit_log_enabled: true
+  audit_log_max_entries: 1000
+
+# Handler定义
+handlers:
+  # === Git只读 ===
+  git:
+    command: git
+    allowed_subcommands:
+      - status
+      - log
+      - diff
+      - branch
+      - show
+      - ls-files
+      - rev-parse
+      - describe
+      - tag
+      - remote
+      - fetch
+      - blame
+      - shortlog
+      - stash
+      - config
+    blocked_patterns:
+      - "--exec"
+      - "-c\\s*core\\.editor"
+    timeout: 30.0
+
+  # === Git写操作 (更严格) ===
+  git-write:
+    command: git
+    allowed_subcommands:
+      - add
+      - commit
+      - checkout
+      - merge
+      - rebase
+      - pull
+    blocked_patterns:
+      - "--exec"
+      - "-m\\s*['\"].*[;|&`]"  # 命令注入
+    rate_limit: 30
+    timeout: 60.0
+
+  # === Docker只读 ===
+  docker:
+    command: docker
+    allowed_subcommands:
+      - ps
+      - images
+      - logs
+      - inspect
+      - stats
+      - version
+      - info
+      - top
+    blocked_patterns:
+      - "--privileged"
+      - "--pid=host"
+      - "--network=host"
+      - "-v\\s*/:"  # 挂载根目录
+
+  # === Curl (限制协议) ===
+  curl:
+    command: curl
+    allowed_patterns:
+      - "^https?://"  # 只允许http/https
+    blocked_patterns:
+      - "file://"
+      - "dict://"
+      - "gopher://"
+      - "--output\\s*/"
+      - "-o\\s*/"
+    timeout: 60.0
+
+  # === 网络工具 ===
+  ping:
+    command: ping
+    allowed_patterns:
+      - "^-c\\s*\\d+\\s+"  # 必须有-c限制次数
+    timeout: 30.0
+
+  wget:
+    command: wget
+    allowed_patterns:
+      - "^https?://"
+    blocked_patterns:
+      - "file://"
+      - "-O\\s*/"
+    timeout: 60.0
+
+  # === 文件操作 (受限) ===
+  ls:
+    command: ls
+    blocked_patterns:
+      - "\\.\\./\\.\\./\\.\\./\\.\\./"  # 防止深度遍历
+
+  cat:
+    command: cat
+    blocked_patterns:
+      - "/etc/shadow"
+      - "/etc/passwd"
+      - "~/.ssh/"
+      - "\\.env$"
+      - "credentials"
+      - "\\.pem$"
+      - "\\.key$"
+
+  head:
+    command: head
+    blocked_patterns:
+      - "/etc/shadow"
+      - "\\.env$"
+
+  tail:
+    command: tail
+    blocked_patterns:
+      - "/etc/shadow"
+      - "\\.env$"
+
+  wc:
+    command: wc
+    # 无限制
+
+  find:
+    command: find
+    blocked_patterns:
+      - "-exec"
+      - "-delete"
+    timeout: 30.0
+
+  grep:
+    command: grep
+    blocked_patterns:
+      - "-exec"
+    timeout: 30.0
+
+  # === Python (严格限制) ===
+  python:
+    command: python3
+    allowed_patterns:
+      - "^-c\\s+"
+      - "^-m\\s+(json\\.tool|http\\.server|venv|pip)"
+    blocked_patterns:
+      - "import\\s+os"
+      - "import\\s+subprocess"
+      - "__import__"
+      - "eval\\s*\\("
+      - "exec\\s*\\("
+      - "open\\s*\\("
+    timeout: 10.0
+    rate_limit: 20
+
+  # === 系统信息 (只读) ===
+  uname:
+    command: uname
+    # 无限制
+
+  whoami:
+    command: whoami
+    # 无限制
+
+  date:
+    command: date
+    # 无限制
+
+  uptime:
+    command: uptime
+    # 无限制
+
+  df:
+    command: df
+    # 无限制
+
+  free:
+    command: free
+    # 无限制
+
+  # === 完全禁止的命令 ===
+  rm:
+    command: rm
+    allowed_subcommands: []
+    allowed_patterns:
+      - "^$"  # 不匹配任何东西
+    blocked: true
+
+  sudo:
+    command: sudo
+    blocked: true
+
+  su:
+    command: su
+    blocked: true
+
+  chmod:
+    command: chmod
+    blocked: true
+
+  chown:
+    command: chown
+    blocked: true
+
+  kill:
+    command: kill
+    blocked: true
+
+  pkill:
+    command: pkill
+    blocked: true
+
+  shutdown:
+    command: shutdown
+    blocked: true
+
+  reboot:
+    command: reboot
+    blocked: true
+
+# 路径限制 (可选)
+allowed_cwd:
+  - "~/.openclaw/workspace"
+  - "/tmp"
+
+# 环境变量白名单
+env_whitelist:
+  - PATH
+  - HOME
+  - USER
+  - LANG
+  - TERM
