@@ -1,8 +1,14 @@
 # AVM - AI Virtual Memory
 
-**Inter-connected memory for AI agents.** 🔗
+> **AVM** — 面向多 Agent 的本地零成本共享记忆系统。语义搜索，FUSE 挂载，私有+共享隔离。
 
-Shared knowledge, incremental sync, token-aware recall. Agents collaborate through a unified memory layer — each sees what they need, nothing more.
+## Core Value
+
+- **面向多 Agent 的本地共享记忆** — 多个 Agent 共享同一记忆层，私有空间互不干扰
+- **零成本** — 本地 sentence-transformers (all-MiniLM-L6-v2)，无需任何 API key，无网络依赖
+- **语义搜索** — 不是关键词匹配，是向量相似度。"伊朗军事冲突" 能找到 "中东局势紧张"
+- **FUSE 挂载** — `cat`/`echo`/`ls` 直接操作记忆，shell 脚本和任何工具都能用
+- **多 Agent 隔离** — 私有空间 (`/memory/private/{agent}/`) + 共享空间 (`/memory/shared/`)，协作不混淆
 
 ## Why You Need AVM
 
@@ -16,7 +22,7 @@ Shared knowledge, incremental sync, token-aware recall. Agents collaborate throu
 | **Memory isolation** | All-or-nothing access | Private + shared, per-agent permissions |
 | **Context limits** | Fixed window, truncate | Token-aware recall, fit any budget |
 | **Knowledge structure** | Flat vector chunks | Linked graph, typed relationships |
-| **Discovery** | Need exact keywords | Browse, explore, timeline |
+| **Discovery** | Need exact keywords | Semantic search + browse/explore/timeline |
 
 **Real examples:**
 
@@ -34,8 +40,6 @@ trader.timeline(7)   # "Mon: BTC signal, Tue: Fed notes..."
 analyst.remember("SPY pattern", namespace="shared")
 trader.recall("market patterns")  # sees analyst's shared memory
 ```
-
-**One-liner value prop:** *"Inter-connected, token-aware memory for multi-agent collaboration."*
 
 ## When to Use AVM
 
@@ -193,6 +197,7 @@ python playground.py
 - **Multi-Agent** - Permissions, quotas, audit logging
 - **Tell System** - Cross-agent messaging with priority levels (urgent/normal/low)
 - **Full-Text Search** - FTS5 (English recommended; Chinese lacks tokenizer support)
+- **Semantic Search** - Local embedding (all-MiniLM-L6-v2), zero API cost, auto-index on write
 
 ## Install
 
@@ -234,10 +239,15 @@ context = mem.recall("NVDA risk", max_tokens=4000)
 avm read /memory/lesson.md
 avm write /memory/lesson.md --content "New lesson"
 
-# Search
+# Full-text search
 avm search "RSI"
 
-# Agent Memory
+# Semantic search (embedding)
+avm semantic "Iran conflict news"           # semantic similarity
+avm semantic "BTC market" --limit 5         # limit results
+avm semantic "trading" --agent akashi       # agent context
+
+# Agent Memory (token-aware recall, hybrid FTS+embedding)
 avm recall "NVDA risk" --agent akashi --max-tokens 4000
 ```
 

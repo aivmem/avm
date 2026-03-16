@@ -420,6 +420,38 @@ def cmd_memory_stats(args):
         print(f"Strategy: {stats['config']['strategy']}")
 
 
+def cmd_semantic(args):
+    """Semantic search using embedding"""
+    vfs = get_vfs(args.config, args.db)
+
+    if vfs._embedding_store is None:
+        print("Embedding not enabled. Set embedding.enabled=true in config.yaml", file=sys.stderr)
+        return 1
+
+    prefix = None
+    if args.agent:
+        prefix = f"/memory/private/{args.agent}"
+
+    results = vfs._embedding_store.search(args.query, k=args.limit, prefix=prefix)
+
+    if args.json:
+        print(json.dumps([
+            {"path": n.path, "score": s, "snippet": n.content[:200]}
+            for n, s in results
+        ], indent=2))
+    else:
+        if not results:
+            print("No results found.")
+        else:
+            for node, score in results:
+                snippet = node.content[:100].replace("\n", " ")
+                print(f"[{score:.4f}] {node.path}")
+                print(f"    {snippet}...")
+                print()
+
+    return 0
+
+
 def cmd_telemetry(args):
     """Show operation telemetry"""
     from .telemetry import get_telemetry
@@ -598,6 +630,13 @@ def main():
     p_mem_stats.add_argument("--agent", "-a", default="default", help="Agent ID")
     p_mem_stats.set_defaults(func=cmd_memory_stats)
     
+    # semantic search
+    p_semantic = subparsers.add_parser("semantic", help="Semantic search (embedding)")
+    p_semantic.add_argument("query", help="Search query")
+    p_semantic.add_argument("--limit", "-n", type=int, default=10)
+    p_semantic.add_argument("--agent", "-a", help="Agent context (search within agent prefix)")
+    p_semantic.set_defaults(func=cmd_semantic)
+
     # Telemetry commands
     p_telemetry = subparsers.add_parser("telemetry", aliases=["telem"], help="Show operation telemetry")
     p_telemetry.add_argument("--agent", "-a", help="Filter by agent")

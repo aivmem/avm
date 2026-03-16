@@ -67,13 +67,36 @@ Store a new memory.
 
 ### avm_search
 
-Full-text search across memories.
+Full-text search across memories. When embedding is enabled, FUSE `:search` uses hybrid semantic + FTS.
 
 ```json
 {
   "query": "RSI",
   "limit": 10
 }
+```
+
+### Semantic Search
+
+AVM supports local semantic search using sentence-transformers (all-MiniLM-L6-v2). No API key required.
+
+- Embedding is auto-enabled via `config.yaml` (`embedding.enabled: true`)
+- New nodes are auto-indexed on write
+- Existing nodes are background-indexed on startup
+
+**CLI:**
+
+```bash
+avm semantic "Iran conflict news"       # semantic similarity search
+avm semantic "BTC market" --limit 5     # limit results
+avm semantic "trading" --agent akashi   # search within agent prefix
+```
+
+**FUSE:**
+
+```bash
+cat "/mnt/avm/:search?q=Iran+conflict"   # hybrid semantic + FTS
+cat "/mnt/avm/:recall?q=NVDA+risk"       # token-aware recall (already uses embedding)
 ```
 
 ### avm_list
@@ -210,6 +233,20 @@ providers:
 ```
 
 Built-in handlers: `file`, `http`, `script`, `plugin`, `sqlite`
+
+## Semantic Search
+
+AVM uses local sentence-transformers (all-MiniLM-L6-v2) for zero-cost semantic search. No API key needed. Enable in `config.yaml`:
+
+```yaml
+embedding:
+  enabled: true
+  backend: local
+  model: all-MiniLM-L6-v2
+  auto_index: true
+```
+
+All nodes are auto-indexed on write and background-indexed on startup.
 
 ## Database
 

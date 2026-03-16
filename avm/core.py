@@ -105,6 +105,31 @@ class AVM:
         
         # registerbuilt-in provider type
         self._register_builtin_providers()
+
+        # Auto-enable embedding if configured
+        self._embedding_store = None
+        emb_cfg = getattr(self.config, 'embedding', None) or {}
+        if isinstance(emb_cfg, dict) and emb_cfg.get('enabled'):
+            try:
+                from .embedding import LocalEmbedding, OpenAIEmbedding, EmbeddingStore
+                backend_type = emb_cfg.get('backend', 'local')
+                model = emb_cfg.get('model', 'all-MiniLM-L6-v2')
+                if backend_type == 'local':
+                    backend = LocalEmbedding(model)
+                else:
+                    backend = OpenAIEmbedding(model)
+                self._embedding_store = EmbeddingStore(self.store, backend)
+                self._auto_index_embedding = emb_cfg.get('auto_index', True)
+                # Background index all existing nodes
+                import threading
+                def _bg_embed_all(es=self._embedding_store):
+                    try:
+                        es.embeend_all("/")
+                    except Exception:
+                        pass
+                threading.Thread(target=_bg_embed_all, daemon=True).start()
+            except Exception:
+                pass  # silently skip if sentence-transformers not installed
     
     def _check_private_access(self, path: str) -> bool:
         """Check if current agent can access path (private space isolation)"""
@@ -282,7 +307,16 @@ class AVM:
             node_type=NodeType.FILE,
         )
         
-        return self.store.put_node(node)
+        result = self.store.put_node(node)
+
+        # Auto-index for semantic search
+        if self._embedding_store and getattr(self, '_auto_index_embedding', False):
+            try:
+                self._embedding_store.embeend_node(result)
+            except Exception:
+                pass  # non-fatal
+
+        return result
     
     def delete(self, path: str) -> bool:
         """deletenode"""

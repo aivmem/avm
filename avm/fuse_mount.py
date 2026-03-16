@@ -427,7 +427,23 @@ class AVMFuse(Operations):
         elif suffix == ':search':
             query = params.get('q', '') if params else ''
             limit = int(params.get('limit', 10)) if params else 10
-            results = self.vfs.search(query, limit=limit)
+            # Use embedding + FTS hybrid when embedding is available
+            es = getattr(self.vfs, '_embedding_store', None)
+            if es is not None:
+                sem_results = es.search(query, k=limit)
+                fts_results = self.vfs.search(query, limit=limit)
+                # Merge: embedding results first, then FTS results not already seen
+                seen = set()
+                merged = []
+                for node, score in sem_results:
+                    seen.add(node.path)
+                    merged.append((node, score))
+                for node, score in fts_results:
+                    if node.path not in seen:
+                        merged.append((node, score))
+                results = merged[:limit]
+            else:
+                results = self.vfs.search(query, limit=limit)
             lines = []
             for node, score in results:
                 lines.append(f"[{score:.2f}] {node.path}")
