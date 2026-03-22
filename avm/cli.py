@@ -406,6 +406,66 @@ def cmd_memory_remember(args):
     print(f"Remembered: {node.path} (importance={args.importance})")
 
 
+def cmd_context(args):
+    """Generate context injection for agent prompts.
+    
+    Outputs formatted memory context suitable for system prompts.
+    """
+    vfs = get_vfs(args.config, args.db)
+    memory = vfs.agent_memory(args.agent)
+    
+    # Build context from multiple sources
+    sections = []
+    
+    # 1. Recent memories (last 24h)
+    recent = memory.recall(
+        "recent activity",
+        max_tokens=args.recent_tokens,
+        prefixes=[f"/memory/private/{args.agent}/"],
+    )
+    if recent.strip():
+        sections.append(f"## Recent Activity\n{recent}")
+    
+    # 2. User preferences (if asked)
+    if args.preferences:
+        prefs = memory.recall(
+            "user preferences settings",
+            max_tokens=args.pref_tokens,
+        )
+        if prefs.strip():
+            sections.append(f"## User Preferences\n{prefs}")
+    
+    # 3. Lessons learned (high importance)
+    if args.lessons:
+        lessons = memory.recall(
+            "lesson learned mistake important",
+            max_tokens=args.lesson_tokens,
+        )
+        if lessons.strip():
+            sections.append(f"## Lessons Learned\n{lessons}")
+    
+    # 4. Custom query
+    if args.query:
+        custom = memory.recall(args.query, max_tokens=args.query_tokens)
+        if custom.strip():
+            sections.append(f"## Relevant Context\n{custom}")
+    
+    # Output
+    if not sections:
+        if not args.quiet:
+            print("# No memory context found", file=sys.stderr)
+        return 0
+    
+    output = "\n\n".join(sections)
+    
+    if args.format == "markdown":
+        print(output)
+    elif args.format == "xml":
+        print(f"<memory_context agent=\"{args.agent}\">\n{output}\n</memory_context>")
+    elif args.format == "json":
+        print(json.dumps({"agent": args.agent, "context": output}))
+
+
 def cmd_memory_stats(args):
     """Agent Memory statistics"""
     vfs = get_vfs(args.config, args.db)
@@ -1058,6 +1118,20 @@ def main():
     p_mem_write.add_argument("--importance", "-i", type=float, default=0.5)
     p_mem_write.add_argument("--tags", help="Comma-separated tags")
     p_mem_write.set_defaults(func=cmd_memory_remember)
+    
+    # context (for prompt injection)
+    p_context = subparsers.add_parser("context", help="Generate memory context for prompts")
+    p_context.add_argument("--agent", "-a", default="default", help="Agent ID")
+    p_context.add_argument("--query", "-q", help="Custom query to include")
+    p_context.add_argument("--preferences", "-p", action="store_true", help="Include user preferences")
+    p_context.add_argument("--lessons", "-l", action="store_true", help="Include lessons learned")
+    p_context.add_argument("--format", "-f", choices=["markdown", "xml", "json"], default="markdown")
+    p_context.add_argument("--recent-tokens", type=int, default=300, help="Tokens for recent activity")
+    p_context.add_argument("--pref-tokens", type=int, default=200, help="Tokens for preferences")
+    p_context.add_argument("--lesson-tokens", type=int, default=200, help="Tokens for lessons")
+    p_context.add_argument("--query-tokens", type=int, default=300, help="Tokens for custom query")
+    p_context.add_argument("--quiet", action="store_true", help="No stderr output")
+    p_context.set_defaults(func=cmd_context)
     
     # memory stats
     p_mem_stats = subparsers.add_parser("memory-stats", help="Agent memory stats")
