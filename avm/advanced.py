@@ -308,6 +308,8 @@ class MemoryDecay:
         
         Returns: Factor between 0 and 1 (1 = no decay)
         """
+        from datetime import timezone
+        
         if reference_time is None:
             reference_time = utcnow()
         
@@ -320,6 +322,12 @@ class MemoryDecay:
                 last_time = node.updated_at
         else:
             last_time = node.updated_at
+        
+        # Ensure both are timezone-aware for comparison
+        if last_time.tzinfo is None:
+            last_time = last_time.replace(tzinfo=timezone.utc)
+        if reference_time.tzinfo is None:
+            reference_time = reference_time.replace(tzinfo=timezone.utc)
         
         # Calculate time since last access
         delta_seconds = (reference_time - last_time).total_seconds()

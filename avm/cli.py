@@ -507,6 +507,141 @@ def cmd_savings(args):
         print(f"Savings: {savings['savings_pct']}%")
 
 
+def cmd_cold(args):
+    """Show cold (decayed) memories"""
+    from .advanced import MemoryDecay
+    
+    vfs = get_vfs(args.config, args.db)
+    decay = MemoryDecay(vfs.store, half_life_days=args.half_life)
+    
+    cold = decay.get_cold_memories(
+        prefix=args.prefix,
+        threshold=args.threshold,
+        limit=args.limit
+    )
+    
+    if args.json:
+        print(json.dumps([n.to_dict() for n in cold], indent=2, default=str))
+    else:
+        if not cold:
+            print("No cold memories found.")
+            return 0
+        print(f"Cold memories (importance × decay < {args.threshold}):")
+        print()
+        for node in cold:
+            importance = node.meta.get("importance", 0.5)
+            decay_factor = decay.calculate_decay(node)
+            score = importance * decay_factor
+            print(f"  {node.path}")
+            print(f"    importance={importance:.2f} × decay={decay_factor:.2f} = {score:.3f}")
+            print()
+    return 0
+
+
+def cmd_compact(args):
+    """Compact old versions of a memory"""
+    from .advanced import MemoryCompactor
+    
+    vfs = get_vfs(args.config, args.db)
+    compactor = MemoryCompactor(vfs.store)
+    
+    result = compactor.compact(args.path, keep_recent=args.keep)
+    
+    if args.json:
+        print(json.dumps({
+            "base_path": result.base_path,
+            "versions_before": result.versions_before,
+            "versions_after": result.versions_after,
+            "summary_path": result.summary_path,
+            "removed_paths": result.removed_paths,
+        }, indent=2))
+    else:
+        print(f"Compacted: {result.base_path}")
+        print(f"  Versions: {result.versions_before} → {result.versions_after}")
+        if result.summary_path:
+            print(f"  Summary: {result.summary_path}")
+        if result.removed_paths:
+            print(f"  Removed: {len(result.removed_paths)} versions")
+    return 0
+
+
+def cmd_dedupe(args):
+    """Check for duplicate content"""
+    from .advanced import SemanticDeduplicator
+    
+    vfs = get_vfs(args.config, args.db)
+    deduper = SemanticDeduplicator(vfs.store)
+    
+    # Read content
+    if args.file:
+        content = Path(args.file).read_text()
+    elif args.content:
+        content = args.content
+    else:
+        content = sys.stdin.read()
+    
+    result = deduper.check_duplicate(content, prefix=args.prefix, threshold=args.threshold)
+    
+    if args.json:
+        print(json.dumps({
+            "is_duplicate": result.is_duplicate,
+            "similar_path": result.similar_path,
+            "similarity": result.similarity,
+            "method": result.method,
+        }, indent=2))
+    else:
+        if result.is_duplicate:
+            print(f"DUPLICATE detected!")
+            print(f"  Similar to: {result.similar_path}")
+            print(f"  Similarity: {result.similarity:.1%}")
+            print(f"  Method: {result.method}")
+        else:
+            print("No duplicates found.")
+    return 0
+
+
+def cmd_archive(args):
+    """Archive cold memories to /archive/"""
+    from .advanced import MemoryDecay
+    
+    vfs = get_vfs(args.config, args.db)
+    decay = MemoryDecay(vfs.store, half_life_days=args.half_life)
+    
+    cold = decay.get_cold_memories(
+        prefix=args.prefix,
+        threshold=args.threshold,
+        limit=args.limit
+    )
+    
+    if not cold:
+        print("No cold memories to archive.")
+        return 0
+    
+    if args.dry_run:
+        print(f"Would archive {len(cold)} memories:")
+        for node in cold:
+            archive_path = node.path.replace("/memory/", "/archive/", 1)
+            print(f"  {node.path} → {archive_path}")
+        return 0
+    
+    archived = []
+    for node in cold:
+        archive_path = node.path.replace("/memory/", "/archive/", 1)
+        # Write to archive
+        vfs.write(archive_path, node.content, meta=node.meta)
+        # Delete original
+        vfs.store.delete_node(node.path)
+        archived.append((node.path, archive_path))
+    
+    if args.json:
+        print(json.dumps({"archived": archived}, indent=2))
+    else:
+        print(f"Archived {len(archived)} memories:")
+        for src, dst in archived:
+            print(f"  {src} → {dst}")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="AI Virtual Filesystem (config-driven)",
@@ -649,6 +784,37 @@ def main():
     p_savings.add_argument("--agent", "-a", help="Filter by agent")
     p_savings.add_argument("--since", help="Filter since timestamp (ISO format)")
     p_savings.set_defaults(func=cmd_savings)
+    
+    # cold memories (decayed below threshold)
+    p_cold = subparsers.add_parser("cold", help="Show cold (decayed) memories")
+    p_cold.add_argument("--prefix", default="/memory", help="Path prefix to scan")
+    p_cold.add_argument("--threshold", "-t", type=float, default=0.1, help="Decay threshold")
+    p_cold.add_argument("--half-life", type=float, default=7.0, help="Half-life in days")
+    p_cold.add_argument("--limit", "-n", type=int, default=20, help="Max results")
+    p_cold.set_defaults(func=cmd_cold)
+    
+    # compact old versions
+    p_compact = subparsers.add_parser("compact", help="Compact old versions into summary")
+    p_compact.add_argument("path", help="Base path to compact")
+    p_compact.add_argument("--keep", "-k", type=int, default=3, help="Keep N recent versions")
+    p_compact.set_defaults(func=cmd_compact)
+    
+    # dedupe check
+    p_dedupe = subparsers.add_parser("dedupe", help="Check for duplicate content")
+    p_dedupe.add_argument("--content", "-c", help="Content to check")
+    p_dedupe.add_argument("--file", "-f", help="Read content from file")
+    p_dedupe.add_argument("--prefix", default="/memory", help="Path prefix to search")
+    p_dedupe.add_argument("--threshold", "-t", type=float, default=0.8, help="Similarity threshold")
+    p_dedupe.set_defaults(func=cmd_dedupe)
+    
+    # archive cold memories
+    p_archive = subparsers.add_parser("archive", help="Archive cold memories")
+    p_archive.add_argument("--prefix", default="/memory", help="Path prefix to scan")
+    p_archive.add_argument("--threshold", "-t", type=float, default=0.1, help="Decay threshold")
+    p_archive.add_argument("--half-life", type=float, default=7.0, help="Half-life in days")
+    p_archive.add_argument("--limit", "-n", type=int, default=100, help="Max to archive")
+    p_archive.add_argument("--dry-run", action="store_true", help="Show what would be archived")
+    p_archive.set_defaults(func=cmd_archive)
     
     args = parser.parse_args()
     
