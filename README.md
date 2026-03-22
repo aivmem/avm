@@ -188,6 +188,26 @@ python playground.py
 
 </details>
 
+## Performance
+
+Benchmarked on Apple M2 Pro, 16GB RAM, macOS 15.7, Python 3.13, SQLite 3.45 (WAL mode).
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Write throughput | 468 ops/s | WAL + async embedding |
+| Read throughput (hot) | 724,000 ops/s | LRU cache hit |
+| Read throughput (cold) | 3,300 ops/s | Cache miss → SQLite |
+| Search throughput | 2,000 ops/s | FTS5 full-text |
+| Cache hit rate | 95% | Zipf access pattern |
+| Token savings | 97%+ | vs. loading all memories |
+
+**Key findings:**
+- **LRU cache is the dominant optimization** — 420x read improvement
+- **Multi-agent contention** — SQLite write lock serializes writes; per-agent throughput drops linearly with agent count
+- **Cold start** — First query ~6x slower due to embedding model initialization
+
+See [detailed benchmarks and ablation study](https://bkmashiro.moe/posts/projects/avm-performance-analysis) for full analysis.
+
 ## Features
 
 - **FUSE Mount** - Mount as filesystem, use `ls`, `cat`, `echo`
