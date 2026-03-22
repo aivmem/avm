@@ -108,17 +108,26 @@ class AVMStore:
     
     @contextmanager
     def _conn(self):
-        """Get database connection with WAL mode for better concurrency"""
+        """Get database connection with configurable WAL mode"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
-        # Enable WAL mode for better concurrent read/write
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")  # Faster, still safe with WAL
+        
+        # Configurable performance settings
+        if getattr(self, '_wal_mode', True):
+            conn.execute("PRAGMA journal_mode=WAL")
+        sync_mode = getattr(self, '_sync_mode', 'NORMAL')
+        conn.execute(f"PRAGMA synchronous={sync_mode}")
+        
         try:
             yield conn
             conn.commit()
         finally:
             conn.close()
+    
+    def configure_performance(self, wal_mode: bool = True, sync_mode: str = "NORMAL"):
+        """Configure performance settings (for ablation experiments)"""
+        self._wal_mode = wal_mode
+        self._sync_mode = sync_mode
     
     # ─── Node operations ─────────────────────────────────────────
     

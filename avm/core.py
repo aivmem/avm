@@ -103,11 +103,22 @@ class AVM:
         # useGlobal registration table
         self._registry = _registry
         
+        # Performance settings (for ablation experiments)
+        perf_cfg = getattr(self.config, 'performance', None) or {}
+        self._hot_cache_enabled = perf_cfg.get('hot_cache', True) if isinstance(perf_cfg, dict) else True
+        self._async_embedding = perf_cfg.get('async_embedding', True) if isinstance(perf_cfg, dict) else True
+        
         # Hot memory cache (LRU)
         cache_cfg = getattr(self.config, 'cache', None) or {}
-        self._cache_max_size = cache_cfg.get('max_size', 100) if isinstance(cache_cfg, dict) else 100
+        cache_size = perf_cfg.get('cache_size', 100) if isinstance(perf_cfg, dict) else 100
+        self._cache_max_size = cache_cfg.get('max_size', cache_size) if isinstance(cache_cfg, dict) else cache_size
         self._cache: Dict[str, AVMNode] = {}
         self._cache_order: list = []  # For LRU eviction
+        
+        # Configure store performance
+        wal_mode = perf_cfg.get('wal_mode', True) if isinstance(perf_cfg, dict) else True
+        sync_mode = perf_cfg.get('sync_mode', 'NORMAL') if isinstance(perf_cfg, dict) else 'NORMAL'
+        self.store.configure_performance(wal_mode=wal_mode, sync_mode=sync_mode)
         
         # registerbuilt-in provider type
         self._register_builtin_providers()
@@ -314,8 +325,8 @@ class AVM:
         if not self._check_private_access(path):
             raise PermissionError(f"Agent {self.agent_id} cannot access {path}")
         
-        # Check hot cache first (if not forcing refresh)
-        if not force_refresh:
+        # Check hot cache first (if enabled and not forcing refresh)
+        if self._hot_cache_enabled and not force_refresh:
             cached = self._cache_get(path)
             if cached:
                 return cached
@@ -323,12 +334,12 @@ class AVM:
         provider = self._get_provider(path)
         if provider:
             node = provider.get(path, force_refresh=force_refresh)
-            if node:
+            if node and self._hot_cache_enabled:
                 self._cache_put(node)
             return node
         
         node = self.store.get_node(path)
-        if node:
+        if node and self._hot_cache_enabled:
             self._cache_put(node)
         return node
     
@@ -356,18 +367,27 @@ class AVM:
         result = self.store.put_node(node)
         
         # Invalidate and update cache
-        self._cache_invalidate(path)
-        self._cache_put(result)
+        if self._hot_cache_enabled:
+            self._cache_invalidate(path)
+            self._cache_put(result)
 
-        # Auto-index for semantic search (async to not block writes)
+        # Auto-index for semantic search
         if self._embedding_store and getattr(self, '_auto_index_embedding', False):
-            import threading
-            def _async_embed(es=self._embedding_store, node=result):
+            if self._async_embedding:
+                # Async: don't block writes
+                import threading
+                def _async_embed(es=self._embedding_store, node=result):
+                    try:
+                        es.embeend_node(node)
+                    except Exception:
+                        pass
+                threading.Thread(target=_async_embed, daemon=True).start()
+            else:
+                # Sync: block until embedding complete
                 try:
-                    es.embeend_node(node)
+                    self._embedding_store.embeend_node(result)
                 except Exception:
                     pass
-            threading.Thread(target=_async_embed, daemon=True).start()
         
         # Trigger subscription notifications
         try:

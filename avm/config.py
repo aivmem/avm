@@ -65,6 +65,15 @@ class AVMConfig:
     # Decay/archive config (optional)
     decay: Dict[str, Any] = field(default_factory=dict)
     
+    # Performance tuning (for ablation experiments)
+    performance: Dict[str, Any] = field(default_factory=lambda: {
+        "wal_mode": True,           # SQLite WAL mode
+        "async_embedding": True,    # Async embedding indexing
+        "hot_cache": True,          # LRU hot cache
+        "cache_size": 100,          # Cache max size
+        "sync_mode": "NORMAL",      # SQLite sync mode (NORMAL/FULL/OFF)
+    })
+    
     @classmethod
     def from_yaml(cls, path: str) -> "AVMConfig":
         """Load configuration from YAML file"""
@@ -127,6 +136,13 @@ class AVMConfig:
             default_access=data.get("default_access", "ro"),
             embedding=data.get("embedding", {}),
             decay=data.get("decay", {}),
+            performance=data.get("performance", {
+                "wal_mode": True,
+                "async_embedding": True,
+                "hot_cache": True,
+                "cache_size": 100,
+                "sync_mode": "NORMAL",
+            }),
         )
     
     def to_dict(self) -> Dict:
