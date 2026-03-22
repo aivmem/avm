@@ -204,6 +204,11 @@ class AVMDaemon:
         self._archive_thread.start()
         print("  Auto-archive enabled (every 6h, threshold=0.15)")
         
+        # Start trash cleanup thread
+        self._trash_thread = threading.Thread(target=self._auto_trash_cleanup, daemon=True)
+        self._trash_thread.start()
+        print("  Trash cleanup enabled (daily, 30d retention)")
+        
         # Wait for stop
         try:
             while self._running:
@@ -277,6 +282,48 @@ class AVMDaemon:
         proc.start()
         self.mounts[mount_config.path] = proc
         print(f"  Mounted: {mount_config.path} (agent={mount_config.agent}, pid={proc.pid})")
+    
+    def _auto_trash_cleanup(self):
+        """Background thread that cleans up old trash items"""
+        import time
+        from datetime import datetime, timedelta, timezone
+        from .core import AVM as _AVM
+        
+        CLEANUP_INTERVAL = 24 * 60 * 60  # Daily
+        RETENTION_DAYS = 30
+        
+        # Initial delay
+        time.sleep(120)
+        
+        while self._running:
+            try:
+                vfs = _AVM()
+                trash_items = vfs.list("/trash", limit=500)
+                
+                cutoff = datetime.now(timezone.utc) - timedelta(days=RETENTION_DAYS)
+                deleted = 0
+                
+                for item in trash_items:
+                    deleted_at = item.meta.get('deleted_at')
+                    if deleted_at:
+                        try:
+                            dt = datetime.fromisoformat(deleted_at.replace('Z', '+00:00'))
+                            if dt < cutoff:
+                                vfs.delete(item.path, hard=True)
+                                deleted += 1
+                        except (ValueError, TypeError):
+                            pass
+                
+                if deleted:
+                    print(f"[trash-cleanup] Removed {deleted} items older than {RETENTION_DAYS}d")
+            except Exception as e:
+                print(f"[trash-cleanup] Error: {e}")
+            
+            # Sleep in chunks
+            for _ in range(CLEANUP_INTERVAL // 60):
+                if not self._running:
+                    break
+                time.sleep(60)
     
     def _handle_signal(self, signum, frame):
         """Handle shutdown signals"""

@@ -359,12 +359,15 @@ class AVM:
         self._cache_invalidate(path)
         self._cache_put(result)
 
-        # Auto-index for semantic search
+        # Auto-index for semantic search (async to not block writes)
         if self._embedding_store and getattr(self, '_auto_index_embedding', False):
-            try:
-                self._embedding_store.embeend_node(result)
-            except Exception:
-                pass  # non-fatal
+            import threading
+            def _async_embed(es=self._embedding_store, node=result):
+                try:
+                    es.embeend_node(node)
+                except Exception:
+                    pass
+            threading.Thread(target=_async_embed, daemon=True).start()
         
         # Trigger subscription notifications
         try:

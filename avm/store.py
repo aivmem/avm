@@ -108,9 +108,12 @@ class AVMStore:
     
     @contextmanager
     def _conn(self):
-        """Get database connection"""
+        """Get database connection with WAL mode for better concurrency"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        # Enable WAL mode for better concurrent read/write
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")  # Faster, still safe with WAL
         try:
             yield conn
             conn.commit()
