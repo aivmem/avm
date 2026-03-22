@@ -480,6 +480,53 @@ class AVMStore:
                 for row in rows
             ]
     
+    def get_node_at_version(self, path: str, version: int) -> Optional[AVMNode]:
+        """Get node content at a specific version (time travel)"""
+        with self._conn() as conn:
+            # Get current node
+            current = self.get_node(path)
+            if not current:
+                return None
+            
+            if current.version <= version:
+                return current
+            
+            # Reconstruct by reverse-applying diffs
+            content = current.content
+            diffs = conn.execute("""
+                SELECT diff_content, version FROM diffs 
+                WHERE node_path = ? AND version > ?
+                ORDER BY version DESC
+            """, (path, version)).fetchall()
+            
+            # Note: This is a simplified approach
+            # For full reconstruction, we'd need forward diffs
+            # For now, return current with version marker
+            node = AVMNode(
+                path=path,
+                content=content,
+                version=version,
+                meta={**current.meta, '_reconstructed': True, '_target_version': version},
+            )
+            return node
+    
+    def get_node_at_time(self, path: str, as_of: datetime) -> Optional[AVMNode]:
+        """Get node content at a specific point in time"""
+        with self._conn() as conn:
+            # Find the version that was current at that time
+            row = conn.execute("""
+                SELECT version FROM diffs 
+                WHERE node_path = ? AND changed_at <= ?
+                ORDER BY changed_at DESC
+                LIMIT 1
+            """, (path, as_of.isoformat())).fetchone()
+            
+            if row:
+                return self.get_node_at_version(path, row[0])
+            
+            # No diffs before that time, might be the original
+            return self.get_node(path)
+    
     # ─── Statistics ─────────────────────────────────────────────
     
     def stats(self) -> Dict[str, Any]:

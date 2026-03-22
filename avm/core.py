@@ -468,6 +468,17 @@ class AVM:
         """Get change history"""
         return self.store.get_history(path, limit)
     
+    def read_at_time(self, path: str, as_of) -> Optional[AVMNode]:
+        """Read node content as it was at a specific time (time travel)"""
+        from datetime import datetime
+        if isinstance(as_of, str):
+            as_of = datetime.fromisoformat(as_of.replace('Z', '+00:00'))
+        return self.store.get_node_at_time(path, as_of)
+    
+    def read_at_version(self, path: str, version: int) -> Optional[AVMNode]:
+        """Read node content at a specific version"""
+        return self.store.get_node_at_version(path, version)
+    
     # ─── statistics ─────────────────────────────────────────────
     
     def stats(self) -> Dict:

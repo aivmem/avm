@@ -41,7 +41,12 @@ def cmd_read(args):
     path = args.path
     
     try:
-        node = vfs.read(path, force_refresh=args.refresh)
+        if args.as_of:
+            node = vfs.read_at_time(path, args.as_of)
+        elif args.version:
+            node = vfs.read_at_version(path, args.version)
+        else:
+            node = vfs.read(path, force_refresh=args.refresh)
     except PermissionError as e:
         print(f"Permission denied: {e}", file=sys.stderr)
         return 1
@@ -583,6 +588,51 @@ def cmd_pending(args):
     return 0
 
 
+def cmd_export(args):
+    """Export memories to archive"""
+    import tarfile
+    import io
+    from datetime import datetime
+    
+    vfs = get_vfs(args.config, args.db)
+    
+    nodes = vfs.list(args.prefix, limit=10000)
+    
+    if args.format == "tar.gz":
+        output = args.output or f"avm-export-{datetime.now().strftime('%Y%m%d-%H%M%S')}.tar.gz"
+        
+        with tarfile.open(output, "w:gz") as tar:
+            for node in nodes:
+                content = (node.content or "").encode('utf-8')
+                info = tarfile.TarInfo(name=node.path.lstrip('/'))
+                info.size = len(content)
+                tar.addfile(info, io.BytesIO(content))
+                
+                # Also save metadata
+                meta_content = json.dumps(node.meta, indent=2, default=str).encode('utf-8')
+                meta_info = tarfile.TarInfo(name=node.path.lstrip('/') + '.meta.json')
+                meta_info.size = len(meta_content)
+                tar.addfile(meta_info, io.BytesIO(meta_content))
+        
+        print(f"Exported {len(nodes)} nodes to {output}")
+    
+    elif args.format == "jsonl":
+        output = args.output or f"avm-export-{datetime.now().strftime('%Y%m%d-%H%M%S')}.jsonl"
+        
+        with open(output, 'w') as f:
+            for node in nodes:
+                f.write(json.dumps({
+                    "path": node.path,
+                    "content": node.content,
+                    "meta": node.meta,
+                    "version": node.version,
+                }, default=str) + '\n')
+        
+        print(f"Exported {len(nodes)} nodes to {output}")
+    
+    return 0
+
+
 def cmd_graph(args):
     """Generate knowledge graph visualization"""
     vfs = get_vfs(args.config, args.db)
@@ -905,6 +955,8 @@ def main():
     p_read.add_argument("path", help="Node path")
     p_read.add_argument("--refresh", "-r", action="store_true", help="Force refresh")
     p_read.add_argument("--meta", "-m", action="store_true", help="Show metadata")
+    p_read.add_argument("--as-of", help="Read as of timestamp (ISO format, time travel)")
+    p_read.add_argument("--version", "-v", type=int, help="Read specific version")
     p_read.set_defaults(func=cmd_read)
     
     # write
@@ -1058,6 +1110,13 @@ def main():
     p_pending.add_argument("--agent", "-a", required=True, help="Agent ID")
     p_pending.add_argument("--clear", action="store_true", help="Mark as delivered")
     p_pending.set_defaults(func=cmd_pending)
+    
+    # export
+    p_export = subparsers.add_parser("export", help="Export memories to archive")
+    p_export.add_argument("prefix", help="Path prefix to export (e.g., /memory)")
+    p_export.add_argument("--output", "-o", help="Output file path")
+    p_export.add_argument("--format", "-f", default="tar.gz", choices=["tar.gz", "jsonl"])
+    p_export.set_defaults(func=cmd_export)
     
     # graph visualization
     p_graph = subparsers.add_parser("graph", help="Generate knowledge graph")
