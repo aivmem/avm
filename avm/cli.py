@@ -507,6 +507,82 @@ def cmd_savings(args):
         print(f"Savings: {savings['savings_pct']}%")
 
 
+def cmd_subscribe(args):
+    """Subscribe to path pattern changes"""
+    from .subscriptions import get_subscription_store, SubscriptionMode
+    
+    store = get_subscription_store()
+    mode = SubscriptionMode(args.mode)
+    sub = store.subscribe(args.agent, args.pattern, mode=mode, throttle_seconds=args.throttle)
+    
+    if args.json:
+        print(json.dumps({
+            "id": sub.id, "agent": sub.agent_id, "pattern": sub.pattern,
+            "mode": sub.mode.value, "throttle": sub.throttle_seconds
+        }, indent=2))
+    else:
+        print(f"Subscribed: {sub.agent_id} → {sub.pattern}")
+        print(f"  Mode: {sub.mode.value}")
+        if sub.mode == SubscriptionMode.THROTTLED:
+            print(f"  Throttle: {sub.throttle_seconds}s")
+    return 0
+
+
+def cmd_subscriptions(args):
+    """List subscriptions"""
+    from .subscriptions import get_subscription_store
+    
+    store = get_subscription_store()
+    subs = store.list_subscriptions(agent_id=args.agent)
+    
+    if args.json:
+        print(json.dumps([{
+            "id": s.id, "agent": s.agent_id, "pattern": s.pattern,
+            "mode": s.mode.value, "throttle": s.throttle_seconds
+        } for s in subs], indent=2))
+    else:
+        if not subs:
+            print("No subscriptions.")
+            return 0
+        for s in subs:
+            mode_info = s.mode.value
+            if s.mode.value == "throttled":
+                mode_info += f" ({s.throttle_seconds}s)"
+            print(f"{s.agent_id}: {s.pattern} [{mode_info}]")
+    return 0
+
+
+def cmd_unsubscribe(args):
+    """Remove subscription"""
+    from .subscriptions import get_subscription_store
+    
+    store = get_subscription_store()
+    store.unsubscribe(args.agent, args.pattern)
+    print(f"Unsubscribed: {args.agent} ← {args.pattern}")
+    return 0
+
+
+def cmd_pending(args):
+    """Show pending notifications"""
+    from .subscriptions import get_subscription_store
+    
+    store = get_subscription_store()
+    pending = store.get_pending(args.agent, mark_delivered=args.clear)
+    
+    if args.json:
+        print(json.dumps(pending, indent=2))
+    else:
+        if not pending:
+            print("No pending notifications.")
+            return 0
+        print(f"Pending notifications for {args.agent}:")
+        for p in pending:
+            print(f"  [{p['timestamp'][:16]}] {p['path']}")
+        if args.clear:
+            print(f"\n(Marked {len(pending)} as delivered)")
+    return 0
+
+
 def cmd_cold(args):
     """Show cold (decayed) memories"""
     from .advanced import MemoryDecay
@@ -784,6 +860,33 @@ def main():
     p_savings.add_argument("--agent", "-a", help="Filter by agent")
     p_savings.add_argument("--since", help="Filter since timestamp (ISO format)")
     p_savings.set_defaults(func=cmd_savings)
+    
+    # subscribe command
+    p_subscribe = subparsers.add_parser("subscribe", help="Subscribe to path pattern changes")
+    p_subscribe.add_argument("pattern", help="Path pattern (e.g., /memory/shared/*)")
+    p_subscribe.add_argument("--agent", "-a", required=True, help="Agent ID")
+    p_subscribe.add_argument("--mode", "-m", default="batched", 
+                             choices=["realtime", "throttled", "batched", "digest"],
+                             help="Notification mode")
+    p_subscribe.add_argument("--throttle", "-t", type=int, default=60, help="Throttle window (seconds)")
+    p_subscribe.set_defaults(func=cmd_subscribe)
+    
+    # subscriptions list
+    p_subs_list = subparsers.add_parser("subscriptions", help="List subscriptions")
+    p_subs_list.add_argument("--agent", "-a", help="Filter by agent")
+    p_subs_list.set_defaults(func=cmd_subscriptions)
+    
+    # unsubscribe
+    p_unsub = subparsers.add_parser("unsubscribe", help="Remove subscription")
+    p_unsub.add_argument("pattern", help="Path pattern")
+    p_unsub.add_argument("--agent", "-a", required=True, help="Agent ID")
+    p_unsub.set_defaults(func=cmd_unsubscribe)
+    
+    # pending notifications
+    p_pending = subparsers.add_parser("pending", help="Show pending notifications")
+    p_pending.add_argument("--agent", "-a", required=True, help="Agent ID")
+    p_pending.add_argument("--clear", action="store_true", help="Mark as delivered")
+    p_pending.set_defaults(func=cmd_pending)
     
     # cold memories (decayed below threshold)
     p_cold = subparsers.add_parser("cold", help="Show cold (decayed) memories")

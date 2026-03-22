@@ -315,6 +315,14 @@ class AVM:
                 self._embedding_store.embeend_node(result)
             except Exception:
                 pass  # non-fatal
+        
+        # Trigger subscription notifications
+        try:
+            from .subscriptions import get_subscription_store
+            sub_store = get_subscription_store()
+            sub_store.on_write(path, author=self.agent_id)
+        except Exception:
+            pass  # non-fatal
 
         return result
     

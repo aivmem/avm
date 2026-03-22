@@ -26,6 +26,7 @@ import errno
 import json
 import argparse
 import re
+import sqlite3
 from datetime import datetime
 
 from .utils import utcnow
@@ -541,6 +542,73 @@ class AVMFuse(Operations):
                 f"half_life: {half_life} days",
                 f"updated_at: {node.updated_at}",
             ]
+            return '\n'.join(lines) + '\n'
+        
+        elif suffix == ':subscriptions':
+            # List subscriptions for current agent
+            if not self.user:
+                return '(no agent context)\n'
+            
+            from .subscriptions import get_subscription_store
+            store = get_subscription_store()
+            subs = store.list_subscriptions(agent_id=self.user)
+            
+            if not subs:
+                return '(no subscriptions)\n'
+            
+            lines = ["# Subscriptions", ""]
+            for s in subs:
+                mode_info = s.mode.value
+                if s.mode.value == "throttled":
+                    mode_info += f" ({s.throttle_seconds}s)"
+                lines.append(f"{s.pattern} [{mode_info}]")
+            return '\n'.join(lines) + '\n'
+        
+        elif suffix == ':pending':
+            # Show pending notifications
+            if not self.user:
+                return '(no agent context)\n'
+            
+            from .subscriptions import get_subscription_store
+            store = get_subscription_store()
+            
+            mark = params.get('mark', '') == 'read' if params else False
+            pending = store.get_pending(self.user, mark_delivered=mark)
+            
+            if not pending:
+                return '(no pending notifications)\n'
+            
+            lines = [f"# Pending ({len(pending)})", ""]
+            for p in pending:
+                lines.append(f"[{p['timestamp'][:16]}] {p['path']}")
+            if mark:
+                lines.append(f"\n(marked {len(pending)} as delivered)")
+            return '\n'.join(lines) + '\n'
+        
+        elif suffix == ':feed':
+            # Show recent activity feed
+            from .advanced import AccessStats
+            
+            limit = int(params.get('limit', 20)) if params else 20
+            stats = AccessStats(self.vfs.store)
+            
+            # Get recent activity across all agents
+            with sqlite3.connect(stats.db_path) as conn:
+                rows = conn.execute("""
+                    SELECT path, agent_id, access_type, timestamp
+                    FROM access_log
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                """, (limit,)).fetchall()
+            
+            if not rows:
+                return '(no recent activity)\n'
+            
+            lines = ["# Activity Feed", ""]
+            for path, agent, access_type, ts in rows:
+                ts_short = ts[11:16] if len(ts) > 16 else ts
+                agent_display = agent or "unknown"
+                lines.append(f"[{ts_short}] {agent_display} {access_type} {path}")
             return '\n'.join(lines) + '\n'
         
         elif suffix == ':changes':
