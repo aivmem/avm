@@ -199,6 +199,11 @@ class AVMDaemon:
         signal.signal(signal.SIGINT, self._handle_signal)
         signal.signal(signal.SIGHUP, self._handle_reload)
         
+        # Start auto-archive thread
+        self._archive_thread = threading.Thread(target=self._auto_archive_loop, daemon=True)
+        self._archive_thread.start()
+        print("  Auto-archive enabled (every 6h, threshold=0.15)")
+        
         # Wait for stop
         try:
             while self._running:
@@ -207,6 +212,51 @@ class AVMDaemon:
             pass
         
         return True
+    
+    def _auto_archive_loop(self):
+        """Background thread that archives cold memories periodically"""
+        import time
+        from .advanced import MemoryDecay
+        from .core import AVM as _AVM
+        
+        ARCHIVE_INTERVAL = 6 * 60 * 60  # 6 hours
+        ARCHIVE_THRESHOLD = 0.15
+        ARCHIVE_HALF_LIFE = 14.0  # 2 weeks
+        ARCHIVE_LIMIT = 50
+        
+        # Initial delay to let system settle
+        time.sleep(60)
+        
+        while self._running:
+            try:
+                vfs = _AVM()
+                decay = MemoryDecay(vfs.store, half_life_days=ARCHIVE_HALF_LIFE)
+                cold = decay.get_cold_memories(
+                    prefix="/memory",
+                    threshold=ARCHIVE_THRESHOLD,
+                    limit=ARCHIVE_LIMIT
+                )
+                
+                if cold:
+                    from .utils import utcnow
+                    archived = []
+                    for node in cold:
+                        archive_path = node.path.replace("/memory/", "/archive/", 1)
+                        node.meta['archived_by'] = 'daemon'
+                        node.meta['archived_at'] = utcnow().isoformat()
+                        vfs.write(archive_path, node.content, meta=node.meta)
+                        vfs.store.delete_node(node.path)
+                        archived.append(node.path)
+                    
+                    print(f"[auto-archive] Archived {len(archived)} cold memories")
+            except Exception as e:
+                print(f"[auto-archive] Error: {e}")
+            
+            # Sleep in small chunks to check _running flag
+            for _ in range(ARCHIVE_INTERVAL // 60):
+                if not self._running:
+                    break
+                time.sleep(60)
     
     def _start_mount(self, mount_config: MountConfig):
         """Start a single mount"""

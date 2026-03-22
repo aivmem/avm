@@ -458,6 +458,91 @@ class AVMFuse(Operations):
             else:
                 return '(no user context for recall)\n'
         
+        elif suffix == ':cold':
+            # Show cold (decayed) memories
+            from .advanced import MemoryDecay
+            threshold = float(params.get('threshold', 0.3)) if params else 0.3
+            half_life = float(params.get('half_life', 7.0)) if params else 7.0
+            limit = int(params.get('limit', 20)) if params else 20
+            
+            decay = MemoryDecay(self.vfs.store, half_life_days=half_life)
+            cold = decay.get_cold_memories(prefix=real_path or '/memory', threshold=threshold, limit=limit)
+            
+            if not cold:
+                return '(no cold memories)\n'
+            
+            lines = [f"# Cold memories (importance × decay < {threshold})", ""]
+            for node in cold:
+                importance = node.meta.get("importance", 0.5)
+                decay_factor = decay.calculate_decay(node)
+                score = importance * decay_factor
+                lines.append(f"{node.path}")
+                lines.append(f"  score={score:.3f} (imp={importance:.2f} × dec={decay_factor:.2f})")
+            return '\n'.join(lines) + '\n'
+        
+        elif suffix == ':archive':
+            # Archive cold memories (requires user context)
+            if not self.user:
+                return '(no agent context - archive requires user)\n'
+            
+            from .advanced import MemoryDecay
+            threshold = float(params.get('threshold', 0.2)) if params else 0.2
+            half_life = float(params.get('half_life', 7.0)) if params else 7.0
+            limit = int(params.get('limit', 10)) if params else 10
+            dry_run = params.get('dry_run', 'true').lower() == 'true' if params else True
+            
+            decay = MemoryDecay(self.vfs.store, half_life_days=half_life)
+            cold = decay.get_cold_memories(prefix=real_path or '/memory', threshold=threshold, limit=limit)
+            
+            if not cold:
+                return '(no cold memories to archive)\n'
+            
+            if dry_run:
+                lines = [f"# Would archive {len(cold)} memories (dry_run=true)", ""]
+                for node in cold:
+                    archive_path = node.path.replace("/memory/", "/archive/", 1)
+                    lines.append(f"{node.path} → {archive_path}")
+                return '\n'.join(lines) + '\n'
+            
+            # Actually archive
+            archived = []
+            for node in cold:
+                archive_path = node.path.replace("/memory/", "/archive/", 1)
+                node.meta['archived_by'] = self.user
+                node.meta['archived_at'] = utcnow().isoformat()
+                self.vfs.write(archive_path, node.content, meta=node.meta)
+                self.vfs.store.delete_node(node.path)
+                archived.append((node.path, archive_path))
+            
+            lines = [f"# Archived {len(archived)} memories", ""]
+            for src, dst in archived:
+                lines.append(f"{src} → {dst}")
+            return '\n'.join(lines) + '\n'
+        
+        elif suffix == ':decay':
+            # Show decay status for a specific file
+            node = self.vfs.read(real_path)
+            if not node:
+                raise FuseOSError(errno.ENOENT)
+            
+            from .advanced import MemoryDecay
+            half_life = float(params.get('half_life', 7.0)) if params else 7.0
+            decay = MemoryDecay(self.vfs.store, half_life_days=half_life)
+            
+            importance = node.meta.get("importance", 0.5)
+            decay_factor = decay.calculate_decay(node)
+            score = importance * decay_factor
+            
+            lines = [
+                f"path: {node.path}",
+                f"importance: {importance:.2f}",
+                f"decay_factor: {decay_factor:.3f}",
+                f"effective_score: {score:.3f}",
+                f"half_life: {half_life} days",
+                f"updated_at: {node.updated_at}",
+            ]
+            return '\n'.join(lines) + '\n'
+        
         elif suffix == ':changes':
             # Return recently modified files
             # :changes?since=ISO_TIMESTAMP or :changes?minutes=N
