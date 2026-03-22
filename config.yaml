@@ -30,3 +30,9 @@ mounts:
 settings:
   default_ttl: 3600    # seconds; used when provider doesn't specify
   db_path: ~/.openclaw/workspace/vfs/vfs.db
+
+embedding:
+  enabled: true
+  backend: local                     # local | openai
+  model: all-MiniLM-L6-v2            # local: sentence-transformers model
+  auto_index: true                   # index new nodes on write

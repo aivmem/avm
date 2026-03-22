@@ -58,6 +58,9 @@ class AVMConfig:
     
     # Default access if no matching rule
     default_access: str = "ro"
+
+    # Embedding config (optional)
+    embedding: Dict[str, Any] = field(default_factory=dict)
     
     @classmethod
     def from_yaml(cls, path: str) -> "AVMConfig":
@@ -88,13 +91,26 @@ class AVMConfig:
             for p in data.get("providers", [])
         ]
         
-        permissions = [
-            PermissionRule(
-                pattern=p.get("pattern", "/*"),
-                access=p.get("access", "ro"),
-            )
-            for p in data.get("permissions", [])
-        ]
+        # Use default permissions if not specified in config
+        raw_permissions = data.get("permissions")
+        if raw_permissions is None:
+            # Default permissions for memory paths
+            permissions = [
+                PermissionRule(pattern="/memory/private/*", access="rw"),
+                PermissionRule(pattern="/memory/shared/*", access="rw"),
+                PermissionRule(pattern="/memory/*", access="rw"),
+                PermissionRule(pattern="/snapshots/*", access="rw"),
+                PermissionRule(pattern="/live/*", access="ro"),
+                PermissionRule(pattern="/research/*", access="ro"),
+            ]
+        else:
+            permissions = [
+                PermissionRule(
+                    pattern=p.get("pattern", "/*"),
+                    access=p.get("access", "ro"),
+                )
+                for p in raw_permissions
+            ]
         
         return cls(
             providers=providers,
@@ -102,6 +118,7 @@ class AVMConfig:
             db_path=data.get("db_path", ""),
             default_ttl=data.get("default_ttl", 300),
             default_access=data.get("default_access", "ro"),
+            embedding=data.get("embedding", {}),
         )
     
     def to_dict(self) -> Dict:
