@@ -232,11 +232,28 @@ class AgentMemory:
     def _retrieve_candidates(self, query: str, 
                             prefixes: List[str],
                             k: int = 50) -> List[Tuple[AVMNode, float]]:
-        """Retrieve candidate nodes"""
+        """Retrieve candidate nodes using TopicIndex first, then fallback to FTS"""
         candidates = []
         seen = set()
         
-        # Use VFS retrieval features (single retrieval)
+        # Try TopicIndex first (O(1) lookup)
+        topic_results = self._query_topic_index(query, k)
+        
+        if topic_results:
+            # Use topic index results
+            for path, score in topic_results:
+                if any(path.startswith(p) for p in prefixes):
+                    if path not in seen:
+                        seen.add(path)
+                        node = self.avm.read(path)
+                        if node:
+                            candidates.append((node, score))
+            
+            # If we got enough results from topic index, return early (1 hop!)
+            if len(candidates) >= k // 2:
+                return candidates
+        
+        # Fallback to VFS retrieval (FTS + embedding)
         result = self.avm.retrieve(query, k=k)
         
         for node in result.nodes:
@@ -248,6 +265,20 @@ class AgentMemory:
                     candidates.append((node, score))
         
         return candidates
+    
+    def _query_topic_index(self, query: str, k: int) -> List[Tuple[str, float]]:
+        """Query the topic index if available"""
+        try:
+            from .topic_index import TopicIndex
+            
+            # Get or create topic index
+            if not hasattr(self.avm, '_topic_index'):
+                self.avm._topic_index = TopicIndex(self.avm.store)
+            
+            return self.avm._topic_index.query(query, limit=k)
+        except Exception:
+            # Topic index not available or error
+            return []
     
     def _score_nodes(self, candidates: List[Tuple[AVMNode, float]],
                      query: str,
