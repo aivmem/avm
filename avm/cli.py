@@ -583,6 +583,177 @@ def cmd_pending(args):
     return 0
 
 
+def cmd_graph(args):
+    """Generate knowledge graph visualization"""
+    vfs = get_vfs(args.config, args.db)
+    
+    # Get starting node
+    start_node = vfs.read(args.path)
+    if not start_node:
+        print(f"Not found: {args.path}", file=sys.stderr)
+        return 1
+    
+    # BFS to collect connected nodes
+    visited = set()
+    edges = []
+    queue = [(args.path, 0)]
+    
+    while queue:
+        path, depth = queue.pop(0)
+        if path in visited or depth > args.depth:
+            continue
+        visited.add(path)
+        
+        # Get links from this node
+        links = vfs.store.get_links(path)
+        for link in links:
+            edges.append((path, link.target, link.relation))
+            if link.target not in visited:
+                queue.append((link.target, depth + 1))
+    
+    if not edges and len(visited) == 1:
+        # No links, just list children
+        children = vfs.list(args.path, limit=50)
+        for child in children:
+            if child.path != args.path:
+                edges.append((args.path, child.path, "contains"))
+    
+    if args.format == "mermaid":
+        lines = ["graph TD"]
+        seen_nodes = set()
+        for src, dst, rel in edges:
+            src_id = src.replace("/", "_").replace(".", "_").replace("-", "_")
+            dst_id = dst.replace("/", "_").replace(".", "_").replace("-", "_")
+            src_label = src.split("/")[-1]
+            dst_label = dst.split("/")[-1]
+            if src not in seen_nodes:
+                lines.append(f"    {src_id}[{src_label}]")
+                seen_nodes.add(src)
+            if dst not in seen_nodes:
+                lines.append(f"    {dst_id}[{dst_label}]")
+                seen_nodes.add(dst)
+            lines.append(f"    {src_id} -->|{rel}| {dst_id}")
+        print('\n'.join(lines))
+    
+    elif args.format == "dot":
+        lines = ["digraph G {"]
+        for src, dst, rel in edges:
+            lines.append(f'    "{src}" -> "{dst}" [label="{rel}"];')
+        lines.append("}")
+        print('\n'.join(lines))
+    
+    else:  # text
+        print(f"Graph from {args.path} (depth {args.depth}):")
+        print(f"Nodes: {len(visited)}")
+        print(f"Edges: {len(edges)}")
+        for src, dst, rel in edges:
+            print(f"  {src} --[{rel}]--> {dst}")
+    
+    return 0
+
+
+def cmd_bundle(args):
+    """Bundle related memories for handoff"""
+    from datetime import datetime, timedelta
+    
+    vfs = get_vfs(args.config, args.db)
+    
+    # Calculate since date
+    if args.since:
+        if args.since.endswith('d'):
+            days = int(args.since[:-1])
+            since_dt = datetime.now() - timedelta(days=days)
+        else:
+            since_dt = datetime.fromisoformat(args.since)
+    else:
+        since_dt = datetime.now() - timedelta(days=7)
+    
+    # Find all nodes under prefix
+    nodes = vfs.list(args.prefix, limit=500)
+    
+    # Filter by date
+    filtered = []
+    for node in nodes:
+        if node.updated_at and node.updated_at >= since_dt:
+            filtered.append(node)
+    
+    # Sort by date
+    filtered.sort(key=lambda n: n.updated_at or datetime.min)
+    
+    if args.json:
+        print(json.dumps([{
+            "path": n.path,
+            "updated_at": n.updated_at.isoformat() if n.updated_at else None,
+            "content": n.content[:500] if n.content else "",
+            "meta": n.meta,
+        } for n in filtered], indent=2, default=str))
+    else:
+        # Generate markdown handoff document
+        lines = [
+            f"# Task Bundle: {args.prefix}",
+            f"Generated: {datetime.now().isoformat()[:16]}",
+            f"Since: {since_dt.isoformat()[:10]}",
+            f"Items: {len(filtered)}",
+            "",
+            "---",
+            "",
+        ]
+        
+        for node in filtered:
+            date_str = node.updated_at.strftime("%Y-%m-%d %H:%M") if node.updated_at else "?"
+            lines.append(f"## {node.path}")
+            lines.append(f"*Updated: {date_str}*")
+            lines.append("")
+            # Include content (truncated)
+            content = node.content or ""
+            if len(content) > 1000:
+                content = content[:1000] + "\n\n*[truncated...]*"
+            lines.append(content)
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+        
+        print('\n'.join(lines))
+    return 0
+
+
+def cmd_restore(args):
+    """Restore a file from trash"""
+    vfs = get_vfs(args.config, args.db)
+    
+    restored = vfs.restore(args.path)
+    if restored:
+        print(f"Restored: {restored.path}")
+        return 0
+    else:
+        print(f"Not found or restore failed: {args.path}", file=sys.stderr)
+        return 1
+
+
+def cmd_trash(args):
+    """List or empty trash"""
+    vfs = get_vfs(args.config, args.db)
+    
+    trash_items = vfs.list("/trash", limit=100)
+    
+    if args.empty:
+        for item in trash_items:
+            vfs.delete(item.path, hard=True)
+        print(f"Emptied {len(trash_items)} items from trash")
+        return 0
+    
+    if not trash_items:
+        print("Trash is empty")
+        return 0
+    
+    print(f"Trash ({len(trash_items)} items):")
+    for item in trash_items:
+        deleted_at = item.meta.get('deleted_at', '?')[:16]
+        original = item.meta.get('original_path', item.path.replace('/trash', '', 1))
+        print(f"  [{deleted_at}] {original}")
+    return 0
+
+
 def cmd_cold(args):
     """Show cold (decayed) memories"""
     from .advanced import MemoryDecay
@@ -887,6 +1058,29 @@ def main():
     p_pending.add_argument("--agent", "-a", required=True, help="Agent ID")
     p_pending.add_argument("--clear", action="store_true", help="Mark as delivered")
     p_pending.set_defaults(func=cmd_pending)
+    
+    # graph visualization
+    p_graph = subparsers.add_parser("graph", help="Generate knowledge graph")
+    p_graph.add_argument("path", help="Starting path")
+    p_graph.add_argument("--depth", "-d", type=int, default=2, help="Max depth")
+    p_graph.add_argument("--format", "-f", default="mermaid", choices=["mermaid", "dot", "text"])
+    p_graph.set_defaults(func=cmd_graph)
+    
+    # bundle for handoff
+    p_bundle = subparsers.add_parser("bundle", help="Bundle related memories for handoff")
+    p_bundle.add_argument("prefix", help="Path prefix (e.g., /task/project-x)")
+    p_bundle.add_argument("--since", "-s", default="7d", help="Since when (e.g., 7d, 2026-03-15)")
+    p_bundle.set_defaults(func=cmd_bundle)
+    
+    # restore from trash
+    p_restore = subparsers.add_parser("restore", help="Restore file from trash")
+    p_restore.add_argument("path", help="Path in /trash/")
+    p_restore.set_defaults(func=cmd_restore)
+    
+    # trash management
+    p_trash = subparsers.add_parser("trash", help="List or empty trash")
+    p_trash.add_argument("--empty", action="store_true", help="Empty trash permanently")
+    p_trash.set_defaults(func=cmd_trash)
     
     # cold memories (decayed below threshold)
     p_cold = subparsers.add_parser("cold", help="Show cold (decayed) memories")

@@ -103,6 +103,12 @@ class AVM:
         # useGlobal registration table
         self._registry = _registry
         
+        # Hot memory cache (LRU)
+        cache_cfg = getattr(self.config, 'cache', None) or {}
+        self._cache_max_size = cache_cfg.get('max_size', 100) if isinstance(cache_cfg, dict) else 100
+        self._cache: Dict[str, AVMNode] = {}
+        self._cache_order: list = []  # For LRU eviction
+        
         # registerbuilt-in provider type
         self._register_builtin_providers()
 
@@ -220,6 +226,34 @@ class AVM:
         """registercustom provider type"""
         self._registry.register(name, provider_class, factory)
     
+    def _cache_get(self, path: str) -> Optional[AVMNode]:
+        """Get from hot cache"""
+        if path in self._cache:
+            # Move to end (most recent)
+            if path in self._cache_order:
+                self._cache_order.remove(path)
+            self._cache_order.append(path)
+            return self._cache[path]
+        return None
+    
+    def _cache_put(self, node: AVMNode):
+        """Put into hot cache"""
+        path = node.path
+        if path in self._cache:
+            self._cache_order.remove(path)
+        self._cache[path] = node
+        self._cache_order.append(path)
+        # Evict if over limit
+        while len(self._cache) > self._cache_max_size:
+            oldest = self._cache_order.pop(0)
+            self._cache.pop(oldest, None)
+    
+    def _cache_invalidate(self, path: str):
+        """Invalidate cache entry"""
+        self._cache.pop(path, None)
+        if path in self._cache_order:
+            self._cache_order.remove(path)
+    
     def _get_provider(self, path: str) -> Optional[Any]:
         """Get or create provider for path"""
         spec = self.config.get_provider_spec(path)
@@ -280,11 +314,23 @@ class AVM:
         if not self._check_private_access(path):
             raise PermissionError(f"Agent {self.agent_id} cannot access {path}")
         
+        # Check hot cache first (if not forcing refresh)
+        if not force_refresh:
+            cached = self._cache_get(path)
+            if cached:
+                return cached
+        
         provider = self._get_provider(path)
         if provider:
-            return provider.get(path, force_refresh=force_refresh)
+            node = provider.get(path, force_refresh=force_refresh)
+            if node:
+                self._cache_put(node)
+            return node
         
-        return self.store.get_node(path)
+        node = self.store.get_node(path)
+        if node:
+            self._cache_put(node)
+        return node
     
     def write(self, path: str, content: str, 
               meta: Dict = None) -> AVMNode:
@@ -308,6 +354,10 @@ class AVM:
         )
         
         result = self.store.put_node(node)
+        
+        # Invalidate and update cache
+        self._cache_invalidate(path)
+        self._cache_put(result)
 
         # Auto-index for semantic search
         if self._embedding_store and getattr(self, '_auto_index_embedding', False):
@@ -326,15 +376,62 @@ class AVM:
 
         return result
     
-    def delete(self, path: str) -> bool:
-        """deletenode"""
+    def delete(self, path: str, hard: bool = False) -> bool:
+        """Delete node (soft delete to /trash/ by default)"""
         if not self.config.check_permission(path, "write"):
             raise PermissionError(f"No write permission for {path}")
         
         if not self._check_private_access(path):
             raise PermissionError(f"Agent {self.agent_id} cannot delete {path}")
         
+        # Invalidate cache
+        self._cache_invalidate(path)
+        
+        if hard or path.startswith("/trash/"):
+            # Hard delete (permanent) or already in trash
+            return self.store.delete_node(path)
+        
+        # Soft delete: move to /trash/
+        node = self.store.get_node(path)
+        if not node:
+            return False
+        
+        from .utils import utcnow
+        trash_path = f"/trash{path}"
+        node.meta['deleted_at'] = utcnow().isoformat()
+        node.meta['deleted_by'] = self.agent_id
+        node.meta['original_path'] = path
+        
+        self.store.put_node(AVMNode(
+            path=trash_path,
+            content=node.content,
+            meta=node.meta,
+            node_type=node.node_type,
+        ))
         return self.store.delete_node(path)
+    
+    def restore(self, trash_path: str) -> Optional[AVMNode]:
+        """Restore a file from trash"""
+        if not trash_path.startswith("/trash/"):
+            raise ValueError("Path must be in /trash/")
+        
+        node = self.store.get_node(trash_path)
+        if not node:
+            return None
+        
+        original_path = node.meta.get('original_path')
+        if not original_path:
+            # Infer from trash path
+            original_path = trash_path.replace("/trash", "", 1)
+        
+        # Clean up trash metadata
+        node.meta.pop('deleted_at', None)
+        node.meta.pop('deleted_by', None)
+        node.meta.pop('original_path', None)
+        
+        restored = self.write(original_path, node.content, meta=node.meta)
+        self.store.delete_node(trash_path)
+        return restored
     
     def list(self, prefix: str = "/", limit: int = 100) -> List[AVMNode]:
         """listnode"""
