@@ -218,11 +218,21 @@ class AVMDaemon:
         import time
         from .advanced import MemoryDecay
         from .core import AVM as _AVM
+        from .config import load_config
         
-        ARCHIVE_INTERVAL = 6 * 60 * 60  # 6 hours
-        ARCHIVE_THRESHOLD = 0.15
-        ARCHIVE_HALF_LIFE = 14.0  # 2 weeks
-        ARCHIVE_LIMIT = 50
+        # Load settings from config
+        config = load_config()
+        decay_cfg = getattr(config, 'decay', None) or {}
+        if isinstance(decay_cfg, dict):
+            ARCHIVE_INTERVAL = int(decay_cfg.get('archive_interval_hours', 6)) * 60 * 60
+            ARCHIVE_THRESHOLD = float(decay_cfg.get('archive_threshold', 0.15))
+            ARCHIVE_HALF_LIFE = float(decay_cfg.get('half_life_days', 14.0))
+            ARCHIVE_LIMIT = int(decay_cfg.get('archive_limit', 50))
+        else:
+            ARCHIVE_INTERVAL = 6 * 60 * 60
+            ARCHIVE_THRESHOLD = 0.15
+            ARCHIVE_HALF_LIFE = 14.0
+            ARCHIVE_LIMIT = 50
         
         # Initial delay to let system settle
         time.sleep(60)

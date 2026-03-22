@@ -62,6 +62,9 @@ class AVMConfig:
     # Embedding config (optional)
     embedding: Dict[str, Any] = field(default_factory=dict)
     
+    # Decay/archive config (optional)
+    decay: Dict[str, Any] = field(default_factory=dict)
+    
     @classmethod
     def from_yaml(cls, path: str) -> "AVMConfig":
         """Load configuration from YAML file"""
@@ -119,6 +122,7 @@ class AVMConfig:
             default_ttl=data.get("default_ttl", 300),
             default_access=data.get("default_access", "ro"),
             embedding=data.get("embedding", {}),
+            decay=data.get("decay", {}),
         )
     
     def to_dict(self) -> Dict:
