@@ -466,6 +466,88 @@ def cmd_context(args):
         print(json.dumps({"agent": args.agent, "context": output}))
 
 
+def cmd_ask(args):
+    """Ask the Librarian for information routing."""
+    vfs = get_vfs(args.config, args.db)
+    
+    from .librarian import Librarian, PrivacyPolicy
+    
+    privacy = PrivacyPolicy(args.privacy)
+    librarian = Librarian(vfs.store, vfs.config, privacy)
+    
+    response = librarian.query(args.agent, args.query, limit=args.limit)
+    
+    if args.json:
+        print(json.dumps(response.to_dict(), indent=2, default=str))
+        return
+    
+    print(f"Query: {args.query}")
+    print(f"Requester: {args.agent}")
+    print(f"Matches: {response.accessible_count}/{response.total_matches} accessible")
+    print()
+    
+    if response.accessible:
+        print("## Accessible Content")
+        for node in response.accessible[:5]:
+            print(f"  • {node.path}")
+            if node.content:
+                snippet = node.content[:100].replace("\n", " ")
+                print(f"    {snippet}...")
+        print()
+    
+    if response.suggestions:
+        print("## Collaboration Suggestions")
+        for s in response.suggestions[:5]:
+            print(f"  • Ask **{s.agent}** about: {s.topic}")
+            if s.reason:
+                print(f"    ({s.reason})")
+        print()
+
+
+def cmd_who_knows(args):
+    """Find agents who know about a topic."""
+    vfs = get_vfs(args.config, args.db)
+    
+    from .librarian import Librarian
+    
+    librarian = Librarian(vfs.store, vfs.config)
+    agents = librarian.who_knows(args.topic, limit=args.limit)
+    
+    if args.json:
+        print(json.dumps([a.to_dict() for a in agents], indent=2))
+        return
+    
+    print(f"Agents who might know about '{args.topic}':")
+    for agent in agents:
+        caps = ", ".join(agent.capabilities) if agent.capabilities else "general"
+        print(f"  • {agent.id} ({caps}) - {agent.memory_count} memories")
+
+
+def cmd_agents(args):
+    """List all agents in the system."""
+    vfs = get_vfs(args.config, args.db)
+    
+    from .librarian import Librarian
+    
+    librarian = Librarian(vfs.store, vfs.config)
+    
+    if args.json:
+        print(json.dumps(librarian.directory(), indent=2))
+        return
+    
+    directory = librarian.directory()
+    
+    print(f"Agents ({directory['total_agents']} total):")
+    for agent in directory['agents']:
+        caps = ", ".join(agent['capabilities']) if agent['capabilities'] else "general"
+        print(f"  • {agent['id']} ({caps})")
+    
+    print()
+    print("By Capability:")
+    for cap, agent_ids in directory['by_capability'].items():
+        print(f"  • {cap}: {', '.join(agent_ids)}")
+
+
 def cmd_memory_stats(args):
     """Agent Memory statistics"""
     vfs = get_vfs(args.config, args.db)
@@ -1132,6 +1214,25 @@ def main():
     p_context.add_argument("--query-tokens", type=int, default=300, help="Tokens for custom query")
     p_context.add_argument("--quiet", action="store_true", help="No stderr output")
     p_context.set_defaults(func=cmd_context)
+    
+    # Librarian: ask
+    p_ask = subparsers.add_parser("ask", help="Ask the Librarian for information routing")
+    p_ask.add_argument("query", help="Query to ask")
+    p_ask.add_argument("--agent", "-a", default="default", help="Requester agent ID")
+    p_ask.add_argument("--limit", "-n", type=int, default=10, help="Max results")
+    p_ask.add_argument("--privacy", "-p", choices=["full", "owner", "existence", "none"], 
+                       default="owner", help="Privacy level for suggestions")
+    p_ask.set_defaults(func=cmd_ask)
+    
+    # Librarian: who-knows
+    p_who = subparsers.add_parser("who-knows", help="Find agents who know about a topic")
+    p_who.add_argument("topic", help="Topic to search")
+    p_who.add_argument("--limit", "-n", type=int, default=5, help="Max agents to return")
+    p_who.set_defaults(func=cmd_who_knows)
+    
+    # Librarian: agents
+    p_agents = subparsers.add_parser("agents", help="List all agents and their capabilities")
+    p_agents.set_defaults(func=cmd_agents)
     
     # memory stats
     p_mem_stats = subparsers.add_parser("memory-stats", help="Agent memory stats")
