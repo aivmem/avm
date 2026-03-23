@@ -25,6 +25,7 @@ from avm.store import AVMStore
 from avm.node import AVMNode
 from avm.librarian import Librarian, LibrarianResponse, PrivacyPolicy, AgentInfo
 from avm.topic_index import TopicIndex
+from avm.embedding import EmbeddingStore, LocalEmbedding
 
 
 @dataclass
@@ -38,6 +39,7 @@ class BenchmarkConfig:
     ])
     query_count: int = 100
     seed: int = 42
+    use_embedding: bool = False  # Enable semantic search
 
 
 @dataclass
@@ -91,7 +93,22 @@ class LibrarianBenchmark:
         self.tmpdir = tempfile.mkdtemp()
         self.store = AVMStore(os.path.join(self.tmpdir, "bench.db"))
         self.topic_index = TopicIndex(self.store)
-        self.librarian = Librarian(self.store, privacy_policy=PrivacyPolicy("full"))
+        
+        # Embedding store (optional)
+        self.embedding_store = None
+        if config.use_embedding:
+            try:
+                backend = LocalEmbedding("all-MiniLM-L6-v2")
+                self.embedding_store = EmbeddingStore(self.store, backend)
+                print("Embedding enabled (all-MiniLM-L6-v2)")
+            except ImportError:
+                print("Warning: sentence-transformers not installed, using FTS only")
+        
+        self.librarian = Librarian(
+            self.store, 
+            privacy_policy=PrivacyPolicy("full"),
+            embedding_store=self.embedding_store,
+        )
         
         # Ground truth
         self.agent_topics: Dict[str, List[str]] = {}
@@ -128,6 +145,10 @@ class LibrarianBenchmark:
                 self.store.put_node(node)
                 self.topic_index.index_path(path, content, topic)
                 self.memory_topics[path] = topic
+                
+                # Generate embedding if enabled
+                if self.embedding_store:
+                    self.embedding_store.embeend_node(node)
         
         # Register agents
         for agent_id, topics in self.agent_topics.items():
@@ -220,6 +241,7 @@ class LibrarianBenchmark:
         """Generate test queries: (query, expected_topic, requester)"""
         queries = []
         
+        # Direct keyword queries (FTS-friendly)
         topic_keywords = {
             "trading": ["market analysis", "bullish", "RSI", "trading strategy"],
             "market": ["stock", "NVDA", "volume", "earnings"],
@@ -233,14 +255,32 @@ class LibrarianBenchmark:
             "meetings": ["meeting notes", "roadmap", "discussion", "team"],
         }
         
+        # Semantic queries (embedding-friendly, no exact keywords)
+        topic_semantic = {
+            "trading": ["how should I invest", "what's the best strategy", "market timing"],
+            "market": ["how are tech stocks doing", "latest equity news", "share price changes"],
+            "crypto": ["blockchain developments", "digital currency trends", "decentralized finance"],
+            "ai": ["machine learning progress", "artificial intelligence advances", "deep learning models"],
+            "research": ["academic work", "scientific studies", "published findings"],
+            "personal": ["things I need to do", "my schedule", "reminders"],
+            "code": ["programming improvements", "software changes", "development work"],
+            "bugs": ["problems in the system", "things that broke", "errors to fix"],
+            "features": ["new functionality", "product improvements", "user requests"],
+            "meetings": ["team discussions", "planning sessions", "group conversations"],
+        }
+        
         agents = list(self.agent_topics.keys())
         
-        for _ in range(self.config.query_count):
-            # Pick random topic and generate query
+        for i in range(self.config.query_count):
             topic = random.choice(self.config.topics)
-            keywords = topic_keywords[topic]
-            query = random.choice(keywords)
             requester = random.choice(agents)
+            
+            # Mix: 50% keyword queries, 50% semantic queries
+            if i % 2 == 0:
+                query = random.choice(topic_keywords[topic])
+            else:
+                query = random.choice(topic_semantic[topic])
+            
             queries.append((query, topic, requester))
         
         return queries
@@ -286,6 +326,7 @@ def main():
     parser.add_argument("--queries", "-q", type=int, default=100, help="Number of queries")
     parser.add_argument("--scale", action="store_true", help="Run scale benchmark")
     parser.add_argument("--max-agents", type=int, default=50, help="Max agents for scale test")
+    parser.add_argument("--embedding", "-e", action="store_true", help="Enable semantic search")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
     
@@ -299,6 +340,7 @@ def main():
         num_agents=args.agents,
         memories_per_agent=args.memories,
         query_count=args.queries,
+        use_embedding=args.embedding,
     )
     
     bench = LibrarianBenchmark(config)

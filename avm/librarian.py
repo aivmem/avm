@@ -29,6 +29,10 @@ import re
 from .node import AVMNode
 from .store import AVMStore
 from .config import AVMConfig
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .embedding import EmbeddingStore
 
 
 @dataclass
@@ -133,10 +137,12 @@ class Librarian:
     """
     
     def __init__(self, store: AVMStore, config: AVMConfig = None,
-                 privacy_policy: PrivacyPolicy = None):
+                 privacy_policy: PrivacyPolicy = None,
+                 embedding_store: "EmbeddingStore" = None):
         self.store = store
         self.config = config
         self.privacy = privacy_policy or PrivacyPolicy("owner")
+        self.embedding_store = embedding_store
         self._agent_registry: Dict[str, AgentInfo] = {}
         self._rebuild_registry()
     
@@ -289,17 +295,24 @@ class Librarian:
         return response
     
     def _privileged_search(self, query: str, limit: int) -> List[SearchMatch]:
-        """Search all content (privileged, ignores permissions)"""
-        matches = []
+        """
+        Hybrid search: FTS + semantic (if embedding_store available)
         
-        # Use FTS search
+        Combines results from both methods, deduplicates, and ranks by combined score.
+        """
+        seen_paths: Set[str] = set()
+        matches: List[SearchMatch] = []
+        
+        # 1. FTS search
         try:
-            results = self.store.search(query, limit=limit)
-            for node, score in results:
+            fts_results = self.store.search(query, limit=limit)
+            for node, score in fts_results:
+                if node.path in seen_paths:
+                    continue
+                seen_paths.add(node.path)
+                
                 owner = self._get_owner(node.path)
                 topic = self._extract_topic(node.path)
-                
-                # Get snippet
                 content = node.content or ""
                 snippet = content[:200] + "..." if len(content) > 200 else content
                 
@@ -313,7 +326,45 @@ class Librarian:
         except Exception:
             pass
         
-        return matches
+        # 2. Semantic search (if available)
+        if self.embedding_store:
+            try:
+                semantic_results = self.embedding_store.search(query, k=limit)
+                # Only use high-confidence semantic matches
+                min_similarity = 0.3  # Threshold for relevance
+                
+                for node, similarity in semantic_results:
+                    if similarity < min_similarity:
+                        continue  # Skip low-confidence matches
+                    
+                    if node.path in seen_paths:
+                        # Boost existing match score
+                        for m in matches:
+                            if m.path == node.path:
+                                # Combine FTS and semantic scores
+                                m.score = m.score + similarity * 5
+                                break
+                        continue
+                    seen_paths.add(node.path)
+                    
+                    owner = self._get_owner(node.path)
+                    topic = self._extract_topic(node.path)
+                    content = node.content or ""
+                    snippet = content[:200] + "..." if len(content) > 200 else content
+                    
+                    matches.append(SearchMatch(
+                        path=node.path,
+                        score=similarity * 5,  # Scale to complement FTS scores
+                        owner=owner,
+                        topic=topic,
+                        snippet=snippet,
+                    ))
+            except Exception:
+                pass
+        
+        # Sort by score and return top results
+        matches.sort(key=lambda m: m.score, reverse=True)
+        return matches[:limit]
     
     def who_knows(self, topic: str, limit: int = 10) -> List[AgentInfo]:
         """Find agents who might know about a topic"""
