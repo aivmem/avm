@@ -475,6 +475,119 @@ class MemoryConsolidator:
         return created
 
 
+def generate_digest(
+    store: AVMStore,
+    topic_index: TopicIndex = None,
+    agent_id: str = None,
+    days: int = 1,
+    max_items: int = 10,
+) -> str:
+    """
+    Generate a memory digest for recent activity.
+    
+    Returns a markdown summary of what happened recently.
+    
+    Args:
+        store: AVM store instance
+        topic_index: Optional topic index for better categorization
+        agent_id: Filter by agent (optional)
+        days: How many days back to look
+        max_items: Maximum items per category
+    
+    Returns:
+        Markdown formatted digest
+    """
+    from collections import defaultdict
+    
+    now = utcnow()
+    cutoff = now - timedelta(days=days)
+    
+    # Get recent memories
+    prefix = f"/memory/private/{agent_id}" if agent_id else "/memory"
+    memories = []
+    
+    for node in store.list_nodes(prefix=prefix, limit=1000):
+        if node and node.updated_at:
+            # Handle timezone
+            node_time = node.updated_at
+            if node_time.tzinfo is None:
+                from datetime import timezone
+                node_time = node_time.replace(tzinfo=timezone.utc)
+            cutoff_aware = cutoff if cutoff.tzinfo else cutoff.replace(tzinfo=timezone.utc)
+            
+            if node_time >= cutoff_aware:
+                memories.append(node)
+    
+    if not memories:
+        return f"# Memory Digest\n\n*No activity in the last {days} day(s).*"
+    
+    # Sort by time (most recent first)
+    memories.sort(key=lambda n: n.updated_at, reverse=True)
+    
+    # Categorize by topic if possible
+    categorized: Dict[str, List[AVMNode]] = defaultdict(list)
+    
+    if topic_index:
+        for mem in memories:
+            topics = topic_index.topics_for_path(mem.path)
+            if topics:
+                # Use first topic as category
+                categorized[topics[0]].append(mem)
+            else:
+                categorized["uncategorized"].append(mem)
+    else:
+        categorized["all"] = memories
+    
+    # Build digest
+    lines = [
+        f"# Memory Digest",
+        f"*{len(memories)} memories from the last {days} day(s)*",
+        f"*Generated: {now.strftime('%Y-%m-%d %H:%M UTC')}*",
+        "",
+    ]
+    
+    # Statistics
+    total_importance = sum(m.meta.get("importance", 0.5) for m in memories)
+    avg_importance = total_importance / len(memories) if memories else 0
+    
+    lines.extend([
+        "## Summary",
+        f"- Total memories: {len(memories)}",
+        f"- Categories: {len(categorized)}",
+        f"- Avg importance: {avg_importance:.2f}",
+        "",
+    ])
+    
+    # Category breakdown
+    lines.append("## By Topic")
+    
+    for topic in sorted(categorized.keys(), key=lambda t: len(categorized[t]), reverse=True):
+        mems = categorized[topic][:max_items]
+        lines.append(f"\n### {topic.title()} ({len(categorized[topic])})")
+        
+        for mem in mems:
+            importance = mem.meta.get("importance", 0.5)
+            # Get first line of content as preview
+            preview = (mem.content or "").split("\n")[0][:80]
+            if len(mem.content or "") > 80:
+                preview += "..."
+            lines.append(f"- [{importance:.1f}] {preview}")
+    
+    # High importance highlights
+    high_importance = [m for m in memories if m.meta.get("importance", 0.5) >= 0.8]
+    if high_importance:
+        lines.extend([
+            "",
+            "## 🔥 High Importance",
+        ])
+        for mem in high_importance[:5]:
+            importance = mem.meta.get("importance", 0.5)
+            preview = (mem.content or "").split("\n")[0][:100]
+            lines.append(f"- **[{importance:.1f}]** {preview}")
+    
+    return "\n".join(lines)
+
+
 def schedule_consolidation(store: AVMStore, interval_hours: int = 24):
     """
     Schedule periodic consolidation.

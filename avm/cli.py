@@ -1242,6 +1242,34 @@ def cmd_consolidate(args):
     return 0
 
 
+def cmd_digest(args):
+    """Generate memory digest"""
+    from .consolidation import generate_digest
+    from .topic_index import TopicIndex
+    
+    vfs = get_vfs(args.config, args.db)
+    agent_id = args.agent or vfs.agent_id
+    
+    topic_index = TopicIndex(vfs.store)
+    
+    digest = generate_digest(
+        store=vfs.store,
+        topic_index=topic_index,
+        agent_id=agent_id,
+        days=args.days,
+        max_items=args.max_items,
+    )
+    
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(digest)
+        print(f"Digest saved to {args.output}")
+    else:
+        print(digest)
+    
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="AI Virtual Filesystem (config-driven)",
@@ -1540,6 +1568,14 @@ def main():
     p_consolidate.add_argument("--agent", "-a", help="Agent ID (default: from config)")
     p_consolidate.add_argument("--dry-run", action="store_true", help="Preview without modifying")
     p_consolidate.set_defaults(func=cmd_consolidate)
+    
+    # digest - generate memory summary
+    p_digest = subparsers.add_parser("digest", help="Generate memory digest/summary")
+    p_digest.add_argument("--agent", "-a", help="Agent ID (default: from config)")
+    p_digest.add_argument("--days", "-d", type=int, default=1, help="Days to look back (default: 1)")
+    p_digest.add_argument("--max-items", "-n", type=int, default=10, help="Max items per category")
+    p_digest.add_argument("--output", "-o", help="Save to file instead of stdout")
+    p_digest.set_defaults(func=cmd_digest)
     
     args = parser.parse_args()
     
