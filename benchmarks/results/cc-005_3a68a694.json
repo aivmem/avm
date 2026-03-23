@@ -1,0 +1,158 @@
+{
+  "run_id": "3a68a694-6728-4f1f-b52b-d2f9c5f675dc",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T12:48:14.753197+00:00",
+  "end_time": "2026-03-23T12:49:23.584895+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T12:48:14.753573+00:00",
+      "agent": "bench_debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:48:18.843762+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 133
+      },
+      "tokens_used": 133,
+      "latency_ms": 4090.0070667266846
+    },
+    {
+      "timestamp": "2026-03-23T12:48:32.405794+00:00",
+      "agent": "bench_debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Cause: the bug report matches a regex-based search path, not the simplified snippet shown. In a regex search, special characters in the user query are treated as regex operators instead of literal tex"
+      },
+      "tokens_used": 636,
+      "latency_ms": 13561.992168426514
+    },
+    {
+      "timestamp": "2026-03-23T12:48:32.496118+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 84
+      },
+      "tokens_used": 84,
+      "latency_ms": 90.20805358886719
+    },
+    {
+      "timestamp": "2026-03-23T12:48:32.496348+00:00",
+      "agent": "bench_fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:48:36.747098+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 125
+      },
+      "tokens_used": 125,
+      "latency_ms": 4250.636100769043
+    },
+    {
+      "timestamp": "2026-03-23T12:48:58.529946+00:00",
+      "agent": "bench_fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "```python\nimport re\n\n\ndef search(items, query):\n    pattern = re.escape(query)\n    return [i for i in items if re.search(pattern, i[\"name\"])]\n```\n\nCouldn\u2019t write `search.py` in this session because th"
+      },
+      "tokens_used": 524,
+      "latency_ms": 21782.779216766357
+    },
+    {
+      "timestamp": "2026-03-23T12:48:58.638591+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 31
+      },
+      "tokens_used": 31,
+      "latency_ms": 108.48474502563477
+    },
+    {
+      "timestamp": "2026-03-23T12:48:58.638804+00:00",
+      "agent": "bench_reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:49:02.815648+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 136
+      },
+      "tokens_used": 136,
+      "latency_ms": 4176.747798919678
+    },
+    {
+      "timestamp": "2026-03-23T12:49:23.474292+00:00",
+      "agent": "bench_reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "No fix to approve.\n\nThe proposed change in [bench_fixer_output.md](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/bench_avm_ovkn4rtm/bench_fixer_output.md) is not a meaningful fix for the re"
+      },
+      "tokens_used": 673,
+      "latency_ms": 20658.590078353882
+    },
+    {
+      "timestamp": "2026-03-23T12:49:23.584372+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 45
+      },
+      "tokens_used": 45,
+      "latency_ms": 109.86709594726562
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 554,
+      "task_tokens": 1833,
+      "total": 2387
+    },
+    "summary": {
+      "total_tokens": 2387,
+      "total_latency_ms": 68829.31232452393,
+      "memory_operations": 0,
+      "event_count": 12
+    }
+  }
+}

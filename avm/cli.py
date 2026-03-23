@@ -394,19 +394,42 @@ def cmd_synthesize(args):
 
 def cmd_memory_recall(args):
     """Agent Memory retrieve"""
+    import io
+    import contextlib
     from .agent_memory import ScoringStrategy
+    
+    # Suppress stdout/stderr if quiet mode (for machine consumption)
+    if getattr(args, 'quiet', False):
+        # Redirect stderr to suppress progress bars and warnings
+        import warnings
+        warnings.filterwarnings('ignore')
+        # Suppress HF/embedding progress bars via environment
+        import os
+        os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '1'
+        os.environ['TRANSFORMERS_VERBOSITY'] = 'error'
     
     vfs = get_vfs(args.config, args.db)
     memory = vfs.agent_memory(args.agent)
     
     strategy = ScoringStrategy(args.strategy) if args.strategy else None
     
-    result = memory.recall(
-        args.query,
-        max_tokens=args.max_tokens,
-        strategy=strategy,
-        include_shared=not args.private_only,
-    )
+    # Capture and filter output if quiet
+    if getattr(args, 'quiet', False):
+        # Run with stderr suppressed
+        with contextlib.redirect_stderr(io.StringIO()):
+            result = memory.recall(
+                args.query,
+                max_tokens=args.max_tokens,
+                strategy=strategy,
+                include_shared=not args.private_only,
+            )
+    else:
+        result = memory.recall(
+            args.query,
+            max_tokens=args.max_tokens,
+            strategy=strategy,
+            include_shared=not args.private_only,
+        )
     
     print(result)
 
@@ -1387,6 +1410,8 @@ def main():
     p_mem_recall.add_argument("--strategy", "-s", 
                               choices=["importance", "recency", "relevance", "balanced"])
     p_mem_recall.add_argument("--private-only", action="store_true")
+    p_mem_recall.add_argument("--quiet", "-q", action="store_true", 
+                              help="Suppress progress bars and warnings (for machine consumption)")
     p_mem_recall.set_defaults(func=cmd_memory_recall)
     
     # memory remember

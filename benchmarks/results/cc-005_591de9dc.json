@@ -1,0 +1,136 @@
+{
+  "run_id": "591de9dc-95e4-4078-b47d-d401b8379d4e",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T12:47:28.688401+00:00",
+  "end_time": "2026-03-23T12:47:52.751035+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T12:47:28.688887+00:00",
+      "agent": "bench_debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:47:32.802085+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 133
+      },
+      "tokens_used": 133,
+      "latency_ms": 4113.148927688599
+    },
+    {
+      "timestamp": "2026-03-23T12:47:32.802311+00:00",
+      "agent": "bench_debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 0.1881122589111328
+    },
+    {
+      "timestamp": "2026-03-23T12:47:32.802418+00:00",
+      "agent": "bench_fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:47:36.904211+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 125
+      },
+      "tokens_used": 125,
+      "latency_ms": 4101.761102676392
+    },
+    {
+      "timestamp": "2026-03-23T12:47:36.904380+00:00",
+      "agent": "bench_fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 0.13589859008789062
+    },
+    {
+      "timestamp": "2026-03-23T12:47:36.904491+00:00",
+      "agent": "bench_reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:47:40.984595+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 140
+      },
+      "tokens_used": 140,
+      "latency_ms": 4080.0700187683105
+    },
+    {
+      "timestamp": "2026-03-23T12:47:52.657859+00:00",
+      "agent": "bench_reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "No fix was provided to review.\n\nCurrent code:\n\n```python\ndef search(items, query):\n    return [i for i in items if query in i['name']]\n```\n\ndoes plain literal substring matching. In Python, `.` and `*"
+      },
+      "tokens_used": 626,
+      "latency_ms": 11673.22587966919
+    },
+    {
+      "timestamp": "2026-03-23T12:47:52.750403+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 87
+      },
+      "tokens_used": 87,
+      "latency_ms": 92.47493743896484
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 485,
+      "task_tokens": 626,
+      "total": 1111
+    },
+    "summary": {
+      "total_tokens": 1111,
+      "total_latency_ms": 24061.004877090454,
+      "memory_operations": 0,
+      "event_count": 10
+    }
+  }
+}

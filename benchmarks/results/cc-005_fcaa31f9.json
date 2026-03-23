@@ -1,0 +1,89 @@
+{
+  "run_id": "fcaa31f9-9c76-49b1-9345-8ccc310a60dd",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T12:49:29.717877+00:00",
+  "end_time": "2026-03-23T12:50:08.329919+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T12:49:29.718350+00:00",
+      "agent": "debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:49:39.854356+00:00",
+      "agent": "debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Cause: the function does a plain literal substring check:\n\n```python\nquery in i['name']\n```\n\nThat means special characters are not interpreted in any special way. `.` and `*` are matched as normal cha"
+      },
+      "tokens_used": 317,
+      "latency_ms": 10135.993719100952
+    },
+    {
+      "timestamp": "2026-03-23T12:49:39.854387+00:00",
+      "agent": "fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:49:54.925407+00:00",
+      "agent": "fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I couldn\u2019t write the file because the workspace is read-only in this session. The fix is:\n\n```python\nimport re\n\ndef search(items, query):\n    pattern = re.compile(re.escape(query))\n    return [i for i"
+      },
+      "tokens_used": 342,
+      "latency_ms": 15070.98412513733
+    },
+    {
+      "timestamp": "2026-03-23T12:49:54.925528+00:00",
+      "agent": "reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:50:08.328772+00:00",
+      "agent": "reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The proposed fix is not a real fix.\n\n`query in i[\"name\"]` already treats `.` and `*` literally, so replacing it with `re.compile(re.escape(query)).search(...)` preserves the same behavior with extra c"
+      },
+      "tokens_used": 455,
+      "latency_ms": 13403.154850006104
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 1114,
+      "total": 1114
+    },
+    "summary": {
+      "total_tokens": 1114,
+      "total_latency_ms": 38610.132694244385,
+      "memory_operations": 0,
+      "event_count": 6
+    }
+  }
+}
