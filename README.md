@@ -224,13 +224,17 @@ See [detailed benchmarks and ablation study](https://bkmashiro.moe/posts/project
 - **MCP Server** - Integrate with AI agents via MCP protocol
 - **Agent Memory** - Token-aware recall with scoring strategies
 - **Multi-Agent** - Permissions, quotas, audit logging
-- **Tell System** - Cross-agent messaging with priority levels (urgent/normal/low)
+- **Tell System** - Cross-agent messaging with priority levels (urgent/normal/low), webhook delivery
 - **Full-Text Search** - FTS5 (English recommended; Chinese lacks tokenizer support)
 - **Semantic Search** - Local embedding (all-MiniLM-L6-v2), zero API cost, auto-index on write
+- **FAISS Index** - High-performance vector search (21x faster than SQLite brute force)
+- **Hybrid Search** - Combines FTS + semantic for best precision/recall tradeoff
 - **TopicIndex** - O(1) recall for known topics, reduces hop count from 4 to 1
 - **Librarian** - Global knowledge router for multi-agent discovery (95% hop reduction)
 - **Gossip Protocol** - Decentralized agent discovery using bloom filter digests
 - **Memory Consolidation** - Sleep-like memory processing: decay, merge, summarize
+- **Subscriptions** - Path pattern monitoring with webhook push notifications
+- **Memory Digest** - Daily/on-demand summaries of recent activity
 
 ## Install
 
@@ -501,6 +505,73 @@ Access metadata via special suffixes:
 | `:search?q=` | Search results | - |
 | `:recall?q=` | Token-aware recall | - |
 | `:inbox` | Unread messages | Mark all read |
+
+## High-Performance Vector Search
+
+AVM supports multiple vector storage backends for semantic search:
+
+### SQLite (default)
+Brute-force cosine similarity, good for <5k documents:
+```python
+from avm.embedding import EmbeddingStore, LocalEmbedding
+store = EmbeddingStore(avm_store, LocalEmbedding())
+```
+
+### FAISS (recommended for scale)
+21x faster than SQLite, supports exact and approximate search:
+```python
+from avm.faiss_store import FAISSEmbeddingStore, get_faiss_store
+from avm.embedding import LocalEmbedding
+
+# Flat index (exact, <10k docs)
+store = FAISSEmbeddingStore(avm_store, LocalEmbedding(), index_type="flat")
+
+# HNSW index (approximate, >10k docs)
+store = FAISSEmbeddingStore(avm_store, LocalEmbedding(), index_type="hnsw")
+
+# Batch index documents
+store.add_nodes(nodes)
+store.save()
+
+# Search
+results = store.search("market analysis", k=5)
+```
+
+**Benchmark (2000 documents):**
+| Backend | Query Latency | Recall |
+|---------|--------------|--------|
+| SQLite | 58ms | 100% |
+| FAISS Flat | 2.7ms | 100% |
+| FAISS HNSW | 2.7ms | ~90% |
+
+## Subscriptions & Webhooks
+
+Monitor path patterns for changes:
+
+```bash
+# Subscribe with webhook
+avm subscribe "/memory/shared/market/*" -a trader -m realtime -w http://localhost:3000/hook
+
+# Subscribe with throttling (batches updates)
+avm subscribe "/memory/shared/*" -a analyst -m throttled -t 60
+
+# List subscriptions
+avm subscriptions --agent trader
+
+# Unsubscribe
+avm unsubscribe "/memory/shared/market/*" -a trader
+```
+
+Webhook payload:
+```json
+{
+  "event": "write",
+  "path": "/memory/shared/market/nvda.md",
+  "pattern": "/memory/shared/market/*",
+  "agent_id": "trader",
+  "timestamp": "2026-03-23T09:15:00Z"
+}
+```
 
 ## Cross-Agent Messaging (Tell)
 
