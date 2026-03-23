@@ -1,0 +1,559 @@
+{
+  "timestamp": "2026-03-23T14:59:48.644221+00:00",
+  "scenarios_run": 10,
+  "summary": {
+    "baseline_success": 9,
+    "avm_success": 7,
+    "baseline_tokens": 7262,
+    "avm_tokens": 4338,
+    "avm_overhead": 5298
+  },
+  "results": [
+    {
+      "scenario": "kr-008",
+      "name": "Customer Preference Recall",
+      "source": "knowledge_retrieval_extended.json",
+      "baseline": {
+        "scenario_id": "kr-008",
+        "scenario_name": "Customer Preference Recall",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "account_manager",
+            "role": "Has historical customer notes",
+            "success": true,
+            "tokens": 85,
+            "avm_tokens": 0,
+            "output_preview": "I notice you've mentioned I'm \"account_manager (Has historical customer notes)\" but haven't provided a specific task or question. \n\nCould you please clarify what you'd like me to help with? Are you lo"
+          },
+          {
+            "id": "support_agent",
+            "role": "Handling current customer request",
+            "success": true,
+            "tokens": 131,
+            "avm_tokens": 0,
+            "output_preview": "I notice this message appears to be attempting to simulate a multi-agent conversation or role-play scenario where I'm being assigned a \"support_agent\" role and receiving a message supposedly from an \""
+          }
+        ],
+        "total_tokens": 216,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-008",
+        "scenario_name": "Customer Preference Recall",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "account_manager",
+            "role": "Has historical customer notes",
+            "success": true,
+            "tokens": 123,
+            "avm_tokens": 263,
+            "output_preview": "Based on my role as **account_manager** with historical customer notes, here's what I can provide from the AVM recall context:\n\n## Historical Customer Notes Summary\n\n**Deployment Notes:**\n- Deployment"
+          },
+          {
+            "id": "support_agent",
+            "role": "Handling current customer request",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 405,
+            "output_preview": ""
+          }
+        ],
+        "total_tokens": 123,
+        "avm_overhead": 668,
+        "success": false
+      }
+    },
+    {
+      "scenario": "co-008",
+      "name": "Contradiction Resolution",
+      "source": "context_overflow.json",
+      "baseline": {
+        "scenario_id": "co-008",
+        "scenario_name": "Contradiction Resolution",
+        "use_avm": false,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "co-008",
+        "scenario_name": "Contradiction Resolution",
+        "use_avm": true,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "scenario": "co-002",
+      "name": "Multi-Session Project",
+      "source": "context_overflow.json",
+      "baseline": {
+        "scenario_id": "co-002",
+        "scenario_name": "Multi-Session Project",
+        "use_avm": false,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "co-002",
+        "scenario_name": "Multi-Session Project",
+        "use_avm": true,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "scenario": "cc-005",
+      "name": "Bug Fix Collaboration",
+      "source": "collaborative_coding.json",
+      "baseline": {
+        "scenario_id": "cc-005",
+        "scenario_name": "Bug Fix Collaboration",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "debugger",
+            "role": "Analyze error logs and reproduce issue",
+            "success": true,
+            "tokens": 488,
+            "avm_tokens": 0,
+            "output_preview": "Looking at this bug report, I need to analyze the code and understand the issue.\n\n## Analysis\n\nThe reported bug is: \"search function returns wrong results when query contains special characters\"\n\nLook"
+          },
+          {
+            "id": "fixer",
+            "role": "Implement the fix",
+            "success": true,
+            "tokens": 504,
+            "avm_tokens": 0,
+            "output_preview": "Looking at the code and the bug report, I need to analyze what's happening.\n\n## Analysis\n\nThe current code:\n```python\ndef search(items, query):\n    return [i for i in items if query in i['name']]\n```\n"
+          },
+          {
+            "id": "reviewer",
+            "role": "Review fix and suggest improvements",
+            "success": true,
+            "tokens": 454,
+            "avm_tokens": 0,
+            "output_preview": "## Review of the Fix\n\nThe fixer's analysis is correct. Let me complete the review:\n\n### The Bug Report vs. The Code\n\n**The bug report claims**: \"special chars like '.' or '*' cause regex issues\"\n\n**Th"
+          }
+        ],
+        "total_tokens": 1446,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-005",
+        "scenario_name": "Bug Fix Collaboration",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "debugger",
+            "role": "Analyze error logs and reproduce issue",
+            "success": true,
+            "tokens": 430,
+            "avm_tokens": 286,
+            "output_preview": "I'll analyze this bug report about special characters causing issues in the search function.\n\n## Diagnosis\n\nLooking at the code:\n```python\ndef search(items, query):\n    return [i for i in items if que"
+          },
+          {
+            "id": "fixer",
+            "role": "Implement the fix",
+            "success": true,
+            "tokens": 95,
+            "avm_tokens": 240,
+            "output_preview": "## Conclusion\n\n**The code is correct.** The `in` operator handles special characters properly:\n- `.` matches only literal dots\n- `*` matches only literal asterisks\n\n**No fix is needed.** The bug repor"
+          },
+          {
+            "id": "reviewer",
+            "role": "Review fix and suggest improvements",
+            "success": true,
+            "tokens": 388,
+            "avm_tokens": 276,
+            "output_preview": "## Review Assessment\n\nI've reviewed the analysis from the debugger and fixer agents, and I agree with their conclusions.\n\n### Verification\n\nThe code:\n```python\ndef search(items, query):\n    return [i "
+          }
+        ],
+        "total_tokens": 913,
+        "avm_overhead": 802,
+        "success": true
+      }
+    },
+    {
+      "scenario": "cc-003",
+      "name": "Data Pipeline",
+      "source": "collaborative_coding.json",
+      "baseline": {
+        "scenario_id": "cc-003",
+        "scenario_name": "Data Pipeline",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "data_engineer",
+            "role": "Design pipeline architecture",
+            "success": true,
+            "tokens": 587,
+            "avm_tokens": 0,
+            "output_preview": "## Data Pipeline Architecture Summary\n\nThe pipeline is **fully implemented** with a clean, modular architecture. Here's the design:\n\n### Architecture Overview\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+          },
+          {
+            "id": "transformer",
+            "role": "Implement data transformations",
+            "success": true,
+            "tokens": 326,
+            "avm_tokens": 0,
+            "output_preview": "The transformation pipeline is fully functional. Here's a summary of what's implemented:\n\n## Data Pipeline Summary\n\nThe pipeline at `/Users/yuzhe/.openclaw/workspace/vfs/benchmarks/pipeline/` is compl"
+          },
+          {
+            "id": "validator",
+            "role": "Implement data validation and tests",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 0,
+            "output_preview": ""
+          }
+        ],
+        "total_tokens": 913,
+        "avm_overhead": 0,
+        "success": false
+      },
+      "avm": {
+        "scenario_id": "cc-003",
+        "scenario_name": "Data Pipeline",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "data_engineer",
+            "role": "Design pipeline architecture",
+            "success": true,
+            "tokens": 925,
+            "avm_tokens": 295,
+            "output_preview": "I now have a complete picture of the existing pipeline architecture. Let me provide a comprehensive design document for this data pipeline.\n\n---\n\n## Data Pipeline Architecture Design\n\n### Overview\n\nTh"
+          },
+          {
+            "id": "transformer",
+            "role": "Implement data transformations",
+            "success": true,
+            "tokens": 153,
+            "avm_tokens": 252,
+            "output_preview": "The pipeline successfully:\n1. Read 33 JSON records from `core_benchmark.json`\n2. Validated all records against the schema (33/33 valid)\n3. Transformed data - added derived fields like `duration_s`, `e"
+          },
+          {
+            "id": "validator",
+            "role": "Implement data validation and tests",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 288,
+            "output_preview": ""
+          }
+        ],
+        "total_tokens": 1078,
+        "avm_overhead": 835,
+        "success": false
+      }
+    },
+    {
+      "scenario": "cc-002",
+      "name": "CLI Tool with Config",
+      "source": "collaborative_coding.json",
+      "baseline": {
+        "scenario_id": "cc-002",
+        "scenario_name": "CLI Tool with Config",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "designer",
+            "role": "Design CLI interface and config schema",
+            "success": true,
+            "tokens": 943,
+            "avm_tokens": 0,
+            "output_preview": "I'll design the CLI interface and config schema for the `fileorg` tool.\n\n## CLI Interface Design\n\n### Command Structure\n\n```\nfileorg [OPTIONS] [COMMAND]\n```\n\n### Commands\n\n| Command | Description |\n|-"
+          },
+          {
+            "id": "coder",
+            "role": "Implement CLI logic",
+            "success": true,
+            "tokens": 239,
+            "avm_tokens": 0,
+            "output_preview": "The CLI implementation is complete and working. Here's a summary of what's implemented:\n\n## CLI Implementation Summary\n\n**Commands:**\n| Command | Description |\n|---------|-------------|\n| `run` | Exec"
+          },
+          {
+            "id": "documenter",
+            "role": "Write usage documentation",
+            "success": true,
+            "tokens": 119,
+            "avm_tokens": 0,
+            "output_preview": "The README.md already exists and is comprehensive. Let me check if there's anything missing or if updates are needed based on the implementation.\n\nThe existing documentation in `fileorg/README.md` is "
+          }
+        ],
+        "total_tokens": 1301,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-002",
+        "scenario_name": "CLI Tool with Config",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "designer",
+            "role": "Design CLI interface and config schema",
+            "success": true,
+            "tokens": 372,
+            "avm_tokens": 270,
+            "output_preview": "The CLI interface and config schema are already fully implemented. Here's the design summary:\n\n## CLI Interface Design\n\n```\nfileorg [OPTIONS] [COMMAND]\n\nCOMMANDS:\n  run       Execute file organization"
+          },
+          {
+            "id": "coder",
+            "role": "Implement CLI logic",
+            "success": true,
+            "tokens": 225,
+            "avm_tokens": 278,
+            "output_preview": "The CLI implementation is complete and fully functional. Here's a summary:\n\n## fileorg CLI - Implementation Complete\n\n**Commands:**\n- `fileorg run` - Organizes files (default command)\n- `fileorg init`"
+          },
+          {
+            "id": "documenter",
+            "role": "Write usage documentation",
+            "success": true,
+            "tokens": 36,
+            "avm_tokens": 291,
+            "output_preview": "Documentation updated. Added:\n- **Behavior** section explaining how files/collisions/directories are handled\n- **Troubleshooting** section for common error messages and solutions\n"
+          }
+        ],
+        "total_tokens": 633,
+        "avm_overhead": 839,
+        "success": true
+      }
+    },
+    {
+      "scenario": "is-006",
+      "name": "Breaking News Propagation",
+      "source": "information_sync_extended.json",
+      "baseline": {
+        "scenario_id": "is-006",
+        "scenario_name": "Breaking News Propagation",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "alerter",
+            "role": "Discovers critical issue",
+            "success": true,
+            "tokens": 455,
+            "avm_tokens": 0,
+            "output_preview": "I have identified several **critical issues** in the benchmark suite:\n\n## Critical Issues Discovered\n\n### 1. **SECURITY: Multi-Agent Isolation is BROKEN** (Severity: CRITICAL)\nIn `results/core_benchma"
+          },
+          {
+            "id": "responder_1",
+            "role": "First responder",
+            "success": true,
+            "tokens": 479,
+            "avm_tokens": 0,
+            "output_preview": "I've analyzed the benchmark code and results. Here's my first responder assessment:\n\n## Critical Issue #1: Multi-Agent Isolation FAILURE CONFIRMED\n\n**Evidence from `core_benchmark.json`:**\n- Lines 169"
+          },
+          {
+            "id": "responder_2",
+            "role": "Second responder",
+            "success": true,
+            "tokens": 584,
+            "avm_tokens": 0,
+            "output_preview": "## Second Responder Assessment: Isolation Failure Root Cause Analysis\n\n### CONFIRMED: Multi-Agent Isolation Failure\n\nThe isolation test at lines 169-190 in `run_core_benchmark.py` reveals the **root c"
+          },
+          {
+            "id": "manager",
+            "role": "Escalation point",
+            "success": true,
+            "tokens": 564,
+            "avm_tokens": 0,
+            "output_preview": "## Manager Decision: Issue Triage and Response\n\nBased on my direct examination of the evidence, here is my assessment:\n\n---\n\n### **CONFIRMED CRITICAL: Multi-Agent Isolation Failure**\n\n**Status**: VALI"
+          }
+        ],
+        "total_tokens": 2082,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-006",
+        "scenario_name": "Breaking News Propagation",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "alerter",
+            "role": "Discovers critical issue",
+            "success": true,
+            "tokens": 253,
+            "avm_tokens": 276,
+            "output_preview": "Based on my investigation as the **alerter** agent:\n\n## Critical Issues Discovered\n\n**1. Database Replication Lag (from AVM memory recall)**\n- Date: 2026-03-23 (today)\n- Status: Under investigation\n- "
+          },
+          {
+            "id": "responder_1",
+            "role": "First responder",
+            "success": true,
+            "tokens": 313,
+            "avm_tokens": 230,
+            "output_preview": "I'm responder_1 (First responder). Let me analyze the AVM recall data and provide my response.\n\n## My Assessment\n\n### Immediate Priorities\n\n**1. Database Replication Lag (TODAY - 2026-03-23)**\n- This "
+          },
+          {
+            "id": "responder_2",
+            "role": "Second responder",
+            "success": true,
+            "tokens": 367,
+            "avm_tokens": 323,
+            "output_preview": "As **responder_2** (Second responder), I'm reviewing the AVM recall data and building on responder_1's assessment.\n\n## My Additional Analysis\n\n### Memory Leak Issue (High Priority)\n\nFrom the AVM recal"
+          },
+          {
+            "id": "manager",
+            "role": "Escalation point",
+            "success": true,
+            "tokens": 347,
+            "avm_tokens": 275,
+            "output_preview": "As the **manager** (Escalation point), I'm synthesizing the reports from the alerter and responders.\n\n## Executive Summary\n\n### Critical Issues Requiring Immediate Action\n\n| Priority | Issue | Status "
+          }
+        ],
+        "total_tokens": 1280,
+        "avm_overhead": 1104,
+        "success": true
+      }
+    },
+    {
+      "scenario": "co-007",
+      "name": "Partial Information Synthesis",
+      "source": "context_overflow.json",
+      "baseline": {
+        "scenario_id": "co-007",
+        "scenario_name": "Partial Information Synthesis",
+        "use_avm": false,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "co-007",
+        "scenario_name": "Partial Information Synthesis",
+        "use_avm": true,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "scenario": "cc-007",
+      "name": "Legacy Code Refactoring",
+      "source": "collaborative_coding_extended.json",
+      "baseline": {
+        "scenario_id": "cc-007",
+        "scenario_name": "Legacy Code Refactoring",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "analyst",
+            "role": "Identify refactoring targets",
+            "success": true,
+            "tokens": 311,
+            "avm_tokens": 0,
+            "output_preview": "## Refactoring Targets Identified\n\nThis code has several issues that need refactoring:\n\n### 1. **Python 2 Syntax (Critical)**\n- **Line 5**: `self.users.has_key(name)` - `has_key()` was removed in Pyth"
+          },
+          {
+            "id": "refactorer",
+            "role": "Apply refactoring",
+            "success": true,
+            "tokens": 186,
+            "avm_tokens": 0,
+            "output_preview": "Looking at the code and the analyst's findings, I need to apply the refactoring to fix the Python 2 syntax issues.\n\nHere are the fixes needed:\n\n```python\nclass UserManager:\n    def __init__(self):\n   "
+          },
+          {
+            "id": "tester",
+            "role": "Write tests",
+            "success": true,
+            "tokens": 460,
+            "avm_tokens": 0,
+            "output_preview": "I'll write tests for the `UserManager` class. Based on the code provided (and the refactoring context), I'll write tests for the Python 3 version.\n\n```python\nimport pytest\nfrom user_manager import Use"
+          },
+          {
+            "id": "reviewer",
+            "role": "Review changes",
+            "success": true,
+            "tokens": 347,
+            "avm_tokens": 0,
+            "output_preview": "Looking at the code provided, here's my review of the changes needed:\n\n## Code Review\n\n### Critical Issues (Python 2 \u2192 Python 3)\n\n1. **Line 5: `self.users.has_key(name)`** - `has_key()` was removed in"
+          }
+        ],
+        "total_tokens": 1304,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-007",
+        "scenario_name": "Legacy Code Refactoring",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "analyst",
+            "role": "Identify refactoring targets",
+            "success": true,
+            "tokens": 311,
+            "avm_tokens": 172,
+            "output_preview": "## Refactoring Targets Identified\n\nThis Python 2 code has several issues that need modernization:\n\n### Critical (Python 2 \u2192 3 incompatibility)\n\n1. **Line 5: `dict.has_key()`** - Removed in Python 3\n  "
+          },
+          {
+            "id": "refactorer",
+            "role": "Apply refactoring",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 374,
+            "output_preview": ""
+          },
+          {
+            "id": "tester",
+            "role": "Write tests",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 263,
+            "output_preview": ""
+          },
+          {
+            "id": "reviewer",
+            "role": "Review changes",
+            "success": false,
+            "tokens": 0,
+            "avm_tokens": 241,
+            "output_preview": ""
+          }
+        ],
+        "total_tokens": 311,
+        "avm_overhead": 1050,
+        "success": false
+      }
+    },
+    {
+      "scenario": "co-006",
+      "name": "Temporal Reasoning",
+      "source": "context_overflow.json",
+      "baseline": {
+        "scenario_id": "co-006",
+        "scenario_name": "Temporal Reasoning",
+        "use_avm": false,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "co-006",
+        "scenario_name": "Temporal Reasoning",
+        "use_avm": true,
+        "agents": [],
+        "total_tokens": 0,
+        "avm_overhead": 0,
+        "success": true
+      }
+    }
+  ]
+}

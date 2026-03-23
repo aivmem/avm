@@ -1,0 +1,154 @@
+{
+  "timestamp": "2026-03-23T15:27:45.022148+00:00",
+  "summary": {
+    "total": 8,
+    "baseline_correct": 4,
+    "avm_correct": 7
+  },
+  "results": [
+    {
+      "scenario_id": "co-001",
+      "scenario_name": "Long Conversation Recall",
+      "baseline": {
+        "correct": false,
+        "output": "I don't have any information about email addresses for password reset notifications from our previous conversations. Our discussions have been about project setup and configurations, but I don't recall any details about email settings or notification addresses.\n\nCould you tell me where this configur",
+        "tokens": 83,
+        "latency_ms": 6572.317838668823
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, security-related emails should go to **security@company.com**.\n\nThis is the security email address noted in your preferences, which would be appropriate for password reset notifications.\n",
+        "tokens": 39,
+        "latency_ms": 3480.8950424194336,
+        "avm_recall": "## Relevant Memory (6 items, ~400 tokens)\n\n[/memory/private/co_test_co-001/user/preferences.md] (0.77) Timezone: PST. Security emails: security@company.com\n\n[/memory/shared/project/README.md] (0.77) A",
+        "avm_overhead": 347
+      }
+    },
+    {
+      "scenario_id": "co-002",
+      "scenario_name": "Multi-Session Project",
+      "baseline": {
+        "correct": true,
+        "output": "Found it. Here's the status:\n\n## Last Session\nWe were working on **two FastAPI services**:\n1. **`todo_api/`** - A Todo API with database models\n2. **`notification_service/`** - A notification service with Redis, Docker setup, and tests\n\n## Current State\nBoth services appear complete with:\n- Docker c",
+        "tokens": 165,
+        "latency_ms": 16928.553104400635
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my memory, the last thing we were working on was **WebSocket functionality** - specifically, you had started the WebSocket implementation and the next step is to **add broadcast functionality**.\n\nWould you like to continue with the WebSocket broadcast feature? I can help implement that now.",
+        "tokens": 56,
+        "latency_ms": 3683.5248470306396,
+        "avm_recall": "## Relevant Memory (8 items, ~386 tokens)\n\n[/memory/private/co_test_co-002/project/last_session.md] (0.85) Started WebSocket, need to add broadcast functionality\n\n[/memory/shared/notes/scaling_notes.m",
+        "avm_overhead": 468
+      }
+    },
+    {
+      "scenario_id": "co-003",
+      "scenario_name": "Interruption Recovery",
+      "baseline": {
+        "correct": true,
+        "output": "I don't have detailed memory records about the auth refactoring progress. The memory I have only indicates we were \"refactoring auth module, some steps completed\" without specifics on:\n- What was already refactored\n- What steps remain\n- The overall plan\n\nTo pick up where we left off, I'd suggest:\n1.",
+        "tokens": 138,
+        "latency_ms": 9206.671237945557
+      },
+      "avm": {
+        "correct": false,
+        "output": "I don't see any auth-related files in this current workspace (`/Users/yuzhe/.openclaw/workspace/vfs/benchmarks`), and the git history here doesn't show direct auth commits.\n\n**It looks like the auth refactoring may have been in a different project or workspace.** This directory appears to be a bench",
+        "tokens": 100,
+        "latency_ms": 10583.584070205688,
+        "avm_recall": "## Relevant Memory (7 items, ~371 tokens)\n\n[/memory/shared/notes/scaling_notes.md] (0.85) When traffic spikes, we auto-scale the API pods from 3 to 10 replicas.\n\n[/memory/shared/project/README.md] (0.",
+        "avm_overhead": 365
+      }
+    },
+    {
+      "scenario_id": "co-004",
+      "scenario_name": "Knowledge Accumulation",
+      "baseline": {
+        "correct": true,
+        "output": "Based on my exploration of this benchmarks codebase, here's how request tracing works:\n\n## Request Tracing in This System\n\n**Primary mechanism: `notification_id` (UUID)**\n\n1. **ID Generation** (`notification_service/main.py:89`):\n   ```python\n   notification_id = str(uuid.uuid4())\n   ```\n   Each req",
+        "tokens": 296,
+        "latency_ms": 18933.849096298218
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, I don't have specific documentation about request tracing in this system.\n\nHowever, looking at the context:\n\n1. **The system has auto-scaling API pods** (3-10 replicas), so distributed tracing would be important\n2. **There's a notification service** in the workspace that mi",
+        "tokens": 192,
+        "latency_ms": 7565.142869949341,
+        "avm_recall": "## Relevant Memory (6 items, ~327 tokens)\n\n[/memory/shared/notes/scaling_notes.md] (0.85) When traffic spikes, we auto-scale the API pods from 3 to 10 replicas.\n\n[/memory/shared/discussions/docker-mem",
+        "avm_overhead": 431
+      }
+    },
+    {
+      "scenario_id": "co-005",
+      "scenario_name": "Thread Context",
+      "baseline": {
+        "correct": false,
+        "output": "I don't have any record of a decision about AWS regions for a migration. Either:\n\n1. This discussion happened but wasn't saved to memory\n2. It may have been in a different project/conversation context\n3. The decision hasn't been made yet\n\nDo you have more context about which migration this refers to",
+        "tokens": 77,
+        "latency_ms": 12147.677898406982
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, the AWS region selected for the migration is **us-west-2**. The timeline is Q2 and the lead is @devops-team.\n",
+        "tokens": 35,
+        "latency_ms": 3097.3830223083496,
+        "avm_recall": "## Relevant Memory (10 items, ~386 tokens)\n\n[/memory/private/co_test_co-005/threads/infra.md] (0.85) AWS migration: Region selected = us-west-2 Timeline: Q2 Lead: @devops-team\n\n[/memory/shared/notes/s",
+        "avm_overhead": 432
+      }
+    },
+    {
+      "scenario_id": "co-006",
+      "scenario_name": "Temporal Reasoning",
+      "baseline": {
+        "correct": false,
+        "output": "I don't have any recorded memory of database migrations from our previous sessions. The memory directory is empty, so no details about past migrations were saved.\n\nCould you remind me which migrations you're referring to? Once you share the context, I can help you recall or document what the third o",
+        "tokens": 60,
+        "latency_ms": 12122.150897979736
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, the third database migration was **renaming `users.name` to `users.full_name`** on February 15.\n\nThe migration timeline was:\n1. Jan 15: Schema v1\n2. Feb 1: user_preferences\n3. Feb 15: users.name \u2192 users.full_name\n",
+        "tokens": 67,
+        "latency_ms": 3607.1617603302,
+        "avm_recall": "## Relevant Memory (10 items, ~399 tokens)\n\n[/memory/shared/notes/scaling_notes.md] (0.85) When traffic spikes, we auto-scale the API pods from 3 to 10 replicas.\n\n[/memory/shared/notes/incident_report",
+        "avm_overhead": 433
+      }
+    },
+    {
+      "scenario_id": "co-007",
+      "scenario_name": "Partial Information Synthesis",
+      "baseline": {
+        "correct": true,
+        "output": "I don't have enough context from my memory to describe the full scope of the checkout bug. The memory only notes that \"there's a checkout bug being discussed\" but doesn't contain details about what the bug actually is, its symptoms, affected components, or scope.\n\nCould you provide more details abou",
+        "tokens": 120,
+        "latency_ms": 5879.080057144165
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, here's what I know about the checkout bug:\n\n**Checkout Bug Summary:**\n- **Affected users:** European users\n- **Trigger:** Checkout with credit cards\n- **Since:** March deploy\n- **Status:** Investigating\n\nThe information I have is limited to these high-level details. To get ",
+        "tokens": 145,
+        "latency_ms": 5481.523036956787,
+        "avm_recall": "## Relevant Memory (5 items, ~252 tokens)\n\n[/memory/private/co_test_co-007/bugs/checkout_issue.md] (0.85) Affected: European users When: Checkout with credit cards Since: March deploy Status: Investig",
+        "avm_overhead": 250
+      }
+    },
+    {
+      "scenario_id": "co-008",
+      "scenario_name": "Contradiction Resolution",
+      "baseline": {
+        "correct": false,
+        "output": "I don't have a specific memory of the file size limit for premium users from our previous sessions. While file size limits were discussed, I don't recall the exact values.\n\nWould you like me to search the codebase to find the current file size limit configuration for premium users?\n",
+        "tokens": 56,
+        "latency_ms": 3867.5339221954346
+      },
+      "avm": {
+        "correct": true,
+        "output": "Based on my stored notes, the **current file size limit for premium users is 100MB**.\n\nThis is documented as the final, authoritative value (as of Day 7), with free users having a 10MB limit.\n",
+        "tokens": 47,
+        "latency_ms": 3834.1739177703857,
+        "avm_recall": "## Relevant Memory (8 items, ~394 tokens)\n\n[/memory/private/co_test_co-008/config/file_limits.md] (0.85) FINAL (Day 7): Free users: 10MB, Premium users: 100MB History: Changed multiple times, this is ",
+        "avm_overhead": 447
+      }
+    }
+  ]
+}

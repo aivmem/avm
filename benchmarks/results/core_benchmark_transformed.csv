@@ -1,0 +1,55 @@
+cost_estimate_usd,details,details_agents,details_avg_ms,details_budgets,details_delta_items,details_found_other_secret,details_output,details_queries,details_total_items,details_total_writes,duration_ms,duration_s,efficiency_score,feature,items,operation,scale,scale_factor,success,throughput_per_s,tokens_used
+0.0,,,76.69956684112549,,,,,,,10,766.9956684112549,0.7669956684112549,130.38,remember_recall,10,write_all,small,1,True,13.037883278681187,0
+0.0,,,,,,,,"[{""query"": ""memory item"", ""duration_ms"": 4161.893129348755, ""success"": true}, {""query"": ""data analysis"", ""duration_ms"": 4174.00336265564, ""success"": true}, {""query"": ""system error"", ""duration_ms"": 4135.0579261779785, ""success"": true}, {""query"": ""random nonexistent xyz"", ""duration_ms"": 4125.305891036987, ""success"": true}]",,,16596.26030921936,16.59626030921936,6.03,remember_recall,10,recall,small,1,True,0.6025453815306161,0
+0.0,,,75.94503402709961,,,,,,,100,7594.503402709961,7.594503402709961,13.17,remember_recall,100,write_all,medium,10,True,13.1674178938832,0
+0.0,,,,,,,,"[{""query"": ""memory item"", ""duration_ms"": 4188.135862350464, ""success"": true}, {""query"": ""data analysis"", ""duration_ms"": 4127.877950668335, ""success"": true}, {""query"": ""system error"", ""duration_ms"": 4238.7800216674805, ""success"": true}, {""query"": ""random nonexistent xyz"", ""duration_ms"": 4217.741012573242, ""success"": true}]",,,16772.53484725952,16.77253484725952,5.96,remember_recall,100,recall,medium,10,True,5.962128021235805,0
+0.0,,,79.8275990486145,,,,,,,500,39913.79952430725,39.91379952430725,2.51,remember_recall,500,write_all,large,50,True,12.526995824977854,0
+0.0,,,,,,,,"[{""query"": ""memory item"", ""duration_ms"": 81.28786087036133, ""success"": true}, {""query"": ""data analysis"", ""duration_ms"": 88.00315856933594, ""success"": true}, {""query"": ""system error"", ""duration_ms"": 78.68099212646484, ""success"": true}, {""query"": ""random nonexistent xyz"", ""duration_ms"": 4399.141073226929, ""success"": true}]",,,4647.113084793091,4.647113084793091,21.52,remember_recall,500,recall,large,50,True,107.5936803939993,0
+0.0,,10,,,,,,,,,805.1111698150635,0.8051111698150635,124.21,multi_agent,10,private_write,small,1,True,12.420644967945272,0
+0.0,,,,,,,,,,,76.70092582702637,0.07670092582702637,1303.77,multi_agent,1,shared_write,small,1,True,13.037652273652734,0
+0.0,,,,,,True,,,,,4186.105012893677,4.186105012893677,23.89,multi_agent,10,isolation_check,small,1,False,2.3888555039108836,0
+0.0,,100,,,,,,,,,7995.9876537323,7.9959876537323,12.51,multi_agent,100,private_write,medium,10,True,12.5062724369419,0
+0.0,,,,,,,,,,,77.06475257873535,0.07706475257873535,1297.61,multi_agent,1,shared_write,medium,10,True,12.976100831288884,0
+0.0,,,,,,True,,,,,4200.057029724121,4.200057029724121,23.81,multi_agent,100,isolation_check,medium,10,False,23.809200516157862,0
+0.0,,500,,,,,,,,,40751.70397758484,40.75170397758484,2.45,multi_agent,500,private_write,large,50,True,12.269425599357051,0
+0.0,,,,,,,,,,,74.92303848266602,0.07492303848266602,1334.7,multi_agent,1,shared_write,large,50,True,13.347029435163087,0
+0.0,,,,,,True,,,,,4286.06390953064,4.28606390953064,23.33,multi_agent,500,isolation_check,large,50,False,116.65714990581048,0
+0.0,,,,,,,,"[{""query"": ""machine is slow"", ""found_related"": false, ""duration_ms"": 4244.064092636108}, {""query"": ""customer cannot sign in"", ""found_related"": false, ""duration_ms"": 4341.369152069092}, {""query"": ""too many API calls"", ""found_related"": true, ""duration_ms"": 4180.559158325195}]",,,12765.992403030396,12.765992403030396,7.83,semantic_search,10,semantic_recall,small,1,True,0.7833311883865917,0
+0.0,,,,,,,,"[{""query"": ""machine is slow"", ""found_related"": false, ""duration_ms"": 4220.178842544556}, {""query"": ""customer cannot sign in"", ""found_related"": false, ""duration_ms"": 4328.9690017700195}, {""query"": ""too many API calls"", ""found_related"": true, ""duration_ms"": 4289.206027984619}]",,,12838.353872299194,12.838353872299194,7.79,semantic_search,100,semantic_recall,medium,10,True,7.78916058824068,0
+0.0,,,,,,,,"[{""query"": ""machine is slow"", ""found_related"": false, ""duration_ms"": 4295.614957809448}, {""query"": ""customer cannot sign in"", ""found_related"": false, ""duration_ms"": 4257.295846939087}, {""query"": ""too many API calls"", ""found_related"": true, ""duration_ms"": 4263.469219207764}]",,,12816.380023956299,12.816380023956299,7.8,semantic_search,500,semantic_recall,large,50,True,39.012576021107606,0
+0.0,,,,"[{""budget"": 100, ""output_tokens"": 63, ""within_budget"": true, ""duration_ms"": 4302.41322517395}, {""budget"": 300, ""output_tokens"": 112, ""within_budget"": true, ""duration_ms"": 4264.2669677734375}, {""budget"": 500, ""output_tokens"": 215, ""within_budget"": true, ""duration_ms"": 4232.477903366089}, {""budget"": 1000, ""output_tokens"": 218, ""within_budget"": true, ""duration_ms"": 4261.879920959473}]",,,,,,,17061.03801727295,17.06103801727295,5.86,token_aware,10,budget_recall,small,1,True,0.5861308080947826,0
+0.0,,,,"[{""budget"": 100, ""output_tokens"": 62, ""within_budget"": true, ""duration_ms"": 4281.558036804199}, {""budget"": 300, ""output_tokens"": 117, ""within_budget"": true, ""duration_ms"": 4315.741777420044}, {""budget"": 500, ""output_tokens"": 228, ""within_budget"": true, ""duration_ms"": 4192.18111038208}, {""budget"": 1000, ""output_tokens"": 498, ""within_budget"": true, ""duration_ms"": 4337.892055511475}]",,,,,,,17127.372980117798,17.127372980117798,5.84,token_aware,100,budget_recall,medium,10,True,5.838607013234567,0
+0.0,,,,"[{""budget"": 100, ""output_tokens"": 62, ""within_budget"": true, ""duration_ms"": 4293.506145477295}, {""budget"": 300, ""output_tokens"": 110, ""within_budget"": true, ""duration_ms"": 83.83488655090332}, {""budget"": 500, ""output_tokens"": 237, ""within_budget"": true, ""duration_ms"": 79.74028587341309}, {""budget"": 1000, ""output_tokens"": 507, ""within_budget"": true, ""duration_ms"": 82.55720138549805}]",,,,,,,4539.638519287109,4.539638519287109,22.03,token_aware,500,budget_recall,large,50,True,110.14092815445544,0
+0.0,,,,,,,,,,,50.781965255737305,0.050781965255737305,1969.2,delta_sync,10,full_read,small,1,True,196.92030329350453,0
+0.0022400000000000002,,,,,1,,,,10,,4249.60994720459,4.24960994720459,0.1,delta_sync,1,delta_read,small,1,True,0.2353157142475638,224
+0.0,,,,,,,,,,,52.03700065612793,0.05203700065612793,1921.71,delta_sync,100,full_read,medium,10,True,1921.7095285875955,0
+0.00236,,,,,10,,,,100,,4252.985000610352,4.252985000610352,0.1,delta_sync,10,delta_read,medium,10,True,2.3512897408678577,236
+0.0,,,,,,,,,,,52.32715606689453,0.05232715606689453,1911.05,delta_sync,500,full_read,large,50,True,9555.268001968325,0
+0.0022,,,,,50,,,,500,,4342.678070068359,4.342678070068359,0.1,delta_sync,50,delta_read,large,50,True,11.513632646320692,220
+0.0,,,,,,,"Agent Memory: discover_oxbl
+================
+Private memories: 10
+Shared accessible: 100
+Private prefix: /memory/private/discover_oxbl
+Max tokens: 4000
+Strategy: balanced
+",,,,73.11725616455078,0.07311725616455078,1367.67,discovery,10,memory_stats,small,1,True,136.76662014634337,0
+0.0,,,,,,,,,,,52.16813087463379,0.05216813087463379,1916.88,discovery,10,list_private,small,1,False,191.68791046072144,0
+0.0,,,,,,,"Agent Memory: discover_qkiy
+================
+Private memories: 100
+Shared accessible: 100
+Private prefix: /memory/private/discover_qkiy
+Max tokens: 4000
+Strategy: balanced
+",,,,71.25687599182129,0.07125687599182129,1403.37,discovery,100,memory_stats,medium,10,True,1403.3733391775102,0
+0.0,,,,,,,,,,,51.38111114501953,0.05138111114501953,1946.24,discovery,100,list_private,medium,10,False,1946.2405107931029,0
+0.0,,,,,,,"Agent Memory: discover_nxqu
+================
+Private memories: 100
+Shared accessible: 100
+Private prefix: /memory/private/discover_nxqu
+Max tokens: 4000
+Strategy: balanced
+",,,,72.85904884338379,0.07285904884338379,1372.51,discovery,500,memory_stats,large,50,True,6862.565569237515,0
+0.0,,,,,,,,,,,53.25603485107422,0.05325603485107422,1877.72,discovery,500,list_private,large,50,False,9388.607345593897,0
