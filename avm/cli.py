@@ -226,16 +226,46 @@ def cmd_stats(args):
     if args.json:
         print(json.dumps(stats, indent=2))
     else:
-        print(f"VFS Statistics")
-        print(f"==============")
-        print(f"Database: {stats['db_path']}")
-        print(f"Nodes: {stats['nodes']}")
-        print(f"Edges: {stats['edges']}")
-        print(f"Diffs: {stats['diffs']}")
-        print()
-        print("By prefix:")
-        for prefix, count in stats.get("by_prefix", {}).items():
-            print(f"  {prefix}: {count}")
+        try:
+            from rich.console import Console
+            from rich.table import Table
+            from rich.panel import Panel
+            
+            console = Console()
+            
+            # Main stats panel
+            main_table = Table(show_header=False, box=None)
+            main_table.add_column("Key", style="cyan")
+            main_table.add_column("Value", style="green")
+            main_table.add_row("📁 Database", stats['db_path'])
+            main_table.add_row("📄 Nodes", str(stats['nodes']))
+            main_table.add_row("🔗 Edges", str(stats['edges']))
+            main_table.add_row("📝 Diffs", str(stats['diffs']))
+            
+            console.print(Panel(main_table, title="[bold]AVM Statistics[/bold]", border_style="blue"))
+            
+            # By prefix table
+            if stats.get("by_prefix"):
+                prefix_table = Table(title="By Prefix", show_header=True)
+                prefix_table.add_column("Prefix", style="cyan")
+                prefix_table.add_column("Count", style="green", justify="right")
+                
+                for prefix, count in sorted(stats["by_prefix"].items()):
+                    prefix_table.add_row(prefix, str(count))
+                
+                console.print(prefix_table)
+        except ImportError:
+            # Fallback to plain text
+            print(f"VFS Statistics")
+            print(f"==============")
+            print(f"Database: {stats['db_path']}")
+            print(f"Nodes: {stats['nodes']}")
+            print(f"Edges: {stats['edges']}")
+            print(f"Diffs: {stats['diffs']}")
+            print()
+            print("By prefix:")
+            for prefix, count in stats.get("by_prefix", {}).items():
+                print(f"  {prefix}: {count}")
     
     return 0
 

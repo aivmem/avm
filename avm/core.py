@@ -397,6 +397,23 @@ class AVM:
         except Exception:
             pass  # non-fatal
 
+        # Auto-index for TopicIndex (async)
+        try:
+            if not hasattr(self, '_topic_index'):
+                from .topic_index import TopicIndex
+                self._topic_index = TopicIndex(self.store)
+            
+            title = meta.get("title", "") if meta else ""
+            import threading
+            def _async_topic_index():
+                try:
+                    self._topic_index.index_path(path, content, title)
+                except Exception:
+                    pass
+            threading.Thread(target=_async_topic_index, daemon=True).start()
+        except Exception:
+            pass  # non-fatal
+
         return result
     
     def delete(self, path: str, hard: bool = False) -> bool:
