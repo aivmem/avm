@@ -22,6 +22,7 @@ from typing import List, Dict, Set, Optional, Tuple
 from collections import defaultdict
 
 from .store import AVMStore
+from .utils import utcnow
 from .node import AVMNode
 
 
@@ -44,15 +45,15 @@ class TopicEntry:
     """A topic with associated paths"""
     topic: str
     paths: Set[str] = field(default_factory=set)
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    last_updated: datetime = field(default_factory=utcnow)
     
     def add_path(self, path: str):
         self.paths.add(path)
-        self.last_updated = datetime.utcnow()
+        self.last_updated = utcnow()
     
     def remove_path(self, path: str):
         self.paths.discard(path)
-        self.last_updated = datetime.utcnow()
+        self.last_updated = utcnow()
 
 
 class TopicIndex:
@@ -94,7 +95,7 @@ class TopicIndex:
                 entry = TopicEntry(
                     topic=topic,
                     paths=paths,
-                    last_updated=datetime.fromtimestamp(updated_at / 1000) if updated_at else datetime.utcnow()
+                    last_updated=datetime.fromtimestamp(updated_at / 1000) if updated_at else utcnow()
                 )
                 self._cache[topic] = entry
                 for path in paths:

@@ -3,6 +3,7 @@
 import pytest
 import tempfile
 from pathlib import Path
+from datetime import datetime, timezone
 
 from avm.store import AVMStore
 from avm.topic_index import TopicIndex
@@ -50,16 +51,16 @@ class TestAgentDigest:
             version=1,
             timestamp=None,
         )
-        digest.timestamp = digest.timestamp or __import__('datetime').datetime.utcnow()
+        digest.timestamp = digest.timestamp or datetime.now(timezone.utc)
         assert digest.agent_id == "test"
         assert digest.version == 1
     
     def test_add_and_query_topic(self):
-        from datetime import datetime
+        from datetime import datetime, timezone
         digest = AgentDigest(
             agent_id="test",
             version=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         digest.add_topic("bitcoin")
@@ -72,11 +73,11 @@ class TestAgentDigest:
     
     def test_bloom_false_positive_rate(self):
         """Test that bloom filter has acceptable FP rate"""
-        from datetime import datetime
+        from datetime import datetime, timezone
         digest = AgentDigest(
             agent_id="test",
             version=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         # Add 100 topics
@@ -95,11 +96,11 @@ class TestAgentDigest:
         assert fp_rate < 0.15, f"False positive rate too high: {fp_rate:.2%}"
     
     def test_serialization(self):
-        from datetime import datetime
+        from datetime import datetime, timezone
         digest = AgentDigest(
             agent_id="alice",
             version=5,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             memory_count=42,
             capabilities=["trading", "analysis"],
         )
@@ -119,11 +120,11 @@ class TestGossipMessage:
     """Test GossipMessage"""
     
     def test_create_message(self):
-        from datetime import datetime
+        from datetime import datetime, timezone
         digest = AgentDigest(
             agent_id="alice",
             version=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         message = GossipMessage(
@@ -136,11 +137,11 @@ class TestGossipMessage:
         assert message.ttl == 3
     
     def test_message_serialization(self):
-        from datetime import datetime
+        from datetime import datetime, timezone
         digest = AgentDigest(
             agent_id="alice",
             version=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         message = GossipMessage(from_agent="alice", digest=digest)
@@ -206,7 +207,7 @@ class TestGossipStore:
         bob_digest = AgentDigest(
             agent_id="bob",
             version=1,
-            timestamp=__import__('datetime').datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         bob_digest.add_topic("stocks")
         alice_store._digest_cache["bob"] = bob_digest

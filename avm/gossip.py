@@ -34,6 +34,7 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from .utils import utcnow
 from typing import List, Dict, Set, Optional, Tuple
 from collections import defaultdict
 import json
@@ -186,7 +187,7 @@ class GossipStore:
         digest = AgentDigest(
             agent_id=self.agent_id,
             version=self._version,
-            timestamp=datetime.utcnow(),
+            timestamp=utcnow(),
         )
         
         # Add topics from TopicIndex
@@ -266,7 +267,7 @@ class GossipStore:
         for agent_id, digest in self._digest_cache.items():
             if digest.might_have_topic(topic.lower()):
                 # Confidence based on recency
-                age_hours = (datetime.utcnow() - digest.timestamp).total_seconds() / 3600
+                age_hours = (utcnow() - digest.timestamp).total_seconds() / 3600
                 confidence = max(0.1, 1.0 - (age_hours / 168))  # Decay over a week
                 results.append((agent_id, confidence))
         
@@ -295,7 +296,7 @@ class GossipStore:
                     "version": d.version,
                     "topics": len(d.topics),
                     "memories": d.memory_count,
-                    "age_hours": (datetime.utcnow() - d.timestamp).total_seconds() / 3600,
+                    "age_hours": (utcnow() - d.timestamp).total_seconds() / 3600,
                 }
                 for d in self._digest_cache.values()
             ],

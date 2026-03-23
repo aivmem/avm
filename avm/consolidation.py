@@ -169,7 +169,7 @@ class MemoryConsolidator:
         if memories is None:
             memories = self._get_memories("/memory")
         
-        now = datetime.utcnow()
+        now = utcnow()
         min_age = timedelta(days=self.config.min_age_for_merge_days)
         merged_count = 0
         
@@ -257,7 +257,7 @@ class MemoryConsolidator:
                 topic_memories[topic].append(mem)
         
         summaries_created = 0
-        now = datetime.utcnow()
+        now = utcnow()
         
         for topic, mems in topic_memories.items():
             if len(mems) < self.config.min_cluster_size:
