@@ -1,0 +1,117 @@
+{
+  "category": "collaborative_coding",
+  "description": "Multi-agent coding tasks where agents must collaborate to complete software development tasks",
+  "scenarios": [
+    {
+      "id": "cc-001",
+      "name": "REST API Implementation",
+      "description": "Implement a simple REST API for a todo list with CRUD operations",
+      "agents": [
+        {"id": "architect", "role": "Design API structure and data models"},
+        {"id": "implementer", "role": "Write the actual code"},
+        {"id": "tester", "role": "Write unit tests"}
+      ],
+      "initial_context": "Create a REST API for a todo list application using Python/FastAPI. The API should support creating, reading, updating, and deleting todo items. Each todo has: id, title, description, completed status, created_at.",
+      "assertions": [
+        "API has POST /todos endpoint that creates a todo",
+        "API has GET /todos endpoint that lists all todos",
+        "API has GET /todos/{id} endpoint that gets a single todo",
+        "API has PUT /todos/{id} endpoint that updates a todo",
+        "API has DELETE /todos/{id} endpoint that deletes a todo",
+        "Unit tests cover all CRUD operations",
+        "Tests pass when run"
+      ],
+      "expected_interactions": 6,
+      "time_limit_seconds": 600,
+      "difficulty": "easy"
+    },
+    {
+      "id": "cc-002",
+      "name": "CLI Tool with Config",
+      "description": "Build a CLI tool that reads configuration and performs operations",
+      "agents": [
+        {"id": "designer", "role": "Design CLI interface and config schema"},
+        {"id": "coder", "role": "Implement CLI logic"},
+        {"id": "documenter", "role": "Write usage documentation"}
+      ],
+      "initial_context": "Create a CLI tool called 'fileorg' that organizes files in a directory by extension. It should read a config file (YAML) that specifies: source directory, rules (extension -> target folder mapping), dry-run mode.",
+      "assertions": [
+        "CLI accepts --config flag for config file path",
+        "CLI accepts --dry-run flag for preview mode",
+        "Config file uses YAML format",
+        "Files are correctly moved based on extension rules",
+        "Dry-run mode shows planned moves without executing",
+        "README.md explains usage clearly"
+      ],
+      "expected_interactions": 5,
+      "time_limit_seconds": 480,
+      "difficulty": "medium"
+    },
+    {
+      "id": "cc-003",
+      "name": "Data Pipeline",
+      "description": "Build a data processing pipeline with multiple stages",
+      "agents": [
+        {"id": "data_engineer", "role": "Design pipeline architecture"},
+        {"id": "transformer", "role": "Implement data transformations"},
+        {"id": "validator", "role": "Implement data validation and tests"}
+      ],
+      "initial_context": "Create a data pipeline that: 1) Reads JSON records from a file, 2) Validates schema, 3) Transforms data (normalize fields, calculate derived values), 4) Outputs to CSV. Handle errors gracefully.",
+      "assertions": [
+        "Pipeline reads JSON input correctly",
+        "Invalid records are logged but don't crash pipeline",
+        "Transformations are applied correctly",
+        "Output CSV has correct headers and data",
+        "Pipeline can be run with different input files",
+        "Error handling covers common cases"
+      ],
+      "expected_interactions": 7,
+      "time_limit_seconds": 720,
+      "difficulty": "medium"
+    },
+    {
+      "id": "cc-004",
+      "name": "Microservice with Queue",
+      "description": "Implement a microservice that processes messages from a queue",
+      "agents": [
+        {"id": "architect", "role": "Design service and message schema"},
+        {"id": "backend", "role": "Implement service logic"},
+        {"id": "ops", "role": "Write deployment config and tests"}
+      ],
+      "initial_context": "Create a notification service that: receives messages from a Redis queue, processes notification requests (email type for now, but extensible), logs all operations, provides health check endpoint.",
+      "assertions": [
+        "Service connects to Redis and consumes messages",
+        "Message schema is well-defined and validated",
+        "Email notifications are processed (mocked)",
+        "Health check endpoint returns service status",
+        "Dockerfile is provided",
+        "Integration tests verify queue processing"
+      ],
+      "expected_interactions": 8,
+      "time_limit_seconds": 900,
+      "difficulty": "hard"
+    },
+    {
+      "id": "cc-005",
+      "name": "Bug Fix Collaboration",
+      "description": "Multiple agents collaborate to diagnose and fix a bug",
+      "agents": [
+        {"id": "debugger", "role": "Analyze error logs and reproduce issue"},
+        {"id": "fixer", "role": "Implement the fix"},
+        {"id": "reviewer", "role": "Review fix and suggest improvements"}
+      ],
+      "initial_context": "A user reports: 'The search function returns wrong results when query contains special characters'. The codebase is a simple search module. Agents must diagnose, fix, and verify the issue.",
+      "provided_code": "def search(items, query):\n    return [i for i in items if query in i['name']]\n\n# Bug: special chars like '.' or '*' cause regex issues in some paths",
+      "assertions": [
+        "Bug is correctly identified",
+        "Fix handles special characters properly",
+        "Fix doesn't break normal search",
+        "Test case for special characters is added",
+        "Code review feedback is addressed"
+      ],
+      "expected_interactions": 5,
+      "time_limit_seconds": 360,
+      "difficulty": "easy"
+    }
+  ]
+}

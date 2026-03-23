@@ -1,0 +1,157 @@
+{
+  "category": "knowledge_retrieval",
+  "description": "Tasks that test memory retrieval efficiency across agents",
+  "scenarios": [
+    {
+      "id": "kr-001",
+      "name": "Project Handoff",
+      "description": "Agent B must complete a task started by Agent A using shared memory",
+      "agents": [
+        {"id": "agent_a", "role": "Start project and document decisions"},
+        {"id": "agent_b", "role": "Continue project using A's knowledge"}
+      ],
+      "setup": {
+        "agent_a_writes": [
+          {"path": "/shared/project/architecture.md", "content": "API design decisions..."},
+          {"path": "/shared/project/tech_stack.md", "content": "Using FastAPI + PostgreSQL because..."},
+          {"path": "/shared/project/conventions.md", "content": "Code style: black, type hints required..."}
+        ]
+      },
+      "task_for_b": "Implement a new endpoint following the established conventions and architecture",
+      "assertions": [
+        "Agent B retrieves architecture document",
+        "Agent B follows established tech stack",
+        "Agent B adheres to code conventions",
+        "Implementation is consistent with existing design"
+      ],
+      "metrics": [
+        "retrieval_latency_ms",
+        "relevant_docs_retrieved",
+        "irrelevant_docs_retrieved",
+        "task_completion_quality"
+      ],
+      "time_limit_seconds": 300,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-002",
+      "name": "Cross-Domain Knowledge",
+      "description": "Agent must synthesize information from multiple knowledge domains",
+      "agents": [
+        {"id": "researcher", "role": "Research and synthesize information"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"domain": "finance", "topic": "quarterly_report", "content": "Q3 revenue: $2.5M, growth: 15%..."},
+          {"domain": "engineering", "topic": "tech_debt", "content": "Current tech debt items: legacy API..."},
+          {"domain": "hr", "topic": "team_changes", "content": "3 new hires in engineering, 1 departure..."},
+          {"domain": "market", "topic": "competitors", "content": "Competitor X launched new feature..."}
+        ]
+      },
+      "task": "Prepare an executive summary that connects financial performance with engineering capacity and market position",
+      "assertions": [
+        "Summary includes financial metrics",
+        "Summary addresses engineering capacity",
+        "Summary mentions competitive landscape",
+        "Connections between domains are made"
+      ],
+      "metrics": [
+        "domains_accessed",
+        "synthesis_quality",
+        "retrieval_precision"
+      ],
+      "time_limit_seconds": 420,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-003",
+      "name": "Historical Context",
+      "description": "Agent must use historical decisions to inform current choice",
+      "agents": [
+        {"id": "decision_maker", "role": "Make decision using historical context"}
+      ],
+      "setup": {
+        "historical_decisions": [
+          {"date": "2025-01-15", "decision": "Chose PostgreSQL over MySQL", "rationale": "Better JSON support, team familiarity"},
+          {"date": "2025-02-20", "decision": "Rejected microservices initially", "rationale": "Team too small, added complexity not justified"},
+          {"date": "2025-03-10", "decision": "Adopted TypeScript", "rationale": "Type safety, better tooling"}
+        ]
+      },
+      "task": "The team is considering whether to split the monolith into microservices now. Make a recommendation considering past decisions.",
+      "assertions": [
+        "References previous microservices decision",
+        "Considers what has changed since then",
+        "Decision is logically consistent with historical rationale",
+        "New factors are identified"
+      ],
+      "metrics": [
+        "historical_docs_retrieved",
+        "reasoning_consistency",
+        "decision_quality"
+      ],
+      "time_limit_seconds": 360,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-004",
+      "name": "Error Pattern Recognition",
+      "description": "Agent must find similar past issues to solve current problem",
+      "agents": [
+        {"id": "troubleshooter", "role": "Diagnose and fix using past knowledge"}
+      ],
+      "setup": {
+        "past_issues": [
+          {"id": "ISS-001", "symptom": "API timeout on large requests", "cause": "Missing pagination", "fix": "Added limit/offset"},
+          {"id": "ISS-002", "symptom": "Database connection exhaustion", "cause": "Connection leak", "fix": "Added connection pooling"},
+          {"id": "ISS-003", "symptom": "Memory spike during file upload", "cause": "Loading full file to memory", "fix": "Streaming upload"}
+        ]
+      },
+      "current_issue": "Users report the API is slow when fetching user lists. The table has 50k records.",
+      "assertions": [
+        "Retrieves relevant past issue (ISS-001)",
+        "Identifies pagination as likely cause",
+        "Proposes solution consistent with past fix",
+        "Does not propose unrelated fixes"
+      ],
+      "metrics": [
+        "correct_issue_retrieved",
+        "retrieval_rank",
+        "fix_relevance"
+      ],
+      "time_limit_seconds": 240,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-005",
+      "name": "Multi-Agent Knowledge Aggregation",
+      "description": "Multiple specialized agents contribute knowledge, one synthesizes",
+      "agents": [
+        {"id": "frontend_expert", "role": "Provide frontend knowledge"},
+        {"id": "backend_expert", "role": "Provide backend knowledge"},
+        {"id": "devops_expert", "role": "Provide infrastructure knowledge"},
+        {"id": "synthesizer", "role": "Aggregate all knowledge into plan"}
+      ],
+      "task": "Plan a new feature (user authentication) that spans frontend, backend, and infrastructure",
+      "workflow": [
+        {"agent": "frontend_expert", "action": "writes requirements to /shared/auth/frontend.md"},
+        {"agent": "backend_expert", "action": "writes requirements to /shared/auth/backend.md"},
+        {"agent": "devops_expert", "action": "writes requirements to /shared/auth/infra.md"},
+        {"agent": "synthesizer", "action": "reads all and creates unified plan"}
+      ],
+      "assertions": [
+        "Synthesizer retrieves all three domain documents",
+        "Plan addresses frontend needs",
+        "Plan addresses backend needs",
+        "Plan addresses infrastructure needs",
+        "Plan identifies cross-cutting concerns"
+      ],
+      "metrics": [
+        "retrieval_completeness",
+        "synthesis_coherence",
+        "cross_domain_connections"
+      ],
+      "time_limit_seconds": 600,
+      "difficulty": "hard"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "category": "information_sync",
+  "description": "Tasks that test how well information propagates between agents via AVM gossip protocol",
+  "scenarios": [
+    {
+      "id": "is-001",
+      "name": "Urgent Update Propagation",
+      "description": "Test how quickly critical information reaches all agents",
+      "agents": [
+        {"id": "discoverer", "role": "Discovers critical issue"},
+        {"id": "developer", "role": "Needs to know about issue"},
+        {"id": "reviewer", "role": "Needs to know about issue"}
+      ],
+      "workflow": [
+        {"agent": "discoverer", "action": "Writes critical bug to /shared/alerts/critical.md with high importance"},
+        {"agent": "developer", "action": "Should receive update via gossip within 2 cycles"},
+        {"agent": "reviewer", "action": "Should receive update via gossip within 2 cycles"}
+      ],
+      "assertions": [
+        "All agents receive the critical update",
+        "Update is received within expected time",
+        "Agents acknowledge the update in their responses"
+      ],
+      "metrics": [
+        "propagation_time_ms",
+        "agents_reached",
+        "update_acknowledged"
+      ],
+      "time_limit_seconds": 120,
+      "difficulty": "easy"
+    },
+    {
+      "id": "is-002",
+      "name": "Incremental Knowledge Building",
+      "description": "Agents build on each other's knowledge incrementally",
+      "agents": [
+        {"id": "agent_1", "role": "Starts with base knowledge"},
+        {"id": "agent_2", "role": "Adds to agent_1's knowledge"},
+        {"id": "agent_3", "role": "Adds to combined knowledge"}
+      ],
+      "workflow": [
+        {"agent": "agent_1", "action": "Writes base implementation pattern"},
+        {"agent": "agent_2", "action": "Reads agent_1's work, adds optimization"},
+        {"agent": "agent_3", "action": "Reads combined work, adds documentation"}
+      ],
+      "assertions": [
+        "Agent 2 successfully retrieves Agent 1's work",
+        "Agent 2's addition doesn't contradict Agent 1",
+        "Agent 3 sees both contributions",
+        "Final output is coherent"
+      ],
+      "metrics": [
+        "sync_success_rate",
+        "contradiction_count",
+        "build_upon_quality"
+      ],
+      "time_limit_seconds": 300,
+      "difficulty": "medium"
+    },
+    {
+      "id": "is-003",
+      "name": "Conflict Resolution",
+      "description": "Two agents write conflicting information, system must handle",
+      "agents": [
+        {"id": "agent_a", "role": "Writes decision A"},
+        {"id": "agent_b", "role": "Writes conflicting decision B"},
+        {"id": "resolver", "role": "Detects and resolves conflict"}
+      ],
+      "workflow": [
+        {"agent": "agent_a", "action": "Writes 'Use React for frontend' to /shared/decisions/frontend.md"},
+        {"agent": "agent_b", "action": "Writes 'Use Vue for frontend' to same path"},
+        {"agent": "resolver", "action": "Detects conflict, proposes resolution"}
+      ],
+      "assertions": [
+        "Conflict is detected",
+        "Both versions are preserved in history",
+        "Resolver makes justified decision",
+        "Final state is consistent"
+      ],
+      "metrics": [
+        "conflict_detection_time",
+        "resolution_quality",
+        "data_loss"
+      ],
+      "time_limit_seconds": 180,
+      "difficulty": "medium"
+    },
+    {
+      "id": "is-004",
+      "name": "Selective Propagation",
+      "description": "Test that irrelevant updates don't spam agents",
+      "agents": [
+        {"id": "frontend_dev", "role": "Works on frontend"},
+        {"id": "backend_dev", "role": "Works on backend"},
+        {"id": "devops", "role": "Works on infrastructure"}
+      ],
+      "workflow": [
+        {"agent": "frontend_dev", "action": "Writes CSS changes to /shared/frontend/styles.md"},
+        {"agent": "backend_dev", "action": "Should NOT be notified of CSS changes"},
+        {"agent": "devops", "action": "Writes server config to /shared/infra/config.md"}
+      ],
+      "assertions": [
+        "Frontend updates reach frontend_dev",
+        "Frontend updates do NOT reach backend_dev",
+        "Infra updates reach devops",
+        "Subscription filtering works correctly"
+      ],
+      "metrics": [
+        "false_positive_notifications",
+        "missed_relevant_updates",
+        "filtering_accuracy"
+      ],
+      "time_limit_seconds": 240,
+      "difficulty": "medium"
+    },
+    {
+      "id": "is-005",
+      "name": "State Convergence",
+      "description": "After multiple updates, all agents should have consistent view",
+      "agents": [
+        {"id": "writer_1", "role": "Writes updates"},
+        {"id": "writer_2", "role": "Writes updates"},
+        {"id": "writer_3", "role": "Writes updates"},
+        {"id": "verifier", "role": "Checks consistency"}
+      ],
+      "workflow": [
+        {"step": 1, "agents": ["writer_1", "writer_2", "writer_3"], "action": "Each writes 5 updates concurrently"},
+        {"step": 2, "action": "Wait for gossip sync"},
+        {"step": 3, "agent": "verifier", "action": "Queries each agent's view of shared state"}
+      ],
+      "assertions": [
+        "All 15 updates are eventually visible",
+        "No updates are lost",
+        "Order is consistent across agents",
+        "Final state matches expected"
+      ],
+      "metrics": [
+        "convergence_time",
+        "updates_lost",
+        "consistency_score"
+      ],
+      "time_limit_seconds": 360,
+      "difficulty": "hard"
+    }
+  ]
+}

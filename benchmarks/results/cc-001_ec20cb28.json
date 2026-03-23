@@ -1,0 +1,34 @@
+{
+  "run_id": "ec20cb28-bcd4-433e-9bc9-73cd94b4dbff",
+  "scenario_id": "cc-001",
+  "category": "unknown",
+  "start_time": "2026-03-23T11:08:37.756662+00:00",
+  "end_time": "2026-03-23T11:08:37.756842+00:00",
+  "config": {
+    "avm_enabled": true,
+    "gossip_enabled": false,
+    "dry_run": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T11:08:37.756837+00:00",
+      "agent": "system",
+      "action": "dry_run",
+      "details": {
+        "scenario": "cc-001"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    }
+  ],
+  "result": {
+    "success": true,
+    "dry_run": true,
+    "summary": {
+      "total_tokens": 0,
+      "total_latency_ms": 0,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  }
+}
