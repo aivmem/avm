@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-03-23T14:05:44.644970+00:00",
+  "results": {
+    "delta": {
+      "baseline": {
+        "tokens_read": 425,
+        "task_tokens": 623,
+        "total": 1048,
+        "found_issues": true,
+        "output_preview": "Current active issues in the last 24 hours:\n\n- `CRITICAL`: Database replication lag, logged on `2026-03-23`; status appears active because it is still marked \u201cinvestigating\u201d.\n- `URGENT`: API rate limi"
+      },
+      "avm": {
+        "tokens_read": 123,
+        "task_tokens": 421,
+        "total": 544,
+        "found_issues": true,
+        "output_preview": "- `CRITICAL`: Database replication lag detected on 2026-03-23, still marked as \u201cinvestigating\u201d.\n\nThe 2026-03-22 API rate limit incident is not clearly confirmed as still active from the provided logs,"
+      }
+    },
+    "digest": {
+      "baseline": {
+        "tokens_read": 471,
+        "task_tokens": 678,
+        "total": 1149,
+        "output_preview": "This project is a web application for task management, with user authentication, task CRUD, team collaboration, and notifications. The stack is React + TypeScript on the frontend, Python FastAPI on the backend, PostgreSQL for the database, Redis for caching, and RabbitMQ for queueing. The current pr"
+      },
+      "avm": {
+        "tokens_read": 191,
+        "task_tokens": 583,
+        "total": 774,
+        "output_preview": "This project is a web application for task management, with user authentication, task CRUD, team collaboration, and notifications. The stack is React + TypeScript on the frontend, Python FastAPI on the backend, with PostgreSQL, Redis, and RabbitMQ supporting data, caching, and queueing. The current "
+      }
+    },
+    "compact_recovery": {
+      "baseline": {
+        "tokens_recalled": 0,
+        "task_tokens": 234,
+        "total": 234,
+        "has_specific_answer": false,
+        "details_found": {
+          "file": true,
+          "line": false,
+          "fix": false
+        },
+        "output_preview": "I can\u2019t specify the exact file line and patch from the current workspace because `/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/tmpv8gfuh_8` is empty.\n\nI checked:\n- `pwd` -> `/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/tmpv8gfuh_8`\n- `ls -la` -> only `.` and `..`\n- no `connec"
+      },
+      "avm": {
+        "tokens_recalled": 286,
+        "task_tokens": 619,
+        "total": 905,
+        "has_specific_answer": false,
+        "details_found": {
+          "file": false,
+          "line": false,
+          "fix": true
+        },
+        "output_preview": "From the notes, the code change is:\n\n```python\nexcept TimeoutError:\n    if conn:\n        conn.close()\n    raise\n```\n\nThis belongs in the `get_connection()` method, inside the `except TimeoutError` block. The missing `conn.close()` guard is the leak fix.\n\nI can\u2019t truthfully give an exact file path an"
+      }
+    },
+    "semantic": {
+      "baseline": {
+        "tokens_read": 0,
+        "task_tokens": 484,
+        "total": 484,
+        "found_relevant": true,
+        "details": {
+          "ssl": true,
+          "jwt": true,
+          "session": true
+        },
+        "output_preview": "I can\u2019t base this on your actual notes because the workspace at [`/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/tmpv9p8i16b`](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/tmpv9p8i16b) is empty, so there are no note files to inspect.\n\nCommon login failure causes and fixes:\n\n- W"
+      },
+      "avm": {
+        "tokens_read": 159,
+        "task_tokens": 532,
+        "total": 691,
+        "found_relevant": true,
+        "details": {
+          "ssl": false,
+          "jwt": true,
+          "session": false
+        },
+        "output_preview": "A likely cause is that the client is sending the JWT without the required `Bearer ` prefix in the `Authorization` header.\n\nCorrect:\n```http\nAuthorization: Bearer <jwt>\n```\n\nWrong:\n```http\nAuthorization: <jwt>\n```\n\nPossible causes and solutions:\n- Missing `Bearer ` prefix\n  Solution: Update the clien"
+      }
+    }
+  }
+}
