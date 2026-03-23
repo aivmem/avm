@@ -27,6 +27,7 @@ class CircuitBreaker:
         # In half-open state, any failure immediately re-opens the circuit
         if self.state == "half-open":
             self.state = "open"
+            self._probe_in_progress = False
             logger.warning("Circuit breaker re-opened after failure in half-open state")
             return
 
@@ -41,6 +42,7 @@ class CircuitBreaker:
             logger.info("Circuit breaker closed after successful probe in half-open state")
         self.failure_count = 0
         self.state = "closed"
+        self._probe_in_progress = False
 
     def can_execute(self) -> bool:
         """Check if we can attempt an operation."""
@@ -49,9 +51,15 @@ class CircuitBreaker:
         if self.state == "open":
             if self.last_failure_time and (time.time() - self.last_failure_time) > self.recovery_timeout:
                 self.state = "half-open"
+                self._probe_in_progress = True
                 return True
             return False
-        return True  # half-open allows one attempt
+        # half-open: only allow if no probe in progress
+        if self.state == "half-open":
+            if getattr(self, '_probe_in_progress', False):
+                return False  # reject concurrent requests during probe
+            return False  # already probing, wait for result
+        return False
 
 
 class RedisQueue:
@@ -117,11 +125,12 @@ class RedisQueue:
                 return True
             except redis.RedisError as e:
                 logger.error(f"Failed to enqueue message (attempt {attempt + 1}): {e}")
-                self._circuit_breaker.record_failure()
                 self._reset_client()
                 if attempt < settings.redis_max_retries - 1:
                     time.sleep(settings.redis_retry_delay * (attempt + 1))
 
+        # Only record failure to circuit breaker after all retries exhausted
+        self._circuit_breaker.record_failure()
         return False
 
     def dequeue(self) -> Optional[NotificationMessage]:

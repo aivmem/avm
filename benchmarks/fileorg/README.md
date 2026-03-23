@@ -55,6 +55,7 @@ fileorg run [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `-n, --dry-run` | Show what would be done without making changes |
+| `-s, --source PATH` | Override source directory from config |
 | `-v, --verbose` | Enable verbose output |
 
 Examples:
@@ -62,6 +63,7 @@ Examples:
 fileorg run                      # Organize files using fileorg.yaml
 fileorg run -n                   # Preview changes
 fileorg run -v                   # Show all operations
+fileorg run -s ~/Downloads       # Override source directory
 fileorg -c ~/rules.yaml run      # Use custom config
 ```
 
@@ -269,3 +271,24 @@ stats = organize_files(source, ext_map, dry_run=True, verbose=True)
 
 print(f"Would move {stats['moved']} files")
 ```
+
+### API Reference
+
+| Function | Description |
+|----------|-------------|
+| `load_config(path)` | Load and validate YAML config file, returns dict |
+| `build_extension_map(rules)` | Convert rules list to `{ext: target}` dict |
+| `organize_files(source, ext_map, dry_run, verbose)` | Move files, returns stats dict |
+| `main(argv)` | CLI entry point, returns exit code |
+
+### Stats Dictionary
+
+The `organize_files` function returns:
+
+```python
+{"moved": int, "skipped": int, "errors": int}
+```
+
+## License
+
+MIT

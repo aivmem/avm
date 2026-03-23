@@ -51,3 +51,51 @@
 - **Status:** PROCESSED
 - **Processed By:** consumer
 - **Processed At:** 2026-03-23
+
+### Item 7
+- **ID:** HP-007
+- **Priority:** HIGH
+- **Description:** Critical auth token validation bypass in OAuth flow
+- **Status:** PROCESSED
+- **Processed By:** consumer
+- **Processed At:** 2026-03-23
+
+### Item 8
+- **ID:** HP-008
+- **Priority:** HIGH
+- **Description:** Database connection pool exhaustion under load
+- **Status:** PROCESSED
+- **Processed By:** consumer
+- **Processed At:** 2026-03-23
+
+### Item 9
+- **ID:** HP-009
+- **Priority:** HIGH
+- **Description:** Race condition in distributed lock acquisition
+- **Status:** PROCESSED
+- **Processed By:** consumer
+- **Processed At:** 2026-03-23
+
+### Item 10
+- **ID:** HP-010
+- **Priority:** HIGH
+- **Description:** Critical webhook delivery failures causing data sync lag
+- **Status:** PROCESSED
+- **Processed By:** day_agent
+- **Processed At:** 2026-03-23
+
+### Item 11
+- **ID:** HP-011
+- **Priority:** HIGH
+- **Description:** Emergency fix for S3 bucket permission misconfiguration
+- **Status:** PROCESSED
+- **Processed By:** day_agent
+- **Processed At:** 2026-03-23
+
+### Item 12
+- **ID:** HP-012
+- **Priority:** HIGH
+- **Description:** Auth feature external API dependency blocking sprint delivery
+- **Status:** PROCESSED
+- **Processed By:** consumer
+- **Processed At:** 2026-03-23

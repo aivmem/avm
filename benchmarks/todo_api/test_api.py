@@ -124,6 +124,57 @@ class TestGetTodos:
         assert "completed" in todo
         assert "created_at" in todo
 
+    def test_get_todos_filter_completed_true(self, client):
+        client.post("/todos", json={"title": "Done", "completed": True})
+        client.post("/todos", json={"title": "Not done", "completed": False})
+        response = client.get("/todos", params={"completed": True})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["completed"] is True
+
+    def test_get_todos_filter_completed_false(self, client):
+        client.post("/todos", json={"title": "Done", "completed": True})
+        client.post("/todos", json={"title": "Not done", "completed": False})
+        response = client.get("/todos", params={"completed": False})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["completed"] is False
+
+    def test_get_todos_limit(self, client):
+        for i in range(5):
+            client.post("/todos", json={"title": f"Todo {i}"})
+        response = client.get("/todos", params={"limit": 3})
+        assert response.status_code == 200
+        assert len(response.json()) == 3
+
+    def test_get_todos_offset(self, client):
+        for i in range(5):
+            client.post("/todos", json={"title": f"Todo {i}"})
+        response = client.get("/todos", params={"offset": 2})
+        assert response.status_code == 200
+        assert len(response.json()) == 3
+
+    def test_get_todos_limit_and_offset(self, client):
+        for i in range(10):
+            client.post("/todos", json={"title": f"Todo {i}"})
+        response = client.get("/todos", params={"limit": 3, "offset": 2})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 3
+        assert data[0]["title"] == "Todo 2"
+
+    def test_get_todos_filter_with_pagination(self, client):
+        for i in range(5):
+            client.post("/todos", json={"title": f"Done {i}", "completed": True})
+            client.post("/todos", json={"title": f"Not {i}", "completed": False})
+        response = client.get("/todos", params={"completed": True, "limit": 2, "offset": 1})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert all(t["completed"] for t in data)
+
 
 class TestGetTodoById:
     """Tests for GET /todos/{todo_id} endpoint."""
@@ -254,3 +305,168 @@ class TestIntegration:
         # Verify deleted
         verify_resp = client.get(f"/todos/{todo_id}")
         assert verify_resp.status_code == 404
+
+    def test_create_multiple_then_delete_one(self, client):
+        """Test that deleting one todo doesn't affect others."""
+        resp1 = client.post("/todos", json={"title": "First"})
+        resp2 = client.post("/todos", json={"title": "Second"})
+        resp3 = client.post("/todos", json={"title": "Third"})
+
+        id2 = resp2.json()["id"]
+        client.delete(f"/todos/{id2}")
+
+        all_todos = client.get("/todos").json()
+        assert len(all_todos) == 2
+        titles = [t["title"] for t in all_todos]
+        assert "First" in titles
+        assert "Third" in titles
+        assert "Second" not in titles
+
+
+class TestDatabaseUnit:
+    """Unit tests for the TodoDatabase class."""
+
+    def test_db_counter_reset_on_clear(self):
+        """Ensure clear() resets the ID counter."""
+        db.create(title="Test")
+        db.create(title="Test2")
+        db.clear()
+        new_todo = db.create(title="After clear")
+        assert new_todo.id == 1
+
+    def test_db_get_returns_none_for_missing(self):
+        """get() returns None for non-existent ID."""
+        assert db.get(9999) is None
+
+    def test_db_update_returns_none_for_missing(self):
+        """update() returns None for non-existent ID."""
+        result = db.update(9999, title="New title")
+        assert result is None
+
+    def test_db_delete_returns_false_for_missing(self):
+        """delete() returns False for non-existent ID."""
+        assert db.delete(9999) is False
+
+    def test_todo_item_to_dict(self):
+        """TodoItem.to_dict() includes all fields."""
+        todo = db.create(title="Test", description="Desc", completed=True)
+        d = todo.to_dict()
+        assert d["title"] == "Test"
+        assert d["description"] == "Desc"
+        assert d["completed"] is True
+        assert "id" in d
+        assert "created_at" in d
+
+
+class TestValidationEdgeCases:
+    """Edge case tests for input validation."""
+
+    def test_create_todo_title_max_length_boundary(self, client):
+        """Title at exactly 200 chars should succeed."""
+        response = client.post("/todos", json={"title": "x" * 200})
+        assert response.status_code == 201
+        assert len(response.json()["title"]) == 200
+
+    def test_create_todo_description_max_length_boundary(self, client):
+        """Description at exactly 1000 chars should succeed."""
+        response = client.post("/todos", json={
+            "title": "Test",
+            "description": "y" * 1000
+        })
+        assert response.status_code == 201
+        assert len(response.json()["description"]) == 1000
+
+    def test_create_todo_title_single_char(self, client):
+        """Single character title is valid."""
+        response = client.post("/todos", json={"title": "X"})
+        assert response.status_code == 201
+
+    def test_update_todo_title_max_length_boundary(self, client, sample_todo):
+        """Update with title at 200 chars should succeed."""
+        response = client.put(
+            f"/todos/{sample_todo['id']}",
+            json={"title": "z" * 200}
+        )
+        assert response.status_code == 200
+
+    def test_update_todo_title_too_long(self, client, sample_todo):
+        """Update with title over 200 chars should fail."""
+        response = client.put(
+            f"/todos/{sample_todo['id']}",
+            json={"title": "z" * 201}
+        )
+        assert response.status_code == 422
+
+    def test_create_todo_with_null_description(self, client):
+        """Explicitly null description is valid."""
+        response = client.post("/todos", json={
+            "title": "Test",
+            "description": None
+        })
+        assert response.status_code == 201
+        assert response.json()["description"] is None
+
+    def test_update_todo_set_description_to_null(self, client):
+        """Setting description to empty string via update."""
+        create_resp = client.post("/todos", json={
+            "title": "Test",
+            "description": "Original"
+        })
+        todo_id = create_resp.json()["id"]
+        # Note: Setting to empty string should fail due to validation
+        # but setting to a new value works
+        update_resp = client.put(
+            f"/todos/{todo_id}",
+            json={"description": "Updated"}
+        )
+        assert update_resp.status_code == 200
+        assert update_resp.json()["description"] == "Updated"
+
+    def test_create_todo_whitespace_only_title(self, client):
+        """Whitespace-only title should succeed (min_length counts chars)."""
+        response = client.post("/todos", json={"title": "   "})
+        assert response.status_code == 201
+
+    def test_update_todo_negative_id(self, client):
+        """Negative ID should return 404 not validation error."""
+        response = client.put("/todos/-1", json={"title": "Test"})
+        assert response.status_code == 404
+
+    def test_delete_todo_negative_id(self, client):
+        """Negative ID should return 404."""
+        response = client.delete("/todos/-1")
+        assert response.status_code == 404
+
+    def test_get_todo_negative_id(self, client):
+        """Negative ID should return 404."""
+        response = client.get("/todos/-1")
+        assert response.status_code == 404
+
+
+class TestConcurrentOperations:
+    """Tests for multiple operations in sequence."""
+
+    def test_update_same_todo_multiple_times(self, client, sample_todo):
+        """Multiple sequential updates to the same todo."""
+        todo_id = sample_todo["id"]
+
+        client.put(f"/todos/{todo_id}", json={"title": "First update"})
+        client.put(f"/todos/{todo_id}", json={"completed": True})
+        client.put(f"/todos/{todo_id}", json={"description": "Final desc"})
+
+        final = client.get(f"/todos/{todo_id}").json()
+        assert final["title"] == "First update"
+        assert final["completed"] is True
+        assert final["description"] == "Final desc"
+
+    def test_create_delete_create_reuses_different_id(self, client):
+        """After delete, new todo gets a new ID (not reused)."""
+        resp1 = client.post("/todos", json={"title": "First"})
+        id1 = resp1.json()["id"]
+
+        client.delete(f"/todos/{id1}")
+
+        resp2 = client.post("/todos", json={"title": "Second"})
+        id2 = resp2.json()["id"]
+
+        assert id2 > id1

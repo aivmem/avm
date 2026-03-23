@@ -1,0 +1,68 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: notification-service-network
+  namespace: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow inbound traffic on port 8000
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Allow outbound to Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow SMTP outbound (for email delivery)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 587
+        - protocol: TCP
+          port: 465
+        - protocol: TCP
+          port: 25
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-network
+  namespace: notification-service
+  labels:
+    app.kubernetes.io/name: redis
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only allow inbound from notification-service pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+      ports:
+        - protocol: TCP
+          port: 6379

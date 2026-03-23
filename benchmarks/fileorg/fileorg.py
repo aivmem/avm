@@ -118,7 +118,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     """Execute file organization."""
     config = load_config(args.config)
 
-    source = Path(config.get("source", ".")).expanduser().resolve()
+    source = args.source if args.source else Path(config.get("source", "."))
+    source = source.expanduser().resolve()
     dry_run = args.dry_run if args.dry_run else config.get("dry_run", False)
     verbose = args.verbose
 
@@ -207,11 +208,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: Optional[list[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        prog="fileorg",
-        description="Organize files by extension based on YAML config",
-    )
+def add_config_arg(parser: argparse.ArgumentParser) -> None:
+    """Add common config argument to a parser."""
     parser.add_argument(
         "-c", "--config",
         type=Path,
@@ -219,14 +217,27 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Path to config file (default: fileorg.yaml)",
     )
 
+
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="fileorg",
+        description="Organize files by extension based on YAML config",
+    )
+
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # run command
     run_parser = subparsers.add_parser("run", help="Execute file organization")
+    add_config_arg(run_parser)
     run_parser.add_argument(
         "-n", "--dry-run",
         action="store_true",
         help="Show what would be done without making changes",
+    )
+    run_parser.add_argument(
+        "-s", "--source",
+        type=Path,
+        help="Override source directory from config",
     )
     run_parser.add_argument(
         "-v", "--verbose",
@@ -249,17 +260,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
 
     # validate command
-    subparsers.add_parser("validate", help="Validate config file")
+    validate_parser = subparsers.add_parser("validate", help="Validate config file")
+    add_config_arg(validate_parser)
 
     # list command
-    subparsers.add_parser("list", help="List configured rules")
+    list_parser = subparsers.add_parser("list", help="List configured rules")
+    add_config_arg(list_parser)
 
     args = parser.parse_args(argv)
 
     # Default to 'run' if no command specified
     if args.command is None:
         args.command = "run"
+        args.config = Path("fileorg.yaml")
         args.dry_run = False
+        args.source = None
         args.verbose = False
 
     commands = {

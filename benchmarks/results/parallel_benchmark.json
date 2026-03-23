@@ -1,0 +1,2023 @@
+{
+  "timestamp": "2026-03-23T16:36:00.683727+00:00",
+  "summary": {
+    "scenarios": 40,
+    "baseline_success": 40,
+    "avm_success": 40,
+    "baseline_tokens": 14240,
+    "avm_tokens": 14154,
+    "avm_overhead": 16202
+  },
+  "results": [
+    {
+      "id": "is-007",
+      "name": "Configuration Change Sync",
+      "baseline": {
+        "scenario_id": "is-007",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "admin",
+            "success": true,
+            "tokens": 76
+          },
+          {
+            "id": "service_a",
+            "success": true,
+            "tokens": 133
+          },
+          {
+            "id": "service_b",
+            "success": true,
+            "tokens": 121
+          },
+          {
+            "id": "service_c",
+            "success": true,
+            "tokens": 114
+          }
+        ],
+        "total_tokens": 444,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-007",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "admin",
+            "success": true,
+            "tokens": 117
+          },
+          {
+            "id": "service_a",
+            "success": true,
+            "tokens": 115
+          },
+          {
+            "id": "service_b",
+            "success": true,
+            "tokens": 86
+          },
+          {
+            "id": "service_c",
+            "success": true,
+            "tokens": 119
+          }
+        ],
+        "total_tokens": 437,
+        "avm_overhead": 575,
+        "success": true
+      }
+    },
+    {
+      "id": "is-006",
+      "name": "Breaking News Propagation",
+      "baseline": {
+        "scenario_id": "is-006",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "alerter",
+            "success": true,
+            "tokens": 125
+          },
+          {
+            "id": "responder_1",
+            "success": true,
+            "tokens": 56
+          },
+          {
+            "id": "responder_2",
+            "success": true,
+            "tokens": 90
+          },
+          {
+            "id": "manager",
+            "success": true,
+            "tokens": 116
+          }
+        ],
+        "total_tokens": 387,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-006",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "alerter",
+            "success": true,
+            "tokens": 120
+          },
+          {
+            "id": "responder_1",
+            "success": true,
+            "tokens": 81
+          },
+          {
+            "id": "responder_2",
+            "success": true,
+            "tokens": 111
+          },
+          {
+            "id": "manager",
+            "success": true,
+            "tokens": 138
+          }
+        ],
+        "total_tokens": 450,
+        "avm_overhead": 565,
+        "success": true
+      }
+    },
+    {
+      "id": "is-008",
+      "name": "Shift Handoff",
+      "baseline": {
+        "scenario_id": "is-008",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "night_agent",
+            "success": true,
+            "tokens": 147
+          },
+          {
+            "id": "day_agent",
+            "success": true,
+            "tokens": 92
+          }
+        ],
+        "total_tokens": 239,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-008",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "night_agent",
+            "success": true,
+            "tokens": 118
+          },
+          {
+            "id": "day_agent",
+            "success": true,
+            "tokens": 37
+          }
+        ],
+        "total_tokens": 155,
+        "avm_overhead": 286,
+        "success": true
+      }
+    },
+    {
+      "id": "is-009",
+      "name": "Distributed Consensus",
+      "baseline": {
+        "scenario_id": "is-009",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "proposer",
+            "success": true,
+            "tokens": 81
+          },
+          {
+            "id": "voter_1",
+            "success": true,
+            "tokens": 85
+          },
+          {
+            "id": "voter_2",
+            "success": true,
+            "tokens": 66
+          }
+        ],
+        "total_tokens": 232,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-009",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "proposer",
+            "success": true,
+            "tokens": 30
+          },
+          {
+            "id": "voter_1",
+            "success": true,
+            "tokens": 46
+          },
+          {
+            "id": "voter_2",
+            "success": true,
+            "tokens": 57
+          }
+        ],
+        "total_tokens": 133,
+        "avm_overhead": 529,
+        "success": true
+      }
+    },
+    {
+      "id": "is-010",
+      "name": "Priority Queue Sync",
+      "baseline": {
+        "scenario_id": "is-010",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "producer_1",
+            "success": true,
+            "tokens": 40
+          },
+          {
+            "id": "producer_2",
+            "success": true,
+            "tokens": 34
+          },
+          {
+            "id": "consumer",
+            "success": true,
+            "tokens": 46
+          }
+        ],
+        "total_tokens": 120,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-010",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "producer_1",
+            "success": true,
+            "tokens": 32
+          },
+          {
+            "id": "producer_2",
+            "success": true,
+            "tokens": 26
+          },
+          {
+            "id": "consumer",
+            "success": true,
+            "tokens": 41
+          }
+        ],
+        "total_tokens": 99,
+        "avm_overhead": 475,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-001",
+      "name": "REST API Implementation",
+      "baseline": {
+        "scenario_id": "cc-001",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 169
+          },
+          {
+            "id": "implementer",
+            "success": true,
+            "tokens": 46
+          },
+          {
+            "id": "tester",
+            "success": true,
+            "tokens": 94
+          }
+        ],
+        "total_tokens": 309,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-001",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 173
+          },
+          {
+            "id": "implementer",
+            "success": true,
+            "tokens": 173
+          },
+          {
+            "id": "tester",
+            "success": true,
+            "tokens": 36
+          }
+        ],
+        "total_tokens": 382,
+        "avm_overhead": 443,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-002",
+      "name": "CLI Tool with Config",
+      "baseline": {
+        "scenario_id": "cc-002",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "designer",
+            "success": true,
+            "tokens": 151
+          },
+          {
+            "id": "coder",
+            "success": true,
+            "tokens": 45
+          },
+          {
+            "id": "documenter",
+            "success": true,
+            "tokens": 48
+          }
+        ],
+        "total_tokens": 244,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-002",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "designer",
+            "success": true,
+            "tokens": 194
+          },
+          {
+            "id": "coder",
+            "success": true,
+            "tokens": 114
+          },
+          {
+            "id": "documenter",
+            "success": true,
+            "tokens": 91
+          }
+        ],
+        "total_tokens": 399,
+        "avm_overhead": 436,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-003",
+      "name": "Data Pipeline",
+      "baseline": {
+        "scenario_id": "cc-003",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "data_engineer",
+            "success": true,
+            "tokens": 269
+          },
+          {
+            "id": "transformer",
+            "success": true,
+            "tokens": 244
+          },
+          {
+            "id": "validator",
+            "success": true,
+            "tokens": 209
+          }
+        ],
+        "total_tokens": 722,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-003",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "data_engineer",
+            "success": true,
+            "tokens": 226
+          },
+          {
+            "id": "transformer",
+            "success": true,
+            "tokens": 187
+          },
+          {
+            "id": "validator",
+            "success": true,
+            "tokens": 83
+          }
+        ],
+        "total_tokens": 496,
+        "avm_overhead": 424,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-005",
+      "name": "Bug Fix Collaboration",
+      "avm": {
+        "scenario_id": "cc-005",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "debugger",
+            "success": true,
+            "tokens": 143
+          },
+          {
+            "id": "fixer",
+            "success": true,
+            "tokens": 130
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 131
+          }
+        ],
+        "total_tokens": 404,
+        "avm_overhead": 399,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "cc-005",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "debugger",
+            "success": true,
+            "tokens": 40
+          },
+          {
+            "id": "fixer",
+            "success": true,
+            "tokens": 141
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 137
+          }
+        ],
+        "total_tokens": 318,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-004",
+      "name": "Microservice with Queue",
+      "avm": {
+        "scenario_id": "cc-004",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 153
+          },
+          {
+            "id": "backend",
+            "success": true,
+            "tokens": 162
+          },
+          {
+            "id": "ops",
+            "success": true,
+            "tokens": 131
+          }
+        ],
+        "total_tokens": 446,
+        "avm_overhead": 423,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "cc-004",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 183
+          },
+          {
+            "id": "backend",
+            "success": true,
+            "tokens": 140
+          },
+          {
+            "id": "ops",
+            "success": true,
+            "tokens": 188
+          }
+        ],
+        "total_tokens": 511,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "is-001",
+      "name": "Urgent Update Propagation",
+      "baseline": {
+        "scenario_id": "is-001",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "discoverer",
+            "success": true,
+            "tokens": 140
+          },
+          {
+            "id": "developer",
+            "success": true,
+            "tokens": 117
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 101
+          }
+        ],
+        "total_tokens": 358,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-001",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "discoverer",
+            "success": true,
+            "tokens": 161
+          },
+          {
+            "id": "developer",
+            "success": true,
+            "tokens": 134
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 144
+          }
+        ],
+        "total_tokens": 439,
+        "avm_overhead": 452,
+        "success": true
+      }
+    },
+    {
+      "id": "is-002",
+      "name": "Incremental Knowledge Building",
+      "avm": {
+        "scenario_id": "is-002",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "agent_1",
+            "success": true,
+            "tokens": 182
+          },
+          {
+            "id": "agent_2",
+            "success": true,
+            "tokens": 128
+          },
+          {
+            "id": "agent_3",
+            "success": true,
+            "tokens": 127
+          }
+        ],
+        "total_tokens": 437,
+        "avm_overhead": 350,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "is-002",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "agent_1",
+            "success": true,
+            "tokens": 128
+          },
+          {
+            "id": "agent_2",
+            "success": true,
+            "tokens": 145
+          },
+          {
+            "id": "agent_3",
+            "success": true,
+            "tokens": 149
+          }
+        ],
+        "total_tokens": 422,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "is-003",
+      "name": "Conflict Resolution",
+      "baseline": {
+        "scenario_id": "is-003",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "agent_a",
+            "success": true,
+            "tokens": 146
+          },
+          {
+            "id": "agent_b",
+            "success": true,
+            "tokens": 127
+          },
+          {
+            "id": "resolver",
+            "success": true,
+            "tokens": 122
+          }
+        ],
+        "total_tokens": 395,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-003",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "agent_a",
+            "success": true,
+            "tokens": 65
+          },
+          {
+            "id": "agent_b",
+            "success": true,
+            "tokens": 67
+          },
+          {
+            "id": "resolver",
+            "success": true,
+            "tokens": 23
+          }
+        ],
+        "total_tokens": 155,
+        "avm_overhead": 445,
+        "success": true
+      }
+    },
+    {
+      "id": "is-004",
+      "name": "Selective Propagation",
+      "avm": {
+        "scenario_id": "is-004",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "frontend_dev",
+            "success": true,
+            "tokens": 65
+          },
+          {
+            "id": "backend_dev",
+            "success": true,
+            "tokens": 103
+          },
+          {
+            "id": "devops",
+            "success": true,
+            "tokens": 113
+          }
+        ],
+        "total_tokens": 281,
+        "avm_overhead": 411,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "is-004",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "frontend_dev",
+            "success": true,
+            "tokens": 121
+          },
+          {
+            "id": "backend_dev",
+            "success": true,
+            "tokens": 98
+          },
+          {
+            "id": "devops",
+            "success": true,
+            "tokens": 117
+          }
+        ],
+        "total_tokens": 336,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "rw-001",
+      "name": "Trading Signal Pipeline",
+      "baseline": {
+        "scenario_id": "rw-001",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 130
+          },
+          {
+            "id": "strategist",
+            "success": true,
+            "tokens": 147
+          },
+          {
+            "id": "executor",
+            "success": true,
+            "tokens": 116
+          },
+          {
+            "id": "risk_manager",
+            "success": true,
+            "tokens": 92
+          }
+        ],
+        "total_tokens": 485,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "rw-001",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 133
+          },
+          {
+            "id": "strategist",
+            "success": true,
+            "tokens": 136
+          },
+          {
+            "id": "executor",
+            "success": true,
+            "tokens": 121
+          },
+          {
+            "id": "risk_manager",
+            "success": true,
+            "tokens": 139
+          }
+        ],
+        "total_tokens": 529,
+        "avm_overhead": 619,
+        "success": true
+      }
+    },
+    {
+      "id": "is-005",
+      "name": "State Convergence",
+      "baseline": {
+        "scenario_id": "is-005",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "writer_1",
+            "success": true,
+            "tokens": 87
+          },
+          {
+            "id": "writer_2",
+            "success": true,
+            "tokens": 51
+          },
+          {
+            "id": "writer_3",
+            "success": true,
+            "tokens": 71
+          },
+          {
+            "id": "verifier",
+            "success": true,
+            "tokens": 82
+          }
+        ],
+        "total_tokens": 291,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "is-005",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "writer_1",
+            "success": true,
+            "tokens": 45
+          },
+          {
+            "id": "writer_2",
+            "success": true,
+            "tokens": 48
+          },
+          {
+            "id": "writer_3",
+            "success": true,
+            "tokens": 54
+          },
+          {
+            "id": "verifier",
+            "success": true,
+            "tokens": 83
+          }
+        ],
+        "total_tokens": 230,
+        "avm_overhead": 617,
+        "success": true
+      }
+    },
+    {
+      "id": "rw-002",
+      "name": "Content Moderation Pipeline",
+      "baseline": {
+        "scenario_id": "rw-002",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "scanner",
+            "success": true,
+            "tokens": 65
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 108
+          },
+          {
+            "id": "appeals",
+            "success": true,
+            "tokens": 75
+          },
+          {
+            "id": "policy_updater",
+            "success": true,
+            "tokens": 64
+          }
+        ],
+        "total_tokens": 312,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "rw-002",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "scanner",
+            "success": true,
+            "tokens": 124
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 130
+          },
+          {
+            "id": "appeals",
+            "success": true,
+            "tokens": 121
+          },
+          {
+            "id": "policy_updater",
+            "success": true,
+            "tokens": 121
+          }
+        ],
+        "total_tokens": 496,
+        "avm_overhead": 539,
+        "success": true
+      }
+    },
+    {
+      "id": "rw-003",
+      "name": "Customer Support Escalation",
+      "baseline": {
+        "scenario_id": "rw-003",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "bot",
+            "success": true,
+            "tokens": 115
+          },
+          {
+            "id": "l1_support",
+            "success": true,
+            "tokens": 122
+          },
+          {
+            "id": "l2_support",
+            "success": true,
+            "tokens": 124
+          },
+          {
+            "id": "specialist",
+            "success": true,
+            "tokens": 121
+          }
+        ],
+        "total_tokens": 482,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "rw-003",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "bot",
+            "success": true,
+            "tokens": 105
+          },
+          {
+            "id": "l1_support",
+            "success": true,
+            "tokens": 126
+          },
+          {
+            "id": "l2_support",
+            "success": true,
+            "tokens": 112
+          },
+          {
+            "id": "specialist",
+            "success": true,
+            "tokens": 103
+          }
+        ],
+        "total_tokens": 446,
+        "avm_overhead": 568,
+        "success": true
+      }
+    },
+    {
+      "id": "rw-004",
+      "name": "Research Paper Workflow",
+      "baseline": {
+        "scenario_id": "rw-004",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 215
+          },
+          {
+            "id": "writer",
+            "success": true,
+            "tokens": 146
+          },
+          {
+            "id": "editor",
+            "success": true,
+            "tokens": 127
+          },
+          {
+            "id": "peer_reviewer",
+            "success": true,
+            "tokens": 117
+          }
+        ],
+        "total_tokens": 605,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "rw-004",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 148
+          },
+          {
+            "id": "writer",
+            "success": true,
+            "tokens": 132
+          },
+          {
+            "id": "editor",
+            "success": true,
+            "tokens": 132
+          },
+          {
+            "id": "peer_reviewer",
+            "success": true,
+            "tokens": 148
+          }
+        ],
+        "total_tokens": 560,
+        "avm_overhead": 477,
+        "success": true
+      }
+    },
+    {
+      "id": "rw-005",
+      "name": "DevOps Incident Response",
+      "baseline": {
+        "scenario_id": "rw-005",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "alerter",
+            "success": true,
+            "tokens": 114
+          },
+          {
+            "id": "triager",
+            "success": true,
+            "tokens": 140
+          },
+          {
+            "id": "responder",
+            "success": true,
+            "tokens": 85
+          },
+          {
+            "id": "postmortem_writer",
+            "success": true,
+            "tokens": 149
+          }
+        ],
+        "total_tokens": 488,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "rw-005",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "alerter",
+            "success": true,
+            "tokens": 126
+          },
+          {
+            "id": "triager",
+            "success": true,
+            "tokens": 128
+          },
+          {
+            "id": "responder",
+            "success": true,
+            "tokens": 37
+          },
+          {
+            "id": "postmortem_writer",
+            "success": true,
+            "tokens": 142
+          }
+        ],
+        "total_tokens": 433,
+        "avm_overhead": 554,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-002",
+      "name": "Cross-Domain Knowledge",
+      "baseline": {
+        "scenario_id": "kr-002",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 70
+          }
+        ],
+        "total_tokens": 70,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-002",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 81
+          }
+        ],
+        "total_tokens": 81,
+        "avm_overhead": 164,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-001",
+      "name": "Project Handoff",
+      "baseline": {
+        "scenario_id": "kr-001",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "agent_a",
+            "success": true,
+            "tokens": 197
+          },
+          {
+            "id": "agent_b",
+            "success": true,
+            "tokens": 136
+          }
+        ],
+        "total_tokens": 333,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-001",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "agent_a",
+            "success": true,
+            "tokens": 165
+          },
+          {
+            "id": "agent_b",
+            "success": true,
+            "tokens": 172
+          }
+        ],
+        "total_tokens": 337,
+        "avm_overhead": 333,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-003",
+      "name": "Historical Context",
+      "baseline": {
+        "scenario_id": "kr-003",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "decision_maker",
+            "success": true,
+            "tokens": 109
+          }
+        ],
+        "total_tokens": 109,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-003",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "decision_maker",
+            "success": true,
+            "tokens": 121
+          }
+        ],
+        "total_tokens": 121,
+        "avm_overhead": 155,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-004",
+      "name": "Error Pattern Recognition",
+      "baseline": {
+        "scenario_id": "kr-004",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "troubleshooter",
+            "success": true,
+            "tokens": 97
+          }
+        ],
+        "total_tokens": 97,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-004",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "troubleshooter",
+            "success": true,
+            "tokens": 106
+          }
+        ],
+        "total_tokens": 106,
+        "avm_overhead": 120,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-005",
+      "name": "Multi-Agent Knowledge Aggregation",
+      "baseline": {
+        "scenario_id": "kr-005",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "frontend_expert",
+            "success": true,
+            "tokens": 96
+          },
+          {
+            "id": "backend_expert",
+            "success": true,
+            "tokens": 98
+          },
+          {
+            "id": "devops_expert",
+            "success": true,
+            "tokens": 142
+          },
+          {
+            "id": "synthesizer",
+            "success": true,
+            "tokens": 124
+          }
+        ],
+        "total_tokens": 460,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-005",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "frontend_expert",
+            "success": true,
+            "tokens": 73
+          },
+          {
+            "id": "backend_expert",
+            "success": true,
+            "tokens": 101
+          },
+          {
+            "id": "devops_expert",
+            "success": true,
+            "tokens": 123
+          },
+          {
+            "id": "synthesizer",
+            "success": true,
+            "tokens": 144
+          }
+        ],
+        "total_tokens": 441,
+        "avm_overhead": 422,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-006",
+      "name": "Distributed System Design",
+      "baseline": {
+        "scenario_id": "cc-006",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 153
+          },
+          {
+            "id": "backend",
+            "success": true,
+            "tokens": 342
+          },
+          {
+            "id": "devops",
+            "success": true,
+            "tokens": 206
+          }
+        ],
+        "total_tokens": 701,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-006",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 382
+          },
+          {
+            "id": "backend",
+            "success": true,
+            "tokens": 459
+          },
+          {
+            "id": "devops",
+            "success": true,
+            "tokens": 238
+          }
+        ],
+        "total_tokens": 1079,
+        "avm_overhead": 398,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-007",
+      "name": "Legacy Code Refactoring",
+      "baseline": {
+        "scenario_id": "cc-007",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 145
+          },
+          {
+            "id": "refactorer",
+            "success": true,
+            "tokens": 144
+          },
+          {
+            "id": "tester",
+            "success": true,
+            "tokens": 151
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 154
+          }
+        ],
+        "total_tokens": 594,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-007",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 142
+          },
+          {
+            "id": "refactorer",
+            "success": true,
+            "tokens": 132
+          },
+          {
+            "id": "tester",
+            "success": true,
+            "tokens": 161
+          },
+          {
+            "id": "reviewer",
+            "success": true,
+            "tokens": 112
+          }
+        ],
+        "total_tokens": 547,
+        "avm_overhead": 601,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-008",
+      "name": "Security Audit",
+      "baseline": {
+        "scenario_id": "cc-008",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "scanner",
+            "success": true,
+            "tokens": 140
+          },
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 168
+          },
+          {
+            "id": "fixer",
+            "success": true,
+            "tokens": 180
+          }
+        ],
+        "total_tokens": 488,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-008",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "scanner",
+            "success": true,
+            "tokens": 160
+          },
+          {
+            "id": "analyst",
+            "success": true,
+            "tokens": 162
+          },
+          {
+            "id": "fixer",
+            "success": true,
+            "tokens": 188
+          }
+        ],
+        "total_tokens": 510,
+        "avm_overhead": 433,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-009",
+      "name": "Performance Optimization",
+      "baseline": {
+        "scenario_id": "cc-009",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "profiler",
+            "success": true,
+            "tokens": 133
+          },
+          {
+            "id": "optimizer",
+            "success": true,
+            "tokens": 88
+          },
+          {
+            "id": "validator",
+            "success": true,
+            "tokens": 158
+          },
+          {
+            "id": "documenter",
+            "success": true,
+            "tokens": 133
+          }
+        ],
+        "total_tokens": 512,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-009",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "profiler",
+            "success": true,
+            "tokens": 136
+          },
+          {
+            "id": "optimizer",
+            "success": true,
+            "tokens": 130
+          },
+          {
+            "id": "validator",
+            "success": true,
+            "tokens": 131
+          },
+          {
+            "id": "documenter",
+            "success": true,
+            "tokens": 124
+          }
+        ],
+        "total_tokens": 521,
+        "avm_overhead": 438,
+        "success": true
+      }
+    },
+    {
+      "id": "cc-010",
+      "name": "API Versioning",
+      "baseline": {
+        "scenario_id": "cc-010",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "designer",
+            "success": true,
+            "tokens": 169
+          },
+          {
+            "id": "implementer",
+            "success": true,
+            "tokens": 161
+          },
+          {
+            "id": "migrator",
+            "success": true,
+            "tokens": 148
+          }
+        ],
+        "total_tokens": 478,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "cc-010",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "designer",
+            "success": true,
+            "tokens": 159
+          },
+          {
+            "id": "implementer",
+            "success": true,
+            "tokens": 175
+          },
+          {
+            "id": "migrator",
+            "success": true,
+            "tokens": 171
+          }
+        ],
+        "total_tokens": 505,
+        "avm_overhead": 486,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-006",
+      "name": "Incident Postmortem Lookup",
+      "baseline": {
+        "scenario_id": "kr-006",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "on_call",
+            "success": true,
+            "tokens": 75
+          },
+          {
+            "id": "historian",
+            "success": true,
+            "tokens": 114
+          }
+        ],
+        "total_tokens": 189,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-006",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "on_call",
+            "success": true,
+            "tokens": 141
+          },
+          {
+            "id": "historian",
+            "success": true,
+            "tokens": 121
+          }
+        ],
+        "total_tokens": 262,
+        "avm_overhead": 329,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-007",
+      "name": "Architecture Decision Records",
+      "baseline": {
+        "scenario_id": "kr-007",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 60
+          },
+          {
+            "id": "adr_finder",
+            "success": true,
+            "tokens": 61
+          }
+        ],
+        "total_tokens": 121,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-007",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "architect",
+            "success": true,
+            "tokens": 180
+          },
+          {
+            "id": "adr_finder",
+            "success": true,
+            "tokens": 123
+          }
+        ],
+        "total_tokens": 303,
+        "avm_overhead": 283,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-008",
+      "name": "Customer Preference Recall",
+      "avm": {
+        "scenario_id": "kr-008",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "account_manager",
+            "success": true,
+            "tokens": 121
+          },
+          {
+            "id": "support_agent",
+            "success": true,
+            "tokens": 126
+          }
+        ],
+        "total_tokens": 247,
+        "avm_overhead": 329,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "kr-008",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "account_manager",
+            "success": true,
+            "tokens": 119
+          },
+          {
+            "id": "support_agent",
+            "success": true,
+            "tokens": 87
+          }
+        ],
+        "total_tokens": 206,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-009",
+      "name": "Codebase Conventions Lookup",
+      "baseline": {
+        "scenario_id": "kr-009",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "new_dev",
+            "success": true,
+            "tokens": 142
+          },
+          {
+            "id": "docs_finder",
+            "success": true,
+            "tokens": 158
+          }
+        ],
+        "total_tokens": 300,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-009",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "new_dev",
+            "success": true,
+            "tokens": 21
+          },
+          {
+            "id": "docs_finder",
+            "success": true,
+            "tokens": 130
+          }
+        ],
+        "total_tokens": 151,
+        "avm_overhead": 287,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-010",
+      "name": "Meeting Notes Synthesis",
+      "avm": {
+        "scenario_id": "kr-010",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "pm",
+            "success": true,
+            "tokens": 135
+          },
+          {
+            "id": "synthesizer",
+            "success": true,
+            "tokens": 122
+          }
+        ],
+        "total_tokens": 257,
+        "avm_overhead": 361,
+        "success": true
+      },
+      "baseline": {
+        "scenario_id": "kr-010",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "pm",
+            "success": true,
+            "tokens": 157
+          },
+          {
+            "id": "synthesizer",
+            "success": true,
+            "tokens": 133
+          }
+        ],
+        "total_tokens": 290,
+        "avm_overhead": 0,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-011",
+      "name": "Competitive Analysis",
+      "baseline": {
+        "scenario_id": "kr-011",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "strategist",
+            "success": true,
+            "tokens": 199
+          },
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 151
+          }
+        ],
+        "total_tokens": 350,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-011",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "strategist",
+            "success": true,
+            "tokens": 132
+          },
+          {
+            "id": "researcher",
+            "success": true,
+            "tokens": 139
+          }
+        ],
+        "total_tokens": 271,
+        "avm_overhead": 275,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-012",
+      "name": "Onboarding Knowledge",
+      "baseline": {
+        "scenario_id": "kr-012",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "new_hire",
+            "success": true,
+            "tokens": 101
+          },
+          {
+            "id": "onboarder",
+            "success": true,
+            "tokens": 143
+          }
+        ],
+        "total_tokens": 244,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-012",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "new_hire",
+            "success": true,
+            "tokens": 110
+          },
+          {
+            "id": "onboarder",
+            "success": true,
+            "tokens": 125
+          }
+        ],
+        "total_tokens": 235,
+        "avm_overhead": 265,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-013",
+      "name": "Regulatory Compliance",
+      "baseline": {
+        "scenario_id": "kr-013",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "support",
+            "success": true,
+            "tokens": 131
+          },
+          {
+            "id": "compliance",
+            "success": true,
+            "tokens": 134
+          }
+        ],
+        "total_tokens": 265,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-013",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "support",
+            "success": true,
+            "tokens": 122
+          },
+          {
+            "id": "compliance",
+            "success": true,
+            "tokens": 141
+          }
+        ],
+        "total_tokens": 263,
+        "avm_overhead": 230,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-014",
+      "name": "Technical Debt Tracker",
+      "baseline": {
+        "scenario_id": "kr-014",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "tech_lead",
+            "success": true,
+            "tokens": 262
+          },
+          {
+            "id": "debt_tracker",
+            "success": true,
+            "tokens": 179
+          }
+        ],
+        "total_tokens": 441,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-014",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "tech_lead",
+            "success": true,
+            "tokens": 139
+          },
+          {
+            "id": "debt_tracker",
+            "success": true,
+            "tokens": 132
+          }
+        ],
+        "total_tokens": 271,
+        "avm_overhead": 323,
+        "success": true
+      }
+    },
+    {
+      "id": "kr-015",
+      "name": "Cross-Team Dependency",
+      "baseline": {
+        "scenario_id": "kr-015",
+        "use_avm": false,
+        "agents": [
+          {
+            "id": "team_a_dev",
+            "success": true,
+            "tokens": 171
+          },
+          {
+            "id": "knowledge_broker",
+            "success": true,
+            "tokens": 121
+          }
+        ],
+        "total_tokens": 292,
+        "avm_overhead": 0,
+        "success": true
+      },
+      "avm": {
+        "scenario_id": "kr-015",
+        "use_avm": true,
+        "agents": [
+          {
+            "id": "team_a_dev",
+            "success": true,
+            "tokens": 109
+          },
+          {
+            "id": "knowledge_broker",
+            "success": true,
+            "tokens": 130
+          }
+        ],
+        "total_tokens": 239,
+        "avm_overhead": 383,
+        "success": true
+      }
+    }
+  ]
+}

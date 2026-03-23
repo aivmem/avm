@@ -36,10 +36,16 @@ def create_todo(todo: TodoCreate):
 
 
 @app.get("/todos", response_model=List[TodoResponse])
-def get_todos():
-    """Get all todo items."""
+def get_todos(
+    completed: bool | None = None,
+    limit: int = 100,
+    offset: int = 0
+):
+    """Get all todo items with optional filtering and pagination."""
     todos = db.get_all()
-    return [todo.to_dict() for todo in todos]
+    if completed is not None:
+        todos = [t for t in todos if t.completed == completed]
+    return [todo.to_dict() for todo in todos[offset:offset + limit]]
 
 
 @app.get("/todos/{todo_id}", response_model=TodoResponse)
