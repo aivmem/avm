@@ -1,0 +1,580 @@
+{
+  "timestamp": "2026-03-23T14:16:36.318289+00:00",
+  "scales": {
+    "small": 10,
+    "medium": 100,
+    "large": 500
+  },
+  "results": [
+    {
+      "feature": "remember_recall",
+      "scale": "small",
+      "items": 10,
+      "operation": "write_all",
+      "duration_ms": 766.9956684112549,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "avg_ms": 76.69956684112549,
+        "total_writes": 10
+      }
+    },
+    {
+      "feature": "remember_recall",
+      "scale": "small",
+      "items": 10,
+      "operation": "recall",
+      "duration_ms": 16596.26030921936,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "memory item",
+            "duration_ms": 4161.893129348755,
+            "success": true
+          },
+          {
+            "query": "data analysis",
+            "duration_ms": 4174.00336265564,
+            "success": true
+          },
+          {
+            "query": "system error",
+            "duration_ms": 4135.0579261779785,
+            "success": true
+          },
+          {
+            "query": "random nonexistent xyz",
+            "duration_ms": 4125.305891036987,
+            "success": true
+          }
+        ]
+      }
+    },
+    {
+      "feature": "remember_recall",
+      "scale": "medium",
+      "items": 100,
+      "operation": "write_all",
+      "duration_ms": 7594.503402709961,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "avg_ms": 75.94503402709961,
+        "total_writes": 100
+      }
+    },
+    {
+      "feature": "remember_recall",
+      "scale": "medium",
+      "items": 100,
+      "operation": "recall",
+      "duration_ms": 16772.53484725952,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "memory item",
+            "duration_ms": 4188.135862350464,
+            "success": true
+          },
+          {
+            "query": "data analysis",
+            "duration_ms": 4127.877950668335,
+            "success": true
+          },
+          {
+            "query": "system error",
+            "duration_ms": 4238.7800216674805,
+            "success": true
+          },
+          {
+            "query": "random nonexistent xyz",
+            "duration_ms": 4217.741012573242,
+            "success": true
+          }
+        ]
+      }
+    },
+    {
+      "feature": "remember_recall",
+      "scale": "large",
+      "items": 500,
+      "operation": "write_all",
+      "duration_ms": 39913.79952430725,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "avg_ms": 79.8275990486145,
+        "total_writes": 500
+      }
+    },
+    {
+      "feature": "remember_recall",
+      "scale": "large",
+      "items": 500,
+      "operation": "recall",
+      "duration_ms": 4647.113084793091,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "memory item",
+            "duration_ms": 81.28786087036133,
+            "success": true
+          },
+          {
+            "query": "data analysis",
+            "duration_ms": 88.00315856933594,
+            "success": true
+          },
+          {
+            "query": "system error",
+            "duration_ms": 78.68099212646484,
+            "success": true
+          },
+          {
+            "query": "random nonexistent xyz",
+            "duration_ms": 4399.141073226929,
+            "success": true
+          }
+        ]
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "small",
+      "items": 10,
+      "operation": "private_write",
+      "duration_ms": 805.1111698150635,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "agents": 10
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "small",
+      "items": 1,
+      "operation": "shared_write",
+      "duration_ms": 76.70092582702637,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "small",
+      "items": 10,
+      "operation": "isolation_check",
+      "duration_ms": 4186.105012893677,
+      "success": false,
+      "tokens_used": 0,
+      "details": {
+        "found_other_secret": true
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "medium",
+      "items": 100,
+      "operation": "private_write",
+      "duration_ms": 7995.9876537323,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "agents": 100
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "medium",
+      "items": 1,
+      "operation": "shared_write",
+      "duration_ms": 77.06475257873535,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "medium",
+      "items": 100,
+      "operation": "isolation_check",
+      "duration_ms": 4200.057029724121,
+      "success": false,
+      "tokens_used": 0,
+      "details": {
+        "found_other_secret": true
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "large",
+      "items": 500,
+      "operation": "private_write",
+      "duration_ms": 40751.70397758484,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "agents": 500
+      }
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "large",
+      "items": 1,
+      "operation": "shared_write",
+      "duration_ms": 74.92303848266602,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "multi_agent",
+      "scale": "large",
+      "items": 500,
+      "operation": "isolation_check",
+      "duration_ms": 4286.06390953064,
+      "success": false,
+      "tokens_used": 0,
+      "details": {
+        "found_other_secret": true
+      }
+    },
+    {
+      "feature": "semantic_search",
+      "scale": "small",
+      "items": 10,
+      "operation": "semantic_recall",
+      "duration_ms": 12765.992403030396,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "machine is slow",
+            "found_related": false,
+            "duration_ms": 4244.064092636108
+          },
+          {
+            "query": "customer cannot sign in",
+            "found_related": false,
+            "duration_ms": 4341.369152069092
+          },
+          {
+            "query": "too many API calls",
+            "found_related": true,
+            "duration_ms": 4180.559158325195
+          }
+        ]
+      }
+    },
+    {
+      "feature": "semantic_search",
+      "scale": "medium",
+      "items": 100,
+      "operation": "semantic_recall",
+      "duration_ms": 12838.353872299194,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "machine is slow",
+            "found_related": false,
+            "duration_ms": 4220.178842544556
+          },
+          {
+            "query": "customer cannot sign in",
+            "found_related": false,
+            "duration_ms": 4328.9690017700195
+          },
+          {
+            "query": "too many API calls",
+            "found_related": true,
+            "duration_ms": 4289.206027984619
+          }
+        ]
+      }
+    },
+    {
+      "feature": "semantic_search",
+      "scale": "large",
+      "items": 500,
+      "operation": "semantic_recall",
+      "duration_ms": 12816.380023956299,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "queries": [
+          {
+            "query": "machine is slow",
+            "found_related": false,
+            "duration_ms": 4295.614957809448
+          },
+          {
+            "query": "customer cannot sign in",
+            "found_related": false,
+            "duration_ms": 4257.295846939087
+          },
+          {
+            "query": "too many API calls",
+            "found_related": true,
+            "duration_ms": 4263.469219207764
+          }
+        ]
+      }
+    },
+    {
+      "feature": "token_aware",
+      "scale": "small",
+      "items": 10,
+      "operation": "budget_recall",
+      "duration_ms": 17061.03801727295,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "budgets": [
+          {
+            "budget": 100,
+            "output_tokens": 63,
+            "within_budget": true,
+            "duration_ms": 4302.41322517395
+          },
+          {
+            "budget": 300,
+            "output_tokens": 112,
+            "within_budget": true,
+            "duration_ms": 4264.2669677734375
+          },
+          {
+            "budget": 500,
+            "output_tokens": 215,
+            "within_budget": true,
+            "duration_ms": 4232.477903366089
+          },
+          {
+            "budget": 1000,
+            "output_tokens": 218,
+            "within_budget": true,
+            "duration_ms": 4261.879920959473
+          }
+        ]
+      }
+    },
+    {
+      "feature": "token_aware",
+      "scale": "medium",
+      "items": 100,
+      "operation": "budget_recall",
+      "duration_ms": 17127.372980117798,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "budgets": [
+          {
+            "budget": 100,
+            "output_tokens": 62,
+            "within_budget": true,
+            "duration_ms": 4281.558036804199
+          },
+          {
+            "budget": 300,
+            "output_tokens": 117,
+            "within_budget": true,
+            "duration_ms": 4315.741777420044
+          },
+          {
+            "budget": 500,
+            "output_tokens": 228,
+            "within_budget": true,
+            "duration_ms": 4192.18111038208
+          },
+          {
+            "budget": 1000,
+            "output_tokens": 498,
+            "within_budget": true,
+            "duration_ms": 4337.892055511475
+          }
+        ]
+      }
+    },
+    {
+      "feature": "token_aware",
+      "scale": "large",
+      "items": 500,
+      "operation": "budget_recall",
+      "duration_ms": 4539.638519287109,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "budgets": [
+          {
+            "budget": 100,
+            "output_tokens": 62,
+            "within_budget": true,
+            "duration_ms": 4293.506145477295
+          },
+          {
+            "budget": 300,
+            "output_tokens": 110,
+            "within_budget": true,
+            "duration_ms": 83.83488655090332
+          },
+          {
+            "budget": 500,
+            "output_tokens": 237,
+            "within_budget": true,
+            "duration_ms": 79.74028587341309
+          },
+          {
+            "budget": 1000,
+            "output_tokens": 507,
+            "within_budget": true,
+            "duration_ms": 82.55720138549805
+          }
+        ]
+      }
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "small",
+      "items": 10,
+      "operation": "full_read",
+      "duration_ms": 50.781965255737305,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "small",
+      "items": 1,
+      "operation": "delta_read",
+      "duration_ms": 4249.60994720459,
+      "success": true,
+      "tokens_used": 224,
+      "details": {
+        "delta_items": 1,
+        "total_items": 10
+      }
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "medium",
+      "items": 100,
+      "operation": "full_read",
+      "duration_ms": 52.03700065612793,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "medium",
+      "items": 10,
+      "operation": "delta_read",
+      "duration_ms": 4252.985000610352,
+      "success": true,
+      "tokens_used": 236,
+      "details": {
+        "delta_items": 10,
+        "total_items": 100
+      }
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "large",
+      "items": 500,
+      "operation": "full_read",
+      "duration_ms": 52.32715606689453,
+      "success": true,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "delta_sync",
+      "scale": "large",
+      "items": 50,
+      "operation": "delta_read",
+      "duration_ms": 4342.678070068359,
+      "success": true,
+      "tokens_used": 220,
+      "details": {
+        "delta_items": 50,
+        "total_items": 500
+      }
+    },
+    {
+      "feature": "discovery",
+      "scale": "small",
+      "items": 10,
+      "operation": "memory_stats",
+      "duration_ms": 73.11725616455078,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "output": "Agent Memory: discover_oxbl\n================\nPrivate memories: 10\nShared accessible: 100\nPrivate prefix: /memory/private/discover_oxbl\nMax tokens: 4000\nStrategy: balanced\n"
+      }
+    },
+    {
+      "feature": "discovery",
+      "scale": "small",
+      "items": 10,
+      "operation": "list_private",
+      "duration_ms": 52.16813087463379,
+      "success": false,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "discovery",
+      "scale": "medium",
+      "items": 100,
+      "operation": "memory_stats",
+      "duration_ms": 71.25687599182129,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "output": "Agent Memory: discover_qkiy\n================\nPrivate memories: 100\nShared accessible: 100\nPrivate prefix: /memory/private/discover_qkiy\nMax tokens: 4000\nStrategy: balanced\n"
+      }
+    },
+    {
+      "feature": "discovery",
+      "scale": "medium",
+      "items": 100,
+      "operation": "list_private",
+      "duration_ms": 51.38111114501953,
+      "success": false,
+      "tokens_used": 0,
+      "details": null
+    },
+    {
+      "feature": "discovery",
+      "scale": "large",
+      "items": 500,
+      "operation": "memory_stats",
+      "duration_ms": 72.85904884338379,
+      "success": true,
+      "tokens_used": 0,
+      "details": {
+        "output": "Agent Memory: discover_nxqu\n================\nPrivate memories: 100\nShared accessible: 100\nPrivate prefix: /memory/private/discover_nxqu\nMax tokens: 4000\nStrategy: balanced\n"
+      }
+    },
+    {
+      "feature": "discovery",
+      "scale": "large",
+      "items": 500,
+      "operation": "list_private",
+      "duration_ms": 53.25603485107422,
+      "success": false,
+      "tokens_used": 0,
+      "details": null
+    }
+  ]
+}
