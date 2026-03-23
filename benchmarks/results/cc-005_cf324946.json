@@ -1,0 +1,154 @@
+{
+  "run_id": "cf324946-6d68-416d-ba37-da8587332915",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:25:10.915083+00:00",
+  "end_time": "2026-03-23T13:26:03.334468+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:25:10.915762+00:00",
+      "agent": "bench_debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:25:15.120801+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 136
+      },
+      "tokens_used": 136,
+      "latency_ms": 4204.874038696289
+    },
+    {
+      "timestamp": "2026-03-23T13:25:24.695067+00:00",
+      "agent": "bench_debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Diagnosis: the bug is not in the shown snippet.\n\n`query in i[\"name\"]` is plain substring matching, so special characters like `.` and `*` are treated ",
+        "success": true
+      },
+      "tokens_used": 710,
+      "latency_ms": 9573.61888885498
+    },
+    {
+      "timestamp": "2026-03-23T13:25:24.798135+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 64,
+      "latency_ms": 102.9810905456543
+    },
+    {
+      "timestamp": "2026-03-23T13:25:24.798166+00:00",
+      "agent": "bench_fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:25:28.985200+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 118
+      },
+      "tokens_used": 118,
+      "latency_ms": 4186.929225921631
+    },
+    {
+      "timestamp": "2026-03-23T13:25:53.296726+00:00",
+      "agent": "bench_fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "`code.py` already satisfies the functional assertions. `query in i[\"name\"]` is a literal substring check, so `.` and `*` are treated as normal charact",
+        "success": true
+      },
+      "tokens_used": 656,
+      "latency_ms": 24310.981273651123
+    },
+    {
+      "timestamp": "2026-03-23T13:25:53.400405+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 50,
+      "latency_ms": 103.57666015625
+    },
+    {
+      "timestamp": "2026-03-23T13:25:53.400435+00:00",
+      "agent": "bench_reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:25:57.566544+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 141
+      },
+      "tokens_used": 141,
+      "latency_ms": 4165.97318649292
+    },
+    {
+      "timestamp": "2026-03-23T13:26:03.224192+00:00",
+      "agent": "bench_reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Review: there is no actual regex bug in the shown implementation.\n\n`query in i['name']` does literal substring matching, so `.` and `*` are already tr",
+        "success": true
+      },
+      "tokens_used": 725,
+      "latency_ms": 5656.558036804199
+    },
+    {
+      "timestamp": "2026-03-23T13:26:03.334256+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 62,
+      "latency_ms": 109.9250316619873
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "avm",
+    "token_breakdown": {
+      "avm_overhead": 571,
+      "task_tokens": 2091,
+      "total": 2662
+    },
+    "summary": {
+      "total_tokens": 2662,
+      "total_latency_ms": 52415.417432785034,
+      "memory_operations": 0,
+      "event_count": 12
+    }
+  }
+}

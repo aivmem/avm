@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-03-23T13:28:27.180730+00:00",
+  "results": [
+    {
+      "scenario_id": "cc-001",
+      "name": "REST API Implementation",
+      "baseline": {
+        "avm_overhead": 0,
+        "task_tokens": 1992,
+        "total": 1992
+      },
+      "avm": {
+        "avm_overhead": 530,
+        "task_tokens": 3061,
+        "total": 3591
+      }
+    },
+    {
+      "scenario_id": "cc-005",
+      "name": "Bug Fix Collaboration",
+      "baseline": {
+        "avm_overhead": 0,
+        "task_tokens": 1169,
+        "total": 1169
+      },
+      "avm": {
+        "avm_overhead": 571,
+        "task_tokens": 2091,
+        "total": 2662
+      }
+    },
+    {
+      "scenario_id": "kr-001",
+      "name": "Project Handoff",
+      "baseline": {
+        "avm_overhead": 0,
+        "task_tokens": 578,
+        "total": 578
+      },
+      "avm": {
+        "avm_overhead": 386,
+        "task_tokens": 1218,
+        "total": 1604
+      }
+    },
+    {
+      "scenario_id": "kr-004",
+      "name": "Error Pattern Recognition",
+      "baseline": {
+        "avm_overhead": 0,
+        "task_tokens": 238,
+        "total": 238
+      },
+      "avm": {
+        "avm_overhead": 167,
+        "task_tokens": 519,
+        "total": 686
+      }
+    }
+  ]
+}

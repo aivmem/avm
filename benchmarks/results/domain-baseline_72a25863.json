@@ -1,0 +1,37 @@
+{
+  "run_id": "72a25863-1b6f-4be6-8bf5-779c6ab2ab51",
+  "scenario_id": "domain-baseline",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:34:43.363787+00:00",
+  "end_time": "2026-03-23T13:35:16.653111+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:35:16.652531+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The likely bug is that `**properties` is being flattened into the top-level event payload, and the analytics API/SDK has a limit on either:\n\n- total top-level fields\n- total custom properties\n- payloa"
+      },
+      "tokens_used": 599,
+      "latency_ms": 33288.36107254028
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": false,
+    "found_limit": false,
+    "tokens": 599,
+    "avm_overhead": 0,
+    "total": 599,
+    "latency_ms": 33288.36107254028,
+    "summary": {
+      "total_tokens": 599,
+      "total_latency_ms": 33288.36107254028,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  }
+}

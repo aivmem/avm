@@ -1,0 +1,37 @@
+{
+  "run_id": "b326bd58-c5d1-4895-9217-5f39a37bb716",
+  "scenario_id": "domain-baseline",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:33:04.821862+00:00",
+  "end_time": "2026-03-23T13:33:34.378038+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:33:34.377817+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The likely bug is not Python. It\u2019s the event payload shape and an analytics API limit.\n\n`**properties` is flattening every custom property into the top-level event object:\n\n```python\n{\n    \"user_id\": "
+      },
+      "tokens_used": 613,
+      "latency_ms": 29555.570125579834
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": true,
+    "found_limit": true,
+    "tokens": 613,
+    "avm_overhead": 0,
+    "total": 613,
+    "latency_ms": 29555.570125579834,
+    "summary": {
+      "total_tokens": 613,
+      "total_latency_ms": 29555.570125579834,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  }
+}

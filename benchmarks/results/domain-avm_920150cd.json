@@ -1,0 +1,47 @@
+{
+  "run_id": "920150cd-ef98-4143-9593-8683eb8e1a0c",
+  "scenario_id": "domain-avm",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:35:16.654174+00:00",
+  "end_time": "2026-03-23T13:35:36.944468+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:35:20.953590+00:00",
+      "agent": "dev",
+      "action": "avm_recall",
+      "details": {
+        "tokens": 169
+      },
+      "tokens_used": 169,
+      "latency_ms": 4299.257040023804
+    },
+    {
+      "timestamp": "2026-03-23T13:35:36.944232+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The silent failure is almost certainly an `analytics.track_event()` API limit: it drops events with more than 5 custom properties and does not return an error.\n\nYour function itself is fine Python-wis"
+      },
+      "tokens_used": 717,
+      "latency_ms": 15990.436792373657
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": true,
+    "found_limit": true,
+    "tokens": 717,
+    "avm_overhead": 169,
+    "total": 886,
+    "latency_ms": 15990.436792373657,
+    "summary": {
+      "total_tokens": 886,
+      "total_latency_ms": 20289.69383239746,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}

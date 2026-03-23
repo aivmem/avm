@@ -1,0 +1,112 @@
+{
+  "run_id": "205b0d0e-23ff-4e0e-a78d-0a11c8660b96",
+  "scenario_id": "kr-001",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:26:48.049332+00:00",
+  "end_time": "2026-03-23T13:28:04.596647+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:26:48.050177+00:00",
+      "agent": "bench_agent_a",
+      "action": "start",
+      "details": {
+        "role": "Start project and document decisions"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:26:52.263592+00:00",
+      "agent": "bench_agent_a",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 146
+      },
+      "tokens_used": 146,
+      "latency_ms": 4213.315963745117
+    },
+    {
+      "timestamp": "2026-03-23T13:27:29.568258+00:00",
+      "agent": "bench_agent_a",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Architecture document for Agent B:\n\n- Shared-memory paths from the prompt are not mounted in this environment, so I could not persist or retrieve `/me",
+        "success": true
+      },
+      "tokens_used": 621,
+      "latency_ms": 37304.04996871948
+    },
+    {
+      "timestamp": "2026-03-23T13:27:29.676868+00:00",
+      "agent": "bench_agent_a",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 46,
+      "latency_ms": 108.54721069335938
+    },
+    {
+      "timestamp": "2026-03-23T13:27:29.676893+00:00",
+      "agent": "bench_agent_b",
+      "action": "start",
+      "details": {
+        "role": "Continue project using A's knowledge"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:27:33.795087+00:00",
+      "agent": "bench_agent_b",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 146
+      },
+      "tokens_used": 146,
+      "latency_ms": 4118.095874786377
+    },
+    {
+      "timestamp": "2026-03-23T13:28:04.494385+00:00",
+      "agent": "bench_agent_b",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Retrieved architecture context from Agent A\u2019s handoff: the shared-memory files are not mounted in this environment, so A\u2019s note is the available archi",
+        "success": true
+      },
+      "tokens_used": 597,
+      "latency_ms": 30698.5821723938
+    },
+    {
+      "timestamp": "2026-03-23T13:28:04.596434+00:00",
+      "agent": "bench_agent_b",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 48,
+      "latency_ms": 101.98092460632324
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "avm",
+    "token_breakdown": {
+      "avm_overhead": 386,
+      "task_tokens": 1218,
+      "total": 1604
+    },
+    "summary": {
+      "total_tokens": 1604,
+      "total_latency_ms": 76544.57211494446,
+      "memory_operations": 0,
+      "event_count": 8
+    }
+  }
+}

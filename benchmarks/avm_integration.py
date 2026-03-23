@@ -54,6 +54,10 @@ def avm_recall(query: str, agent_id: str, max_tokens: int = 500) -> AVMResult:
         latency = (time.time() - start) * 1000
         output = result.stdout.strip()
         
+        # Remove null bytes and other control characters
+        output = output.replace('\x00', '')
+        output = ''.join(c for c in output if ord(c) >= 32 or c in '\n\r\t')
+        
         # Estimate tokens from output length
         tokens = len(output.split()) if output else 0
         

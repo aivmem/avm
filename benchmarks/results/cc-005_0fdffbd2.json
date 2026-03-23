@@ -1,0 +1,147 @@
+{
+  "run_id": "0fdffbd2-8b26-4652-9049-c0be12a4abf5",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:11:32.377082+00:00",
+  "end_time": "2026-03-23T13:12:33.465607+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:11:32.377522+00:00",
+      "agent": "bench_debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:11:36.488762+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 126
+      },
+      "tokens_used": 126,
+      "latency_ms": 4111.199140548706
+    },
+    {
+      "timestamp": "2026-03-23T13:11:36.488971+00:00",
+      "agent": "bench_debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 0.17523765563964844
+    },
+    {
+      "timestamp": "2026-03-23T13:11:36.489096+00:00",
+      "agent": "bench_fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:11:40.595039+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 130
+      },
+      "tokens_used": 130,
+      "latency_ms": 4105.883836746216
+    },
+    {
+      "timestamp": "2026-03-23T13:12:17.715234+00:00",
+      "agent": "bench_fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "```python\nimport re\n\n\ndef search(items, query):\n    pattern = re.escape(query)\n    return [i for i in items if re.search(pattern, i[\"name\"])]\n```\n\nCouldn\u2019t write `search.py` in this session because th"
+      },
+      "tokens_used": 503,
+      "latency_ms": 37120.129108428955
+    },
+    {
+      "timestamp": "2026-03-23T13:12:17.803875+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 31
+      },
+      "tokens_used": 31,
+      "latency_ms": 88.58180046081543
+    },
+    {
+      "timestamp": "2026-03-23T13:12:17.804079+00:00",
+      "agent": "bench_reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:12:21.978298+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 136
+      },
+      "tokens_used": 136,
+      "latency_ms": 4174.177885055542
+    },
+    {
+      "timestamp": "2026-03-23T13:12:33.357852+00:00",
+      "agent": "bench_reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "No fix was provided to review, so correctness cannot be confirmed.\n\nCause: the current code does literal substring matching with `query in i['name']`. In Python, `.` and `*` are not special there, so "
+      },
+      "tokens_used": 616,
+      "latency_ms": 11379.485130310059
+    },
+    {
+      "timestamp": "2026-03-23T13:12:33.465124+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 80
+      },
+      "tokens_used": 80,
+      "latency_ms": 107.04302787780762
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 503,
+      "task_tokens": 1119,
+      "total": 1622
+    },
+    "summary": {
+      "total_tokens": 1622,
+      "total_latency_ms": 61086.67516708374,
+      "memory_operations": 0,
+      "event_count": 11
+    }
+  }
+}

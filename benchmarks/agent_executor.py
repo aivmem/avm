@@ -257,6 +257,83 @@ def test_simple():
     return response.success
 
 
+def run_claude_opus(task: str, workdir: str = None, timeout: int = 120) -> AgentResponse:
+    """
+    Run Claude Code (Opus) with a task.
+    Uses --print mode for non-interactive execution.
+    """
+    start = time.time()
+    
+    if not workdir:
+        workdir = tempfile.mkdtemp(prefix="claude_bench_")
+    
+    cmd = [
+        "claude",
+        "--print",
+        "--dangerously-skip-permissions",
+        "--model", "claude-sonnet-4-6",  # Use sonnet to save quota
+        task
+    ]
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=workdir,
+        )
+        
+        latency = (time.time() - start) * 1000
+        output = result.stdout.strip()
+        
+        # Count tokens with tiktoken (approximate for Claude)
+        tokens_used = count_tokens(task) + count_tokens(output)
+        
+        return AgentResponse(
+            success=result.returncode == 0 and len(output) > 0,
+            output=output,
+            tokens_used=tokens_used,
+            latency_ms=latency,
+            error=result.stderr if result.returncode != 0 else "",
+        )
+    except subprocess.TimeoutExpired:
+        return AgentResponse(
+            success=False,
+            output="",
+            tokens_used=0,
+            latency_ms=timeout * 1000,
+            error="Timeout",
+        )
+    except Exception as e:
+        return AgentResponse(
+            success=False,
+            output="",
+            tokens_used=0,
+            latency_ms=(time.time() - start) * 1000,
+            error=str(e),
+        )
+
+
+def run_agent(task: str, agent_type: str = "codex", workdir: str = None, timeout: int = 120) -> AgentResponse:
+    """
+    Unified interface to run any agent type.
+    
+    Args:
+        task: The task/prompt
+        agent_type: "codex" or "claude"
+        workdir: Working directory
+        timeout: Timeout in seconds
+    
+    Returns:
+        AgentResponse with results
+    """
+    if agent_type == "claude":
+        return run_claude_opus(task, workdir, timeout)
+    else:
+        return run_codex(task, workdir, timeout)
+
+
 def test_codex():
     """Quick test with Codex."""
     print("Testing Codex...")
@@ -268,9 +345,25 @@ def test_codex():
     return response.success
 
 
+def test_claude():
+    """Quick test with Claude."""
+    print("Testing Claude...")
+    response = run_claude_opus("Print 'Hello from Claude benchmark test'", timeout=30)
+    print(f"Success: {response.success}")
+    print(f"Latency: {response.latency_ms:.0f}ms")
+    print(f"Output: {response.output[:500]}")
+    print(f"Error: {response.error[:200] if response.error else 'none'}")
+    return response.success
+
+
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "codex":
-        test_codex()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "codex":
+            test_codex()
+        elif sys.argv[1] == "claude":
+            test_claude()
+        else:
+            test_simple()
     else:
         test_simple()

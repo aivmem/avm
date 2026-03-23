@@ -1,0 +1,70 @@
+{
+  "run_id": "e8f6cb7e-4d23-47d6-a153-ea3f0cbaae4b",
+  "scenario_id": "kr-004",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:28:13.343724+00:00",
+  "end_time": "2026-03-23T13:28:27.180305+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:28:13.344182+00:00",
+      "agent": "bench_troubleshooter",
+      "action": "start",
+      "details": {
+        "role": "Diagnose and fix using past knowledge"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:28:17.650480+00:00",
+      "agent": "bench_troubleshooter",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 106
+      },
+      "tokens_used": 106,
+      "latency_ms": 4306.207895278931
+    },
+    {
+      "timestamp": "2026-03-23T13:28:27.074827+00:00",
+      "agent": "bench_troubleshooter",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Similar past issue: `ISS-001`.\n\nDiagnosis: the current behavior is consistent with the earlier pagination bug, where only the first page of results wa",
+        "success": true
+      },
+      "tokens_used": 519,
+      "latency_ms": 9423.821926116943
+    },
+    {
+      "timestamp": "2026-03-23T13:28:27.180080+00:00",
+      "agent": "bench_troubleshooter",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 61,
+      "latency_ms": 105.16476631164551
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "avm",
+    "token_breakdown": {
+      "avm_overhead": 167,
+      "task_tokens": 519,
+      "total": 686
+    },
+    "summary": {
+      "total_tokens": 686,
+      "total_latency_ms": 13835.19458770752,
+      "memory_operations": 0,
+      "event_count": 4
+    }
+  }
+}

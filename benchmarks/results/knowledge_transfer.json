@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-23T13:30:35.991890+00:00",
+  "test": "knowledge_transfer",
+  "baseline": {
+    "success": true,
+    "correct": true,
+    "tokens": 370,
+    "latency_ms": 7193.640947341919,
+    "avm_overhead": 0,
+    "summary": {
+      "total_tokens": 370,
+      "total_latency_ms": 7193.640947341919,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  },
+  "avm": {
+    "success": true,
+    "correct": true,
+    "tokens": 608,
+    "latency_ms": 13670.182943344116,
+    "avm_overhead": 177,
+    "total_tokens": 785,
+    "summary": {
+      "total_tokens": 785,
+      "total_latency_ms": 17807.843923568726,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}

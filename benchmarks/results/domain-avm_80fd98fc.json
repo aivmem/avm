@@ -1,0 +1,47 @@
+{
+  "run_id": "80fd98fc-4e89-4c62-afea-c44e88768628",
+  "scenario_id": "domain-avm",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:31:57.895625+00:00",
+  "end_time": "2026-03-23T13:32:24.773284+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:32:02.132136+00:00",
+      "agent": "dev",
+      "action": "avm_recall",
+      "details": {
+        "tokens": 149
+      },
+      "tokens_used": 149,
+      "latency_ms": 4236.358880996704
+    },
+    {
+      "timestamp": "2026-03-23T13:32:24.772858+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The failure is most likely caused by an analytics API/schema limit, not Python itself.\n\n`**properties` is flattening all custom fields into the top-level event payload:\n\n```python\nevent_data = {\n    \""
+      },
+      "tokens_used": 861,
+      "latency_ms": 22640.562295913696
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": false,
+    "found_limit": false,
+    "tokens": 861,
+    "avm_overhead": 149,
+    "total": 1010,
+    "latency_ms": 22640.562295913696,
+    "summary": {
+      "total_tokens": 1010,
+      "total_latency_ms": 26876.9211769104,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}

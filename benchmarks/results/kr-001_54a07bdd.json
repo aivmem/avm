@@ -1,0 +1,70 @@
+{
+  "run_id": "54a07bdd-5b5f-4fa6-9538-d4a02bdc9cb8",
+  "scenario_id": "kr-001",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:26:03.335176+00:00",
+  "end_time": "2026-03-23T13:26:48.047585+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:26:03.335335+00:00",
+      "agent": "agent_a",
+      "action": "start",
+      "details": {
+        "role": "Start project and document decisions"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:26:19.930718+00:00",
+      "agent": "agent_a",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Shared memory could not be written to disk because the workspace is read-only. Use this as Agent A\u2019s handoff.\n\n**Architecture Document**\n- Project sha",
+        "success": true
+      },
+      "tokens_used": 323,
+      "latency_ms": 16594.818115234375
+    },
+    {
+      "timestamp": "2026-03-23T13:26:19.930815+00:00",
+      "agent": "agent_b",
+      "action": "start",
+      "details": {
+        "role": "Continue project using A's knowledge"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:26:48.046896+00:00",
+      "agent": "agent_b",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Retrieved Agent A\u2019s architecture document from the handoff: the project is a single-file Python module centered on `process(data)`.\n\nThe workspace mat",
+        "success": true
+      },
+      "tokens_used": 255,
+      "latency_ms": 28115.53168296814
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "baseline",
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 578,
+      "total": 578
+    },
+    "summary": {
+      "total_tokens": 578,
+      "total_latency_ms": 44710.349798202515,
+      "memory_operations": 0,
+      "event_count": 4
+    }
+  }
+}

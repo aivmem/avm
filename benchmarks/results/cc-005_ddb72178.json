@@ -1,0 +1,91 @@
+{
+  "run_id": "ddb72178-b656-4034-b037-c25fd5054ec7",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:24:05.715969+00:00",
+  "end_time": "2026-03-23T13:25:10.913645+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:24:05.716144+00:00",
+      "agent": "debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:24:17.526794+00:00",
+      "agent": "debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Bug identified: the failure is not in the shown list comprehension itself. `query in i['name']` does literal substring matching, so special characters",
+        "success": true
+      },
+      "tokens_used": 345,
+      "latency_ms": 11810.111999511719
+    },
+    {
+      "timestamp": "2026-03-23T13:24:17.526860+00:00",
+      "agent": "fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:24:58.086129+00:00",
+      "agent": "fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I identified the bug as a mismatch between intended literal substring search and regex-based handling in other paths. The shown `query in i['name']` l",
+        "success": true
+      },
+      "tokens_used": 394,
+      "latency_ms": 40558.86101722717
+    },
+    {
+      "timestamp": "2026-03-23T13:24:58.086176+00:00",
+      "agent": "reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:25:10.912838+00:00",
+      "agent": "reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The diagnosis is correct: the shown `search()` implementation does plain substring matching, so `.` and `*` are not special there. If failures happen,",
+        "success": true
+      },
+      "tokens_used": 430,
+      "latency_ms": 12825.902938842773
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "baseline",
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 1169,
+      "total": 1169
+    },
+    "summary": {
+      "total_tokens": 1169,
+      "total_latency_ms": 65194.875955581665,
+      "memory_operations": 0,
+      "event_count": 6
+    }
+  }
+}

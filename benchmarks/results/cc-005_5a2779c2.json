@@ -1,0 +1,158 @@
+{
+  "run_id": "5a2779c2-c4a8-4a35-984c-78600eb52f89",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:13:38.642388+00:00",
+  "end_time": "2026-03-23T13:14:26.711046+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:13:38.642840+00:00",
+      "agent": "bench_debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:13:42.644628+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 126
+      },
+      "tokens_used": 126,
+      "latency_ms": 4001.6608238220215
+    },
+    {
+      "timestamp": "2026-03-23T13:13:49.126488+00:00",
+      "agent": "bench_debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Cause: the reported behavior does not match the shown `query in i['name']` code, because plain substring search treats `.` and `*` literally. The real bug is likely in a regex-based search path.\n\nRepr"
+      },
+      "tokens_used": 605,
+      "latency_ms": 6481.8291664123535
+    },
+    {
+      "timestamp": "2026-03-23T13:13:49.221852+00:00",
+      "agent": "bench_debugger",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 82
+      },
+      "tokens_used": 82,
+      "latency_ms": 95.2920913696289
+    },
+    {
+      "timestamp": "2026-03-23T13:13:49.222115+00:00",
+      "agent": "bench_fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:13:53.420757+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 118
+      },
+      "tokens_used": 118,
+      "latency_ms": 4198.54211807251
+    },
+    {
+      "timestamp": "2026-03-23T13:14:14.754649+00:00",
+      "agent": "bench_fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "`search.py` could not be modified in this read-only workspace. Fixed implementation:\n\n```python\nimport re\n\ndef search(items, query):\n    pattern = re.escape(query)\n    return [i for i in items if re.s"
+      },
+      "tokens_used": 513,
+      "latency_ms": 21333.819150924683
+    },
+    {
+      "timestamp": "2026-03-23T13:14:14.862909+00:00",
+      "agent": "bench_fixer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 31
+      },
+      "tokens_used": 31,
+      "latency_ms": 108.06679725646973
+    },
+    {
+      "timestamp": "2026-03-23T13:14:14.863138+00:00",
+      "agent": "bench_reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:14:19.015376+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_recall",
+      "details": {
+        "query": "bug fix search regex",
+        "success": true,
+        "tokens": 134
+      },
+      "tokens_used": 134,
+      "latency_ms": 4152.133226394653
+    },
+    {
+      "timestamp": "2026-03-23T13:14:26.609419+00:00",
+      "agent": "bench_reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "No fix was provided, so correctness cannot be confirmed.\n\nThe current implementation:\n\n```python\nquery in i['name']\n```\n\ndoes literal substring matching. In Python, `.` and `*` are not special in that"
+      },
+      "tokens_used": 649,
+      "latency_ms": 7593.976020812988
+    },
+    {
+      "timestamp": "2026-03-23T13:14:26.710573+00:00",
+      "agent": "bench_reviewer",
+      "action": "avm_remember",
+      "details": {
+        "success": true,
+        "tokens": 78
+      },
+      "tokens_used": 78,
+      "latency_ms": 100.93379020690918
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 569,
+      "task_tokens": 1767,
+      "total": 2336
+    },
+    "summary": {
+      "total_tokens": 2336,
+      "total_latency_ms": 48066.25318527222,
+      "memory_operations": 0,
+      "event_count": 12
+    }
+  }
+}

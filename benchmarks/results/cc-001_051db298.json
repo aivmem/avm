@@ -1,0 +1,91 @@
+{
+  "run_id": "051db298-9f5a-4cf7-961f-5a60696bb65a",
+  "scenario_id": "cc-001",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:20:12.340419+00:00",
+  "end_time": "2026-03-23T13:21:34.275241+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:20:12.340872+00:00",
+      "agent": "architect",
+      "action": "start",
+      "details": {
+        "role": "Design API structure and data models"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:20:41.933962+00:00",
+      "agent": "architect",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I couldn\u2019t write to [code.py](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/bench_q1q2b58i/code.py) because the workspace is read-only. Thi",
+        "success": true
+      },
+      "tokens_used": 645,
+      "latency_ms": 29576.38692855835
+    },
+    {
+      "timestamp": "2026-03-23T13:20:41.934008+00:00",
+      "agent": "implementer",
+      "action": "start",
+      "details": {
+        "role": "Write the actual code"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:21:13.211638+00:00",
+      "agent": "implementer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I couldn\u2019t write to [code.py](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/bench_q1q2b58i/code.py) because the workspace is read-only. Thi",
+        "success": true
+      },
+      "tokens_used": 668,
+      "latency_ms": 31276.795148849487
+    },
+    {
+      "timestamp": "2026-03-23T13:21:13.211697+00:00",
+      "agent": "tester",
+      "action": "start",
+      "details": {
+        "role": "Write unit tests"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:21:34.274735+00:00",
+      "agent": "tester",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I couldn\u2019t write tests in this read-only workspace. Put this in `test_code.py`:\n\n```python\nimport importlib\n\nimport pytest\n\n\n@pytest.fixture\ndef clien",
+        "success": true
+      },
+      "tokens_used": 679,
+      "latency_ms": 21062.40487098694
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "baseline",
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 1992,
+      "total": 1992
+    },
+    "summary": {
+      "total_tokens": 1992,
+      "total_latency_ms": 81915.58694839478,
+      "memory_operations": 0,
+      "event_count": 6
+    }
+  }
+}

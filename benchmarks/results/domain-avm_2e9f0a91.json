@@ -1,0 +1,47 @@
+{
+  "run_id": "2e9f0a91-58eb-46d1-b64d-46fe662f046d",
+  "scenario_id": "domain-avm",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:33:34.378519+00:00",
+  "end_time": "2026-03-23T13:34:14.894172+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:33:38.510976+00:00",
+      "agent": "dev",
+      "action": "avm_recall",
+      "details": {
+        "tokens": 146
+      },
+      "tokens_used": 146,
+      "latency_ms": 4132.316827774048
+    },
+    {
+      "timestamp": "2026-03-23T13:34:14.893714+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The Python itself is fine. The bug is the payload shape and lack of validation.\n\n`**properties` flattens every custom property into the top-level event object:\n\n```python\n{\n    \"user_id\": ...,\n    \"ac"
+      },
+      "tokens_used": 901,
+      "latency_ms": 36382.566928863525
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": false,
+    "found_limit": false,
+    "tokens": 901,
+    "avm_overhead": 146,
+    "total": 1047,
+    "latency_ms": 36382.566928863525,
+    "summary": {
+      "total_tokens": 1047,
+      "total_latency_ms": 40514.88375663757,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}

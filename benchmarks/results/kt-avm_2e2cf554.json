@@ -1,0 +1,47 @@
+{
+  "run_id": "2e2cf554-0d71-40e9-ba22-056317b84e38",
+  "scenario_id": "kt-avm",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:30:18.183112+00:00",
+  "end_time": "2026-03-23T13:30:35.991472+00:00",
+  "config": {
+    "test": "knowledge_transfer"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:30:22.320924+00:00",
+      "agent": "new_dev_avm",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 177
+      },
+      "tokens_used": 177,
+      "latency_ms": 4137.660980224609
+    },
+    {
+      "timestamp": "2026-03-23T13:30:35.991286+00:00",
+      "agent": "new_dev_avm",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Use a timezone-aware `now` in UTC:\n\n```python\nfrom datetime import datetime, timezone\n\ndef is_past_event(event_time: datetime) -> bool:\n    now = datetime.now(timezone.utc)\n    return event_time < now"
+      },
+      "tokens_used": 608,
+      "latency_ms": 13670.182943344116
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": true,
+    "tokens": 608,
+    "latency_ms": 13670.182943344116,
+    "avm_overhead": 177,
+    "total_tokens": 785,
+    "summary": {
+      "total_tokens": 785,
+      "total_latency_ms": 17807.843923568726,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}

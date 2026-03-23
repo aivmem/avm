@@ -1,0 +1,154 @@
+{
+  "run_id": "0f40221a-9a76-49d8-9c9b-1d999b7ab483",
+  "scenario_id": "cc-001",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:21:34.276273+00:00",
+  "end_time": "2026-03-23T13:24:05.715383+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": true
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:21:34.276770+00:00",
+      "agent": "bench_architect",
+      "action": "start",
+      "details": {
+        "role": "Design API structure and data models"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:21:38.558547+00:00",
+      "agent": "bench_architect",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 131
+      },
+      "tokens_used": 131,
+      "latency_ms": 4281.6431522369385
+    },
+    {
+      "timestamp": "2026-03-23T13:22:36.505092+00:00",
+      "agent": "bench_architect",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The workspace is read-only, so I could not apply the change to [code.py](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/bench_53467sj7/code.",
+        "success": true
+      },
+      "tokens_used": 1136,
+      "latency_ms": 57945.33085823059
+    },
+    {
+      "timestamp": "2026-03-23T13:22:36.615706+00:00",
+      "agent": "bench_architect",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 47,
+      "latency_ms": 110.51487922668457
+    },
+    {
+      "timestamp": "2026-03-23T13:22:36.615729+00:00",
+      "agent": "bench_implementer",
+      "action": "start",
+      "details": {
+        "role": "Write the actual code"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:22:40.814269+00:00",
+      "agent": "bench_implementer",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 134
+      },
+      "tokens_used": 134,
+      "latency_ms": 4198.417901992798
+    },
+    {
+      "timestamp": "2026-03-23T13:23:32.646342+00:00",
+      "agent": "bench_implementer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I could not modify [code.py](/private/var/folders/2h/m6vg_6ps0nx5ldbj_xr55hlh0000gn/T/bench_53467sj7/code.py) because this workspace is read-only. Rep",
+        "success": true
+      },
+      "tokens_used": 1035,
+      "latency_ms": 51830.562114715576
+    },
+    {
+      "timestamp": "2026-03-23T13:23:32.751435+00:00",
+      "agent": "bench_implementer",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 36,
+      "latency_ms": 104.96091842651367
+    },
+    {
+      "timestamp": "2026-03-23T13:23:32.751461+00:00",
+      "agent": "bench_tester",
+      "action": "start",
+      "details": {
+        "role": "Write unit tests"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:23:36.857417+00:00",
+      "agent": "bench_tester",
+      "action": "avm_recall",
+      "details": {
+        "success": true,
+        "tokens": 136
+      },
+      "tokens_used": 136,
+      "latency_ms": 4105.866193771362
+    },
+    {
+      "timestamp": "2026-03-23T13:24:05.615635+00:00",
+      "agent": "bench_tester",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "I could not add the unit tests because the workspace is read-only and write approval is disabled.\n\nThe test file to add is:\n\n```python\nimport unittest",
+        "success": true
+      },
+      "tokens_used": 890,
+      "latency_ms": 28757.07173347473
+    },
+    {
+      "timestamp": "2026-03-23T13:24:05.715150+00:00",
+      "agent": "bench_tester",
+      "action": "avm_remember",
+      "details": {
+        "success": true
+      },
+      "tokens_used": 46,
+      "latency_ms": 99.35832023620605
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "avm",
+    "token_breakdown": {
+      "avm_overhead": 530,
+      "task_tokens": 3061,
+      "total": 3591
+    },
+    "summary": {
+      "total_tokens": 3591,
+      "total_latency_ms": 151433.7260723114,
+      "memory_operations": 0,
+      "event_count": 12
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "run_id": "e7330d57-ff1f-4689-b5f3-0b48120fc90e",
+  "scenario_id": "domain-baseline",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:31:14.035281+00:00",
+  "end_time": "2026-03-23T13:31:57.894881+00:00",
+  "config": {
+    "test": "domain_knowledge"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:31:57.894506+00:00",
+      "agent": "dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The bug is almost certainly not Python. It\u2019s the analytics API/SDK rejecting oversized or over-specified events, and your wrapper hides that failure.\n\nWhat\u2019s wrong in the snippet is that `**properties"
+      },
+      "tokens_used": 664,
+      "latency_ms": 43858.84475708008
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": false,
+    "found_limit": false,
+    "tokens": 664,
+    "avm_overhead": 0,
+    "total": 664,
+    "latency_ms": 43858.84475708008,
+    "summary": {
+      "total_tokens": 664,
+      "total_latency_ms": 43858.84475708008,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  }
+}

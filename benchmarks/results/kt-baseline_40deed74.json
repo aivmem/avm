@@ -1,0 +1,35 @@
+{
+  "run_id": "40deed74-c890-448d-ac74-a08b66d788e9",
+  "scenario_id": "kt-baseline",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:30:10.988151+00:00",
+  "end_time": "2026-03-23T13:30:18.182425+00:00",
+  "config": {
+    "test": "knowledge_transfer"
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:30:18.182165+00:00",
+      "agent": "new_dev",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Use a timezone-aware UTC timestamp for \u201cnow\u201d:\n\n```python\nfrom datetime import datetime, timezone\n\ndef is_past_event(event_time: datetime) -> bool:\n    return event_time < datetime.now(timezone.utc)\n\n#"
+      },
+      "tokens_used": 370,
+      "latency_ms": 7193.640947341919
+    }
+  ],
+  "result": {
+    "success": true,
+    "correct": true,
+    "tokens": 370,
+    "latency_ms": 7193.640947341919,
+    "avm_overhead": 0,
+    "summary": {
+      "total_tokens": 370,
+      "total_latency_ms": 7193.640947341919,
+      "memory_operations": 0,
+      "event_count": 1
+    }
+  }
+}

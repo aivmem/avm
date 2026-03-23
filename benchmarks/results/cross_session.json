@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-03-23T13:43:03.135284+00:00",
+  "results": [
+    {
+      "id": "redis-timeout",
+      "baseline_tokens": 395,
+      "baseline_quality": 0.3333333333333333,
+      "avm_tokens": 786,
+      "avm_overhead": 155,
+      "avm_quality": 0.6666666666666666,
+      "found_discussion": true,
+      "quality_improvement": 0.3333333333333333
+    },
+    {
+      "id": "docker-memory",
+      "baseline_tokens": 329,
+      "baseline_quality": 0.5,
+      "avm_tokens": 800,
+      "avm_overhead": 169,
+      "avm_quality": 0.9,
+      "found_discussion": true,
+      "quality_improvement": 0.4
+    },
+    {
+      "id": "git-rebase",
+      "baseline_tokens": 1270,
+      "baseline_quality": 1.0,
+      "avm_tokens": 1106,
+      "avm_overhead": 190,
+      "avm_quality": 1.0,
+      "found_discussion": true,
+      "quality_improvement": 0.0
+    }
+  ],
+  "avg_quality_improvement": 0.24444444444444446,
+  "avg_overhead": 171.33333333333334
+}

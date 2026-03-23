@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-03-23T13:40:02.842677+00:00",
+  "results": [
+    {
+      "id": "simple-1",
+      "name": "Simple: FizzBuzz",
+      "needs_avm": false,
+      "baseline_tokens": 118,
+      "avm_tokens": 118,
+      "avm_overhead": 0,
+      "total_avm": 118,
+      "overhead_pct": 0.0
+    },
+    {
+      "id": "simple-2",
+      "name": "Simple: List Comprehension",
+      "needs_avm": false,
+      "baseline_tokens": 76,
+      "avm_tokens": 76,
+      "avm_overhead": 0,
+      "total_avm": 76,
+      "overhead_pct": 0.0
+    },
+    {
+      "id": "medium-1",
+      "name": "Medium: API Rate Limiting",
+      "needs_avm": false,
+      "baseline_tokens": 222,
+      "avm_tokens": 308,
+      "avm_overhead": 0,
+      "total_avm": 308,
+      "overhead_pct": 38.73873873873874
+    },
+    {
+      "id": "domain-1",
+      "name": "Domain: Analytics Quirk",
+      "needs_avm": true,
+      "baseline_tokens": 177,
+      "avm_tokens": 359,
+      "avm_overhead": 137,
+      "total_avm": 496,
+      "overhead_pct": 180.22598870056495
+    },
+    {
+      "id": "domain-2",
+      "name": "Domain: Auth Token Format",
+      "needs_avm": true,
+      "baseline_tokens": 291,
+      "avm_tokens": 377,
+      "avm_overhead": 82,
+      "total_avm": 459,
+      "overhead_pct": 57.73195876288659
+    },
+    {
+      "id": "domain-3",
+      "name": "Domain: DB Connection Pool",
+      "needs_avm": true,
+      "baseline_tokens": 205,
+      "avm_tokens": 442,
+      "avm_overhead": 126,
+      "total_avm": 568,
+      "overhead_pct": 177.0731707317073
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-03-23T13:49:49.534835+00:00",
+  "results": [
+    {
+      "test": "secret_code",
+      "baseline_correct": false,
+      "avm_correct": true,
+      "baseline_tokens": 48,
+      "avm_tokens": 619
+    },
+    {
+      "test": "cipher",
+      "baseline_correct": false,
+      "avm_correct": false,
+      "baseline_tokens": 0,
+      "avm_tokens": 825
+    },
+    {
+      "test": "mystery",
+      "baseline_correct": false,
+      "avm_correct": true,
+      "baseline_tokens": 158,
+      "avm_tokens": 548
+    }
+  ]
+}

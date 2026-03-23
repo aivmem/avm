@@ -1,0 +1,89 @@
+{
+  "run_id": "4213fcdd-5be6-4048-ba1f-7453b73e5705",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:14:33.260221+00:00",
+  "end_time": "2026-03-23T13:15:13.692470+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:14:33.260712+00:00",
+      "agent": "debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:14:46.582552+00:00",
+      "agent": "debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The reported cause does not match the shown code.\n\n`search()` does a plain substring check:\n\n```python\nquery in i['name']\n```\n\nIn Python, `in` on strings does not treat `.` or `*` as special regex cha"
+      },
+      "tokens_used": 385,
+      "latency_ms": 13321.81715965271
+    },
+    {
+      "timestamp": "2026-03-23T13:14:46.582623+00:00",
+      "agent": "fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:15:05.595965+00:00",
+      "agent": "fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "There is no special-character bug in the shown code. `query in i['name']` is a literal substring check, not regex, so `.` and `*` are matched as normal characters.\n\nIf the goal is to make that behavio"
+      },
+      "tokens_used": 308,
+      "latency_ms": 19013.301134109497
+    },
+    {
+      "timestamp": "2026-03-23T13:15:05.596069+00:00",
+      "agent": "reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:15:13.691980+00:00",
+      "agent": "reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The fix is correct: there is no special-character bug in the shown code.\n\n`query in i['name']` is a plain Python substring check, not regex matching, so `.` and `*` have no special meaning. The debugg"
+      },
+      "tokens_used": 511,
+      "latency_ms": 8095.87287902832
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 1204,
+      "total": 1204
+    },
+    "summary": {
+      "total_tokens": 1204,
+      "total_latency_ms": 40430.99117279053,
+      "memory_operations": 0,
+      "event_count": 6
+    }
+  }
+}

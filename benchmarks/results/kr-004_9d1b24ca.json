@@ -1,0 +1,49 @@
+{
+  "run_id": "9d1b24ca-d586-465c-87c9-4751087d061e",
+  "scenario_id": "kr-004",
+  "category": "unknown",
+  "start_time": "2026-03-23T13:28:04.597357+00:00",
+  "end_time": "2026-03-23T13:28:13.342917+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T13:28:04.597551+00:00",
+      "agent": "troubleshooter",
+      "action": "start",
+      "details": {
+        "role": "Diagnose and fix using past knowledge"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T13:28:13.342371+00:00",
+      "agent": "troubleshooter",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Relevant past issue: `ISS-001`.\n\nDiagnosis: this looks similar to the earlier failure mode where only the first page of data was processed. The likely",
+        "success": true
+      },
+      "tokens_used": 238,
+      "latency_ms": 8744.436025619507
+    }
+  ],
+  "result": {
+    "success": true,
+    "mode": "baseline",
+    "token_breakdown": {
+      "avm_overhead": 0,
+      "task_tokens": 238,
+      "total": 238
+    },
+    "summary": {
+      "total_tokens": 238,
+      "total_latency_ms": 8744.436025619507,
+      "memory_operations": 0,
+      "event_count": 2
+    }
+  }
+}
