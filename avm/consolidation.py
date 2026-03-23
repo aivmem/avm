@@ -23,6 +23,7 @@ from collections import defaultdict
 from .store import AVMStore
 from .node import AVMNode
 from .topic_index import TopicIndex
+from .utils import utcnow
 
 
 @dataclass
@@ -39,6 +40,22 @@ class ConsolidationConfig:
     # Summary extraction
     min_cluster_size: int = 3  # Minimum memories to form a cluster
     max_summary_length: int = 500  # Characters per summary
+    
+    # Clustering
+    cluster_min_similarity: float = 0.3  # Minimum similarity for clustering
+    max_clusters: int = 20  # Maximum number of clusters to create
+
+
+@dataclass
+class MemoryCluster:
+    """A cluster of related memories"""
+    id: str
+    topic: str
+    memories: List[str]  # paths
+    centroid_topics: Set[str]
+    avg_importance: float
+    created_at: datetime
+    summary: str = ""
 
 
 @dataclass
@@ -114,11 +131,17 @@ class MemoryConsolidator:
         if memories is None:
             memories = self._get_memories("/memory")
         
-        now = datetime.utcnow()
+        now = utcnow()
         decayed_count = 0
         
         for mem in memories:
-            age_days = (now - mem.updated_at).total_seconds() / 86400
+            # Handle timezone-aware and naive datetimes
+            mem_time = mem.updated_at
+            if mem_time.tzinfo is None:
+                from datetime import timezone
+                mem_time = mem_time.replace(tzinfo=timezone.utc)
+            now_aware = now if now.tzinfo else now.replace(tzinfo=timezone.utc)
+            age_days = (now_aware - mem_time).total_seconds() / 86400
             current_importance = mem.meta.get("importance", 0.5)
             
             # Calculate decayed importance
@@ -284,6 +307,172 @@ class MemoryConsolidator:
                 lines.append(f"- {first_sentence.strip()}")
         
         return "\n".join(lines)[:self.config.max_summary_length]
+
+
+    def cluster_memories(self, memories: List[AVMNode] = None) -> List[MemoryCluster]:
+        """
+        Cluster memories by topic similarity using agglomerative clustering.
+        
+        Returns a list of MemoryCluster objects.
+        """
+        if memories is None:
+            memories = self._get_memories("/memory")
+        
+        # Build topic vectors for each memory
+        mem_topics: Dict[str, Set[str]] = {}
+        for mem in memories:
+            topics = set(self.topic_index.topics_for_path(mem.path))
+            if topics:
+                mem_topics[mem.path] = topics
+        
+        if len(mem_topics) < 2:
+            return []
+        
+        # Build similarity matrix
+        paths = list(mem_topics.keys())
+        n = len(paths)
+        
+        def jaccard(s1: Set[str], s2: Set[str]) -> float:
+            if not s1 or not s2:
+                return 0.0
+            return len(s1 & s2) / len(s1 | s2)
+        
+        # Simple agglomerative clustering
+        # Start with each memory as its own cluster
+        clusters: List[Set[int]] = [{i} for i in range(n)]
+        cluster_topics: List[Set[str]] = [mem_topics[paths[i]] for i in range(n)]
+        
+        # Merge until we hit max_clusters or no similar pairs
+        while len(clusters) > 1:
+            # Find most similar pair
+            best_sim = 0.0
+            best_pair = (-1, -1)
+            
+            for i in range(len(clusters)):
+                for j in range(i + 1, len(clusters)):
+                    sim = jaccard(cluster_topics[i], cluster_topics[j])
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_pair = (i, j)
+            
+            if best_sim < self.config.cluster_min_similarity:
+                break
+            
+            # Merge clusters
+            i, j = best_pair
+            clusters[i] = clusters[i] | clusters[j]
+            cluster_topics[i] = cluster_topics[i] | cluster_topics[j]
+            del clusters[j]
+            del cluster_topics[j]
+        
+        # Convert to MemoryCluster objects
+        result = []
+        now = utcnow()
+        
+        for idx, (cluster_indices, topics) in enumerate(zip(clusters, cluster_topics)):
+            if len(cluster_indices) < self.config.min_cluster_size:
+                continue
+            
+            cluster_paths = [paths[i] for i in cluster_indices]
+            
+            # Calculate average importance
+            total_importance = 0.0
+            for path in cluster_paths:
+                node = self.store.get_node(path)
+                if node:
+                    total_importance += node.meta.get("importance", 0.5)
+            avg_importance = total_importance / len(cluster_paths) if cluster_paths else 0.5
+            
+            # Find dominant topic (most frequent across cluster)
+            topic_counts: Dict[str, int] = defaultdict(int)
+            for path in cluster_paths:
+                for t in mem_topics.get(path, set()):
+                    topic_counts[t] += 1
+            
+            dominant_topic = max(topic_counts.keys(), key=lambda t: topic_counts[t]) if topic_counts else "misc"
+            
+            cluster = MemoryCluster(
+                id=f"cluster-{idx}",
+                topic=dominant_topic,
+                memories=cluster_paths,
+                centroid_topics=topics,
+                avg_importance=avg_importance,
+                created_at=now,
+            )
+            result.append(cluster)
+        
+        # Sort by importance
+        result.sort(key=lambda c: c.avg_importance, reverse=True)
+        
+        return result
+    
+    def generate_cluster_summaries(self, clusters: List[MemoryCluster] = None) -> int:
+        """
+        Generate summaries for memory clusters.
+        
+        Returns number of summaries created.
+        """
+        if clusters is None:
+            memories = self._get_memories("/memory")
+            clusters = self.cluster_memories(memories)
+        
+        now = utcnow()
+        created = 0
+        
+        for cluster in clusters:
+            # Load memory contents
+            contents = []
+            for path in cluster.memories[:10]:  # Limit to top 10
+                node = self.store.get_node(path)
+                if node and node.content:
+                    contents.append(node.content)
+            
+            if not contents:
+                continue
+            
+            # Generate summary
+            summary_lines = [
+                f"# Cluster Summary: {cluster.topic.title()}",
+                f"*{len(cluster.memories)} memories, avg importance: {cluster.avg_importance:.2f}*",
+                f"*Topics: {', '.join(sorted(cluster.centroid_topics)[:10])}*",
+                "",
+                "## Key Points:",
+            ]
+            
+            # Extract key sentences from each memory
+            for content in contents:
+                # Get first meaningful sentence
+                sentences = content.replace("\n", " ").split(".")
+                for sent in sentences:
+                    sent = sent.strip()
+                    if len(sent) > 20:  # Skip too short
+                        summary_lines.append(f"- {sent[:150]}")
+                        break
+            
+            cluster.summary = "\n".join(summary_lines)[:self.config.max_summary_length]
+            
+            # Save summary
+            summary_path = f"/memory/clusters/{cluster.topic}.md"
+            summary_node = AVMNode(
+                path=summary_path,
+                content=cluster.summary,
+                meta={
+                    "type": "cluster_summary",
+                    "cluster_id": cluster.id,
+                    "topic": cluster.topic,
+                    "source_count": len(cluster.memories),
+                    "source_paths": cluster.memories[:20],
+                    "centroid_topics": list(cluster.centroid_topics)[:20],
+                    "avg_importance": cluster.avg_importance,
+                    "generated_at": now.isoformat(),
+                    "importance": min(cluster.avg_importance + 0.2, 1.0),
+                }
+            )
+            self.store.put_node(summary_node)
+            self.topic_index.index_path(summary_path, cluster.summary, cluster.topic)
+            created += 1
+        
+        return created
 
 
 def schedule_consolidation(store: AVMStore, interval_hours: int = 24):

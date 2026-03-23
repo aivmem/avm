@@ -1155,6 +1155,93 @@ def cmd_archive(args):
     return 0
 
 
+def cmd_cluster(args):
+    """Cluster memories by topic similarity"""
+    from .consolidation import MemoryConsolidator, ConsolidationConfig
+    from .topic_index import TopicIndex
+    
+    vfs = get_vfs(args.config, args.db)
+    agent_id = args.agent or vfs.agent_id
+    
+    config = ConsolidationConfig(
+        min_cluster_size=args.min_size,
+        max_clusters=args.max_clusters,
+    )
+    
+    topic_index = TopicIndex(vfs.store)
+    consolidator = MemoryConsolidator(vfs.store, topic_index, config)
+    
+    # Get memories
+    prefix = f"/memory/private/{agent_id}" if agent_id else "/memory"
+    memories = consolidator._get_memories(prefix)
+    
+    # Cluster
+    clusters = consolidator.cluster_memories(memories)
+    
+    if not clusters:
+        print("No clusters found (need more memories or higher topic diversity).")
+        return 0
+    
+    if args.json:
+        print(json.dumps([{
+            "id": c.id,
+            "topic": c.topic,
+            "size": len(c.memories),
+            "avg_importance": c.avg_importance,
+            "topics": list(c.centroid_topics)[:10],
+            "memories": c.memories[:5],
+        } for c in clusters], indent=2))
+    else:
+        print(f"Found {len(clusters)} clusters:\n")
+        for c in clusters:
+            print(f"  📁 {c.topic.upper()} ({len(c.memories)} memories)")
+            print(f"     Importance: {c.avg_importance:.2f}")
+            print(f"     Topics: {', '.join(sorted(c.centroid_topics)[:5])}")
+            for p in c.memories[:3]:
+                print(f"       - {p}")
+            print()
+    
+    # Generate summaries if requested
+    if args.summarize:
+        created = consolidator.generate_cluster_summaries(clusters)
+        print(f"\n✅ Created {created} cluster summaries in /memory/clusters/")
+    
+    return 0
+
+
+def cmd_consolidate(args):
+    """Run full memory consolidation"""
+    from .consolidation import MemoryConsolidator, ConsolidationConfig
+    from .topic_index import TopicIndex
+    
+    vfs = get_vfs(args.config, args.db)
+    agent_id = args.agent or vfs.agent_id
+    
+    topic_index = TopicIndex(vfs.store)
+    consolidator = MemoryConsolidator(vfs.store, topic_index)
+    
+    result = consolidator.run(agent_id=agent_id, dry_run=args.dry_run)
+    
+    if args.json:
+        print(json.dumps({
+            "processed": result.memories_processed,
+            "decayed": result.importance_decayed,
+            "merged": result.memories_merged,
+            "summaries": result.summaries_created,
+            "duration_ms": result.duration_ms,
+            "dry_run": args.dry_run,
+        }, indent=2))
+    else:
+        print(f"Memory Consolidation {'(dry-run)' if args.dry_run else ''}:")
+        print(f"  Memories processed: {result.memories_processed}")
+        print(f"  Importance decayed: {result.importance_decayed}")
+        print(f"  Memories merged:    {result.memories_merged}")
+        print(f"  Summaries created:  {result.summaries_created}")
+        print(f"  Duration:           {result.duration_ms:.1f}ms")
+    
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="AI Virtual Filesystem (config-driven)",
@@ -1439,6 +1526,20 @@ def main():
     p_archive.add_argument("--limit", "-n", type=int, default=100, help="Max to archive")
     p_archive.add_argument("--dry-run", action="store_true", help="Show what would be archived")
     p_archive.set_defaults(func=cmd_archive)
+    
+    # cluster memories
+    p_cluster = subparsers.add_parser("cluster", help="Cluster memories by topic similarity")
+    p_cluster.add_argument("--agent", "-a", help="Agent ID (default: from config)")
+    p_cluster.add_argument("--min-size", type=int, default=3, help="Minimum cluster size")
+    p_cluster.add_argument("--max-clusters", type=int, default=20, help="Maximum clusters")
+    p_cluster.add_argument("--summarize", "-s", action="store_true", help="Generate summaries")
+    p_cluster.set_defaults(func=cmd_cluster)
+    
+    # consolidate memories
+    p_consolidate = subparsers.add_parser("consolidate", help="Run memory consolidation")
+    p_consolidate.add_argument("--agent", "-a", help="Agent ID (default: from config)")
+    p_consolidate.add_argument("--dry-run", action="store_true", help="Preview without modifying")
+    p_consolidate.set_defaults(func=cmd_consolidate)
     
     args = parser.parse_args()
     
