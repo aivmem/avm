@@ -102,23 +102,47 @@ class MountProcess:
         self.agent_id = agent_id
         self.pid: Optional[int] = None
     
-    def start(self):
-        """Fork a child process to run the FUSE mount"""
+    def start(self) -> bool:
+        """Fork a child process to run the FUSE mount.
+
+        Returns True if the child appears to have started successfully
+        (still alive after a short grace period), False otherwise.
+        """
+        import time
         pid = os.fork()
         if pid == 0:
             # Child process
             self._run_fuse()
             os._exit(0)
         else:
-            # Parent process
+            # Parent: wait briefly so we can detect immediate startup failures
             self.pid = pid
+            time.sleep(2.5)
+            try:
+                rc = os.waitpid(pid, os.WNOHANG)
+                if rc[0] != 0:
+                    # Child already exited — mount failed
+                    self.pid = None
+                    return False
+            except ChildProcessError:
+                self.pid = None
+                return False
+            return True
     
     def _run_fuse(self):
         """Run FUSE in child process"""
         _lazy_imports()
         try:
-            # Create agent-scoped AVM
-            agent_avm = AVM(agent_id=self.agent_id)
+            # FUSE workers don't need semantic search — disable embedding to
+            # avoid loading the ML model in every fork (causes GPU/MPS crashes
+            # when multiple workers initialise concurrently after a restart).
+            from .config import load_config
+            cfg = load_config()
+            if hasattr(cfg, 'embedding') and isinstance(cfg.embedding, dict):
+                cfg.embedding['enabled'] = False
+
+            # Create agent-scoped AVM (embedding disabled in this worker)
+            agent_avm = AVM(agent_id=self.agent_id, config=cfg)
             
             # Ensure mountpoint exists
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
@@ -296,14 +320,32 @@ class AVMDaemon:
                 time.sleep(60)
     
     def _start_mount(self, mount_config: MountConfig):
-        """Start a single mount"""
-        proc = MountProcess(
-            mount_config.path,
-            mount_config.agent,
-        )
-        proc.start()
-        self.mounts[mount_config.path] = proc
-        print(f"  Mounted: {mount_config.path} (agent={mount_config.agent}, pid={proc.pid})")
+        """Start a single mount, with zombie cleanup on failure."""
+        import subprocess, platform
+
+        mp = mount_config.path
+        Path(mp).mkdir(parents=True, exist_ok=True)
+
+        proc = MountProcess(mp, mount_config.agent)
+        ok = proc.start()
+
+        if not ok:
+            # Mount failed — clean up any partial macFUSE state immediately
+            print(f"  ⚠ Mount failed for {mp}, cleaning up...", file=sys.stderr)
+            if platform.system() == "Darwin":
+                subprocess.run(["/usr/sbin/diskutil", "unmount", "force", mp],
+                               capture_output=True, timeout=5)
+            else:
+                for cmd in (["fusermount3", "-u", mp],
+                            ["fusermount", "-u", mp],
+                            ["/sbin/umount", "-f", mp]):
+                    r = subprocess.run(cmd, capture_output=True, timeout=5)
+                    if r.returncode == 0:
+                        break
+            return
+
+        self.mounts[mp] = proc
+        print(f"  Mounted: {mp} (agent={mount_config.agent}, pid={proc.pid})")
     
     def _auto_trash_cleanup(self):
         """Background thread that cleans up old trash items"""
