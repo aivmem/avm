@@ -217,6 +217,41 @@ def cmd_history(args):
     return 0
 
 
+def cmd_warmup(args):
+    """Pre-load embedding model for faster recall"""
+    import time
+    import os
+    import warnings
+    import io
+    import contextlib
+    
+    # Suppress all warnings
+    warnings.filterwarnings('ignore')
+    os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '1'
+    os.environ['TRANSFORMERS_VERBOSITY'] = 'error'
+    
+    start = time.time()
+    
+    # Suppress stderr during model load
+    with contextlib.redirect_stderr(io.StringIO()):
+        vfs = get_vfs(args.config, args.db)
+    
+    if vfs._embedding_store is None:
+        print("Embedding not enabled. Set embedding.enabled=true in config.yaml")
+        return
+    
+    # Warmup the backend (suppress stderr)
+    backend = vfs._embedding_store.backend
+    with contextlib.redirect_stderr(io.StringIO()):
+        if hasattr(backend, 'warmup'):
+            backend.warmup()
+    
+    elapsed = (time.time() - start) * 1000
+    print(f"✓ Embedding model loaded in {elapsed:.0f}ms")
+    print(f"  Model: {getattr(backend, 'model_name', 'unknown')}")
+    print(f"  Dimension: {backend.dimension}")
+
+
 def cmd_stats(args):
     """storagestatistics"""
     vfs = get_vfs(args.config, args.db)
@@ -1377,6 +1412,10 @@ def main():
     # stats
     p_stats = subparsers.add_parser("stats", help="Show storage stats")
     p_stats.set_defaults(func=cmd_stats)
+    
+    # warmup - pre-load embedding model
+    p_warmup = subparsers.add_parser("warmup", help="Pre-load embedding model for faster recall")
+    p_warmup.set_defaults(func=cmd_warmup)
     
 
     

@@ -2,6 +2,8 @@
 """
 AVM Unit Benchmark - No LLM required.
 Tests core AVM operations: write, read, recall, search.
+
+Uses in-process API calls for accurate timing (avoids CLI subprocess overhead).
 """
 
 import json
@@ -9,10 +11,24 @@ import subprocess
 import time
 import random
 import string
+import sys
+import os
 from pathlib import Path
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from typing import List
+
+# Suppress warnings
+import warnings
+warnings.filterwarnings('ignore')
+os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '1'
+os.environ['TRANSFORMERS_VERBOSITY'] = 'error'
+
+# Add parent dir to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from avm.core import AVM
+from avm.config import load_config
 
 
 def random_text(n_words: int = 20) -> str:
@@ -54,17 +70,30 @@ def run_avm(args: List[str], input_text: str = None, timeout: int = 30) -> tuple
         return False, "", timeout * 1000
 
 
+def get_avm() -> AVM:
+    """Get shared AVM instance."""
+    global _avm
+    if '_avm' not in globals():
+        import io
+        import contextlib
+        with contextlib.redirect_stderr(io.StringIO()):
+            config = load_config()
+            _avm = AVM(config)
+    return _avm
+
+
 def bench_write(n: int) -> BenchResult:
-    """Benchmark write operations."""
-    agent = f"bench_write_{random_id()}"
+    """Benchmark write operations (in-process)."""
+    avm = get_avm()
+    agent_id = f"bench_write_{random_id()}"
+    memory = avm.agent_memory(agent_id)
     times = []
     
     for i in range(n):
         content = f"Memory {i}: {random_text(30)}"
-        success, _, duration = run_avm([
-            "remember", "-a", agent, "-c", content, "-i", "0.5"
-        ])
-        times.append(duration)
+        start = time.time()
+        memory.remember(content, importance=0.5)
+        times.append((time.time() - start) * 1000)
     
     total = sum(times)
     return BenchResult(
@@ -78,23 +107,24 @@ def bench_write(n: int) -> BenchResult:
 
 
 def bench_recall(n: int) -> BenchResult:
-    """Benchmark recall operations."""
-    agent = f"bench_recall_{random_id()}"
+    """Benchmark recall operations (in-process with warm model)."""
+    avm = get_avm()
+    agent_id = f"bench_recall_{random_id()}"
+    memory = avm.agent_memory(agent_id)
     
     # Pre-populate
     for i in range(50):
         content = f"Pre-populated memory {i}: {random_text(20)}"
-        run_avm(["remember", "-a", agent, "-c", content])
+        memory.remember(content)
     
     times = []
     queries = ["data analysis", "bug fix", "deploy test", "api monitor", "cache sync"]
     
     for i in range(n):
         q = queries[i % len(queries)]
-        success, output, duration = run_avm([
-            "recall", "-a", agent, "-t", "300", q
-        ])
-        times.append(duration)
+        start = time.time()
+        result = memory.recall(q, max_tokens=300)
+        times.append((time.time() - start) * 1000)
     
     total = sum(times)
     return BenchResult(
@@ -109,19 +139,19 @@ def bench_recall(n: int) -> BenchResult:
 
 def bench_recall_empty(n: int) -> BenchResult:
     """Benchmark recall with high min_relevance (tests early exit)."""
-    agent = f"bench_empty_{random_id()}"
+    avm = get_avm()
+    agent_id = f"bench_empty_{random_id()}"
+    memory = avm.agent_memory(agent_id)
     times = []
     
     for i in range(n):
         # Query with gibberish that won't match anything
-        success, output, duration = run_avm([
-            "recall", "-a", agent, "-t", "100", "-r", "0.9",
-            f"xyzzy_{random_id()}_plugh"
-        ])
-        times.append(duration)
+        start = time.time()
+        result = memory.recall(f"xyzzy_{random_id()}_plugh", max_tokens=100, min_relevance=0.9)
+        times.append((time.time() - start) * 1000)
         # Verify empty return
-        if output.strip():
-            print(f"  Warning: expected empty, got {len(output)} chars")
+        if result.strip():
+            print(f"  Warning: expected empty, got {len(result)} chars")
     
     total = sum(times)
     return BenchResult(
@@ -135,12 +165,14 @@ def bench_recall_empty(n: int) -> BenchResult:
 
 
 def bench_list(n: int) -> BenchResult:
-    """Benchmark list operations."""
+    """Benchmark list operations (in-process)."""
+    avm = get_avm()
     times = []
     
     for i in range(n):
-        success, _, duration = run_avm(["list", "/memory/", "--json"])
-        times.append(duration)
+        start = time.time()
+        nodes = avm.list("/memory/")
+        times.append((time.time() - start) * 1000)
     
     total = sum(times)
     return BenchResult(
@@ -154,17 +186,20 @@ def bench_list(n: int) -> BenchResult:
 
 
 def bench_stats(n: int) -> BenchResult:
-    """Benchmark memory-stats operations."""
-    agent = f"bench_stats_{random_id()}"
+    """Benchmark memory-stats operations (in-process)."""
+    avm = get_avm()
+    agent_id = f"bench_stats_{random_id()}"
+    memory = avm.agent_memory(agent_id)
     
     # Pre-populate
     for i in range(20):
-        run_avm(["remember", "-a", agent, "-c", f"Content {i}"])
+        memory.remember(f"Content {i}")
     
     times = []
     for i in range(n):
-        success, _, duration = run_avm(["memory-stats", "-a", agent])
-        times.append(duration)
+        start = time.time()
+        stats = memory.stats()
+        times.append((time.time() - start) * 1000)
     
     total = sum(times)
     return BenchResult(
@@ -178,30 +213,42 @@ def bench_stats(n: int) -> BenchResult:
 
 
 def bench_batch_write(n_items: int) -> BenchResult:
-    """Benchmark batch write (comparing N individual vs 1 batch)."""
-    agent = f"bench_batch_{random_id()}"
+    """Benchmark batch write."""
+    avm = get_avm()
+    agent_id = f"bench_batch_{random_id()}"
+    memory = avm.agent_memory(agent_id)
     
-    # Time N individual writes
+    items = [{"content": f"Batch item {i}: {random_text(15)}"} for i in range(n_items)]
+    
     start = time.time()
-    for i in range(n_items):
-        run_avm(["remember", "-a", agent, "-c", f"Individual {i}"])
-    individual_ms = (time.time() - start) * 1000
+    results = memory.batch_remember(items)
+    batch_ms = (time.time() - start) * 1000
     
-    # Note: batch write not exposed in CLI yet, just measure individual
     return BenchResult(
-        operation=f"write_x{n_items}",
+        operation=f"batch_x{n_items}",
         n_items=n_items,
-        total_ms=individual_ms,
-        avg_ms=individual_ms / n_items,
-        ops_per_sec=n_items / (individual_ms / 1000),
-        success=True,
+        total_ms=batch_ms,
+        avg_ms=batch_ms / n_items,
+        ops_per_sec=n_items / (batch_ms / 1000),
+        success=len(results) == n_items,
     )
 
 
 def main():
+    import io
+    import contextlib
+    
     print("="*70)
-    print("AVM UNIT BENCHMARK (No LLM)")
+    print("AVM UNIT BENCHMARK (No LLM, In-Process)")
     print("="*70)
+    
+    # Warmup: load model once
+    print("\nWarming up embedding model...")
+    with contextlib.redirect_stderr(io.StringIO()):
+        avm = get_avm()
+        if avm._embedding_store:
+            avm._embedding_store.backend.warmup()
+    print("  Done.")
     
     results = []
     

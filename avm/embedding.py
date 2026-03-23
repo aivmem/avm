@@ -132,16 +132,28 @@ class LocalEmbedding(EmbeddingBackend):
     Requires: pip install sentence-transformers
     """
     
+    # Class-level model cache (persists across instances within same process)
+    _model_cache: Dict[str, Any] = {}
+    
     def __init__(self, model: str = "all-MiniLM-L6-v2"):
         self.model_name = model
         self._model = None
         self._dimension = None
+        # Query embedding cache (LRU)
+        self._query_cache: Dict[str, List[float]] = {}
+        self._cache_max = 100
     
     def _load_model(self):
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(self.model_name)
-            self._dimension = self._model.get_sentence_embedding_dimension()
+            # Check class-level cache first
+            if self.model_name in LocalEmbedding._model_cache:
+                self._model, self._dimension = LocalEmbedding._model_cache[self.model_name]
+            else:
+                from sentence_transformers import SentenceTransformer
+                self._model = SentenceTransformer(self.model_name)
+                self._dimension = self._model.get_sentence_embedding_dimension()
+                # Cache at class level
+                LocalEmbedding._model_cache[self.model_name] = (self._model, self._dimension)
     
     @property
     def dimension(self) -> int:
@@ -150,12 +162,32 @@ class LocalEmbedding(EmbeddingBackend):
         return self._dimension
     
     def embeend(self, text: str) -> List[float]:
+        # Check query cache first
+        cache_key = text[:200]  # Truncate for cache key
+        if cache_key in self._query_cache:
+            return self._query_cache[cache_key]
+        
         self._load_model()
-        return self._model.encode(text).tolist()
+        result = self._model.encode(text).tolist()
+        
+        # Update cache (LRU eviction)
+        if len(self._query_cache) >= self._cache_max:
+            # Remove oldest entry
+            oldest = next(iter(self._query_cache))
+            del self._query_cache[oldest]
+        self._query_cache[cache_key] = result
+        
+        return result
     
     def embeend_batch(self, texts: List[str]) -> List[List[float]]:
         self._load_model()
         return self._model.encode(texts).tolist()
+    
+    def warmup(self):
+        """Pre-load model (call once to avoid cold start)"""
+        self._load_model()
+        # Warm up with dummy query
+        _ = self.embeend("warmup query")
 
 
 class EmbeddingStore:
