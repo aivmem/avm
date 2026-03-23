@@ -323,6 +323,31 @@ for suggestion in response.collaboration_suggestions:
 
 ---
 
+---
+
+## ⚠️ 安全注意事项
+
+### 隐私隔离
+
+- **私有空间**：`/memory/private/{agent_id}/` 只有 owner 可访问
+- **共享空间**：`/memory/shared/` 所有 agent 可访问
+- **Gossip digest** 只暴露 topic 存在性，不暴露具体内容
+
+### 权限检查
+
+- 写入前检查 `_check_private_access()`
+- Librarian 返回结果前检查 `_can_access()`
+- 4 级隐私策略：`full`、`owner`、`existence`、`none`
+
+### 建议
+
+- 敏感信息用高 importance（不易被归档）
+- 跨 agent 共享前检查内容
+- 定期 `avm cold` 检查低活跃记忆
+- consolidation 前 `--dry-run` 预览
+
+---
+
 ## 更多信息
 
 - [性能分析博客](https://bkmashiro.moe/posts/projects/avm-performance-analysis)
