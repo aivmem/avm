@@ -13,6 +13,7 @@ from avm import AVM, AVMNode
 @pytest.fixture
 def avm():
     """Create temp AVM instance"""
+    import shutil
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "test.db")
         from avm.config import AVMConfig, PermissionRule
@@ -44,6 +45,8 @@ def avm():
             }
         })
         yield v
+        # Force cleanup any leftover files
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 class TestSubscription:
