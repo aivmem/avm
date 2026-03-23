@@ -781,6 +781,11 @@ class AVMFuse(Operations):
         """Get file attributes."""
         now = datetime.now().timestamp()
         
+        # Skip macOS special files
+        basename = os.path.basename(path)
+        if basename.startswith('._') or basename in ('.DS_Store', '.localized'):
+            raise FuseOSError(errno.ENOENT)
+        
         real_path, suffix, params = self._parse_path(path)
         
         # Root directory
