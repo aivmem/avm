@@ -13,9 +13,20 @@ from avm.node import AVMNode
 @pytest.fixture
 def temp_env():
     """Create temp environment."""
+    import shutil
     with tempfile.TemporaryDirectory() as tmpdir:
+        old_xdg = os.environ.get("XDG_DATA_HOME")
         os.environ["XDG_DATA_HOME"] = tmpdir
         yield tmpdir
+        # Restore env and force cleanup any leftover dirs
+        if old_xdg:
+            os.environ["XDG_DATA_HOME"] = old_xdg
+        else:
+            os.environ.pop("XDG_DATA_HOME", None)
+        # Force remove vfs directory if it exists
+        vfs_dir = os.path.join(tmpdir, "vfs")
+        if os.path.exists(vfs_dir):
+            shutil.rmtree(vfs_dir, ignore_errors=True)
 
 
 class TestProviderRegistry:

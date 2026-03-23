@@ -45,7 +45,7 @@ class AVMNode:
     version: int = 1
     
     # Permission determined by path prefix
-    WRITABLE_PREFIXES = ("/memory", "/trash", "/archive", "/shared", "/task")
+    WRITABLE_PREFIXES = ("/memory", "/trash", "/archive", "/shared", "/task", "/gossip")
     READONLY_PREFIXES = ("/research", "/live", "/links")
     
     @property
