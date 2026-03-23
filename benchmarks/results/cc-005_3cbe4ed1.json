@@ -1,0 +1,139 @@
+{
+  "run_id": "3cbe4ed1-cefd-4403-9a6e-a20f532253cd",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T12:24:57.943263+00:00",
+  "end_time": "2026-03-23T12:24:58.109654+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T12:24:57.943806+00:00",
+      "agent": "debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.000993+00:00",
+      "agent": "debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 57.168006896972656
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.001133+00:00",
+      "agent": "fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.055071+00:00",
+      "agent": "fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 53.92098426818848
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.055221+00:00",
+      "agent": "reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109270+00:00",
+      "agent": "reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": ""
+      },
+      "tokens_used": 0,
+      "latency_ms": 54.035186767578125
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109426+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Bug is correctly identified",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109429+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Fix handles special characters properly",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109431+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Fix doesn't break normal search",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109433+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Test case for special characters is added",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:24:58.109435+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Code review feedback is addressed",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "summary": {
+      "total_tokens": 0,
+      "total_latency_ms": 165.12417793273926,
+      "memory_operations": 0,
+      "event_count": 11
+    }
+  }
+}
