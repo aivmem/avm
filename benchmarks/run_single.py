@@ -82,6 +82,7 @@ Be concise. Output only what's needed for your role.
             
             print(f"    Success: {response.success}")
             print(f"    Latency: {latency:.0f}ms")
+            print(f"    Tokens: {response.tokens_used}")
             print(f"    Output preview: {response.output[:150]}...")
             
             # Save output for inspection

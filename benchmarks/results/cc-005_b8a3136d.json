@@ -1,0 +1,139 @@
+{
+  "run_id": "b8a3136d-43c1-4f32-b579-a6fb9e3a81d5",
+  "scenario_id": "cc-005",
+  "category": "unknown",
+  "start_time": "2026-03-23T12:32:56.887084+00:00",
+  "end_time": "2026-03-23T12:33:26.402378+00:00",
+  "config": {
+    "agent": "codex",
+    "avm_enabled": false
+  },
+  "events": [
+    {
+      "timestamp": "2026-03-23T12:32:56.888024+00:00",
+      "agent": "debugger",
+      "action": "start",
+      "details": {
+        "role": "Analyze error logs and reproduce issue"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:03.365357+00:00",
+      "agent": "debugger",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "Cause: the query is being treated as a pattern instead of a literal string in at least one search path.\n\nWhy it fails:\n- Special characters like `.` and `*` have regex meaning.\n- If a query such as `a"
+      },
+      "tokens_used": 0,
+      "latency_ms": 6477.294683456421
+    },
+    {
+      "timestamp": "2026-03-23T12:33:03.366155+00:00",
+      "agent": "fixer",
+      "action": "start",
+      "details": {
+        "role": "Implement the fix"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:07.906453+00:00",
+      "agent": "fixer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "```python\ndef search(items, query):\n    q = str(query)\n    return [i for i in items if q in str(i.get('name', ''))]\n```"
+      },
+      "tokens_used": 0,
+      "latency_ms": 4540.255069732666
+    },
+    {
+      "timestamp": "2026-03-23T12:33:07.907075+00:00",
+      "agent": "reviewer",
+      "action": "start",
+      "details": {
+        "role": "Review fix and suggest improvements"
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.400643+00:00",
+      "agent": "reviewer",
+      "action": "llm_call",
+      "details": {
+        "output_preview": "The proposed fix is correct for the reported bug.\n\nIt treats `query` as a literal substring, so special characters like `.` and `*` no longer have regex semantics. It also hardens the function by hand"
+      },
+      "tokens_used": 0,
+      "latency_ms": 18493.521213531494
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.401512+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Bug is correctly identified",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.401521+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Fix handles special characters properly",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.401527+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Fix doesn't break normal search",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.401531+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Test case for special characters is added",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    },
+    {
+      "timestamp": "2026-03-23T12:33:26.401535+00:00",
+      "agent": "judge",
+      "action": "assertion_check",
+      "details": {
+        "assertion": "Code review feedback is addressed",
+        "passed": true
+      },
+      "tokens_used": 0,
+      "latency_ms": 0
+    }
+  ],
+  "result": {
+    "success": true,
+    "assertions_passed": 5,
+    "assertions_total": 5,
+    "summary": {
+      "total_tokens": 0,
+      "total_latency_ms": 29511.07096672058,
+      "memory_operations": 0,
+      "event_count": 11
+    }
+  }
+}

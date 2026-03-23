@@ -12,6 +12,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+try:
+    import tiktoken
+    _encoder = tiktoken.encoding_for_model("gpt-4")
+    def count_tokens(text: str) -> int:
+        return len(_encoder.encode(text))
+except ImportError:
+    def count_tokens(text: str) -> int:
+        # Fallback: rough estimate
+        return int(len(text.split()) * 1.3)
+
 
 @dataclass
 class AgentResponse:
@@ -105,12 +115,31 @@ def run_codex(task: str, workdir: str = None, timeout: int = 120) -> AgentRespon
         )
         
         latency = (time.time() - start) * 1000
-        tokens_estimate = len(result.stdout.split()) * 1.3
+        
+        # Parse actual token count from Codex output or use tiktoken
+        output = result.stdout.strip()
+        tokens_used = 0
+        
+        # Try to parse from Codex output first
+        if "tokens used" in output:
+            lines = output.split('\n')
+            for i, line in enumerate(lines):
+                if "tokens used" in line.lower() and i + 1 < len(lines):
+                    try:
+                        tokens_used = int(lines[i + 1].replace(',', '').strip())
+                        output = '\n'.join(lines[:i]).strip()
+                    except ValueError:
+                        pass
+                    break
+        
+        # Fallback: count with tiktoken (input + output estimate)
+        if tokens_used == 0:
+            tokens_used = count_tokens(task) + count_tokens(output)
         
         return AgentResponse(
             success=result.returncode == 0,
-            output=result.stdout,
-            tokens_used=int(tokens_estimate),
+            output=output.strip(),
+            tokens_used=tokens_used,
             latency_ms=latency,
             error=result.stderr if result.returncode != 0 else "",
         )
