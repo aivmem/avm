@@ -413,6 +413,8 @@ def cmd_memory_recall(args):
     
     strategy = ScoringStrategy(args.strategy) if args.strategy else None
     
+    min_rel = getattr(args, 'min_relevance', 0.3)
+    
     # Capture and filter output if not verbose
     if not getattr(args, 'verbose', False):
         # Run with stderr suppressed
@@ -422,6 +424,7 @@ def cmd_memory_recall(args):
                 max_tokens=args.max_tokens,
                 strategy=strategy,
                 include_shared=not args.private_only,
+                min_relevance=min_rel,
             )
     else:
         result = memory.recall(
@@ -429,6 +432,7 @@ def cmd_memory_recall(args):
             max_tokens=args.max_tokens,
             strategy=strategy,
             include_shared=not args.private_only,
+            min_relevance=min_rel,
         )
     
     print(result)
@@ -1412,6 +1416,8 @@ def main():
     p_mem_recall.add_argument("--private-only", action="store_true")
     p_mem_recall.add_argument("--verbose", "-v", action="store_true", 
                               help="Show progress bars and warnings (default: quiet)")
+    p_mem_recall.add_argument("--min-relevance", "-r", type=float, default=0.3,
+                              help="Min relevance score (0-1), filters noise (default: 0.3)")
     p_mem_recall.set_defaults(func=cmd_memory_recall)
     
     # memory remember

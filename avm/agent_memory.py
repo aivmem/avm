@@ -56,6 +56,10 @@ class MemoryConfig:
     duplicate_check: bool = False
     duplicate_threshold: float = 0.85
     
+    # Smart recall: minimum relevance threshold
+    # Results below this score are filtered out (reduces noise)
+    min_relevance: float = 0.3
+    
     @classmethod
     def from_dict(cls, data: Dict) -> "MemoryConfig":
         return cls(
@@ -139,7 +143,8 @@ class AgentMemory:
                strategy: ScoringStrategy = None,
                include_shared: bool = True,
                namespaces: List[str] = None,
-               merge_versions: bool = True) -> str:
+               merge_versions: bool = True,
+               min_relevance: float = None) -> str:
         """
         Retrieve related memories, return token-controlled context
         
@@ -156,6 +161,7 @@ class AgentMemory:
         """
         max_tokens = max_tokens or self.config.default_max_tokens
         strategy = strategy or self.config.default_strategy
+        min_rel = min_relevance if min_relevance is not None else self.config.min_relevance
         
         telemetry = get_telemetry()
         with telemetry.track("recall", self.agent_id, query=query) as t:
@@ -175,6 +181,18 @@ class AgentMemory:
             
             # 4. score
             scored = self._score_nodes(candidates, query, strategy)
+            
+            # 4.5 Smart recall: filter low relevance results
+            if min_rel > 0:
+                before_count = len(scored)
+                scored = [s for s in scored if s.relevance_score >= min_rel]
+                t["filtered_low_relevance"] = before_count - len(scored)
+            
+            # Early return if no relevant results (saves tokens)
+            if not scored:
+                t["results"] = 0
+                t["tokens_in"] = 0
+                return ""
             
             # Track total available tokens
             total_available = sum(self._estimate_tokens(s.node.content or "") for s in scored)
