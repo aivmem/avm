@@ -1,0 +1,122 @@
+{
+  "category": "information_sync_extended",
+  "description": "Extended information synchronization scenarios testing gossip protocol",
+  "scenarios": [
+    {
+      "id": "is-006",
+      "name": "Breaking News Propagation",
+      "description": "Critical alert must reach all agents within time limit",
+      "agents": [
+        {"id": "alerter", "role": "Discovers critical issue"},
+        {"id": "responder_1", "role": "First responder"},
+        {"id": "responder_2", "role": "Second responder"},
+        {"id": "manager", "role": "Escalation point"}
+      ],
+      "workflow": [
+        {"agent": "alerter", "action": "Writes CRITICAL alert to shared memory"},
+        {"wait": "2 gossip cycles"},
+        {"check": "All agents have received the alert"}
+      ],
+      "assertions": [
+        "Alert reaches all agents within 30 seconds",
+        "Alert content is not corrupted",
+        "Agents acknowledge receipt"
+      ],
+      "metrics": ["propagation_time", "delivery_rate"],
+      "time_limit_seconds": 60,
+      "difficulty": "easy"
+    },
+    {
+      "id": "is-007",
+      "name": "Configuration Change Sync",
+      "description": "One agent updates config, others must see within window",
+      "agents": [
+        {"id": "admin", "role": "Updates configuration"},
+        {"id": "service_a", "role": "Depends on config"},
+        {"id": "service_b", "role": "Depends on config"},
+        {"id": "service_c", "role": "Depends on config"}
+      ],
+      "workflow": [
+        {"agent": "admin", "action": "Updates rate_limit from 100 to 200"},
+        {"wait": "sync window"},
+        {"check": "All services see new rate_limit"}
+      ],
+      "assertions": [
+        "Config update is atomic",
+        "All services see same value",
+        "No service uses stale config after sync"
+      ],
+      "metrics": ["sync_latency", "consistency"],
+      "time_limit_seconds": 120,
+      "difficulty": "medium"
+    },
+    {
+      "id": "is-008",
+      "name": "Shift Handoff",
+      "description": "Night agent hands off context to day agent",
+      "agents": [
+        {"id": "night_agent", "role": "Ending shift"},
+        {"id": "day_agent", "role": "Starting shift"}
+      ],
+      "workflow": [
+        {"agent": "night_agent", "action": "Writes handoff notes: open issues, pending tasks"},
+        {"agent": "day_agent", "action": "Reads handoff and acknowledges"}
+      ],
+      "assertions": [
+        "Day agent receives all open issues",
+        "Day agent sees pending tasks",
+        "Handoff is timestamped"
+      ],
+      "metrics": ["handoff_completeness", "acknowledgment_time"],
+      "time_limit_seconds": 180,
+      "difficulty": "easy"
+    },
+    {
+      "id": "is-009",
+      "name": "Distributed Consensus",
+      "description": "Three agents must agree on a value",
+      "agents": [
+        {"id": "proposer", "role": "Proposes value"},
+        {"id": "voter_1", "role": "Votes on proposal"},
+        {"id": "voter_2", "role": "Votes on proposal"}
+      ],
+      "workflow": [
+        {"agent": "proposer", "action": "Proposes 'release_v2.1'"},
+        {"agent": "voter_1", "action": "Votes accept/reject"},
+        {"agent": "voter_2", "action": "Votes accept/reject"},
+        {"check": "Majority determines outcome"}
+      ],
+      "assertions": [
+        "All agents see same final decision",
+        "Decision reflects majority vote",
+        "No split-brain scenario"
+      ],
+      "metrics": ["consensus_time", "agreement_rate"],
+      "time_limit_seconds": 180,
+      "difficulty": "hard"
+    },
+    {
+      "id": "is-010",
+      "name": "Priority Queue Sync",
+      "description": "Multiple agents adding to shared priority queue",
+      "agents": [
+        {"id": "producer_1", "role": "Adds high priority items"},
+        {"id": "producer_2", "role": "Adds low priority items"},
+        {"id": "consumer", "role": "Processes in priority order"}
+      ],
+      "workflow": [
+        {"agent": "producer_1", "action": "Adds 3 priority=1 items"},
+        {"agent": "producer_2", "action": "Adds 3 priority=3 items"},
+        {"agent": "consumer", "action": "Reads and processes"}
+      ],
+      "assertions": [
+        "Consumer sees all 6 items",
+        "High priority items processed first",
+        "No items lost"
+      ],
+      "metrics": ["ordering_correctness", "item_loss_rate"],
+      "time_limit_seconds": 180,
+      "difficulty": "medium"
+    }
+  ]
+}

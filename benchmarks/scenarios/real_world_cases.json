@@ -1,0 +1,132 @@
+{
+  "category": "real_world_cases",
+  "description": "Real-world multi-agent workflow scenarios",
+  "scenarios": [
+    {
+      "id": "rw-001",
+      "name": "Trading Signal Pipeline",
+      "description": "End-to-end trading signal generation and execution",
+      "agents": [
+        {"id": "analyst", "role": "Analyzes market data"},
+        {"id": "strategist", "role": "Generates trading signals"},
+        {"id": "executor", "role": "Executes trades"},
+        {"id": "risk_manager", "role": "Validates risk limits"}
+      ],
+      "initial_context": "BTC/USD showing RSI divergence, volume spike detected",
+      "workflow": [
+        {"agent": "analyst", "output": "Technical analysis report"},
+        {"agent": "strategist", "output": "BUY signal with entry/exit"},
+        {"agent": "risk_manager", "output": "Risk assessment approval"},
+        {"agent": "executor", "output": "Order placement confirmation"}
+      ],
+      "assertions": [
+        "Signal includes entry price",
+        "Risk assessment checks position size",
+        "Order respects risk limits"
+      ],
+      "metrics": ["pipeline_latency", "signal_accuracy"],
+      "difficulty": "hard",
+      "time_limit_seconds": 480
+    },
+    {
+      "id": "rw-002",
+      "name": "Content Moderation Pipeline",
+      "description": "Multi-stage content review workflow",
+      "agents": [
+        {"id": "scanner", "role": "Automated content scan"},
+        {"id": "reviewer", "role": "Human review simulation"},
+        {"id": "appeals", "role": "Handles appeals"},
+        {"id": "policy_updater", "role": "Updates moderation rules"}
+      ],
+      "initial_context": "User posted: 'Check out this amazing crypto opportunity! 10x returns guaranteed!'",
+      "workflow": [
+        {"agent": "scanner", "output": "Flags as potential spam/scam"},
+        {"agent": "reviewer", "output": "Confirms violation"},
+        {"agent": "appeals", "output": "User appeals, denied"},
+        {"agent": "policy_updater", "output": "Adds pattern to blocklist"}
+      ],
+      "assertions": [
+        "Scanner identifies spam indicators",
+        "Reviewer cites specific policy",
+        "Appeal decision is documented"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 360
+    },
+    {
+      "id": "rw-003",
+      "name": "Customer Support Escalation",
+      "description": "Tiered support with knowledge handoff",
+      "agents": [
+        {"id": "bot", "role": "First line automated response"},
+        {"id": "l1_support", "role": "Level 1 human support"},
+        {"id": "l2_support", "role": "Technical specialist"},
+        {"id": "specialist", "role": "Product team escalation"}
+      ],
+      "initial_context": "Customer: 'My payment failed 3 times but I was charged'",
+      "workflow": [
+        {"agent": "bot", "output": "Standard troubleshooting offered"},
+        {"agent": "l1_support", "output": "Identifies payment system issue"},
+        {"agent": "l2_support", "output": "Confirms duplicate charges"},
+        {"agent": "specialist", "output": "Initiates refund process"}
+      ],
+      "assertions": [
+        "Each tier adds context for next",
+        "Customer issue is fully captured",
+        "Resolution includes refund"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 420
+    },
+    {
+      "id": "rw-004",
+      "name": "Research Paper Workflow",
+      "description": "Academic paper writing collaboration",
+      "agents": [
+        {"id": "researcher", "role": "Literature review"},
+        {"id": "writer", "role": "Drafts sections"},
+        {"id": "editor", "role": "Edits for clarity"},
+        {"id": "peer_reviewer", "role": "Provides feedback"}
+      ],
+      "initial_context": "Topic: 'Impact of LLMs on software development productivity'",
+      "workflow": [
+        {"agent": "researcher", "output": "5 key papers summarized"},
+        {"agent": "writer", "output": "Introduction draft"},
+        {"agent": "editor", "output": "Revised introduction"},
+        {"agent": "peer_reviewer", "output": "Suggests methodology section"}
+      ],
+      "assertions": [
+        "Literature review covers recent work",
+        "Draft has thesis statement",
+        "Editor improves readability"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 480
+    },
+    {
+      "id": "rw-005",
+      "name": "DevOps Incident Response",
+      "description": "Full incident lifecycle management",
+      "agents": [
+        {"id": "alerter", "role": "Receives PagerDuty alert"},
+        {"id": "triager", "role": "Assesses severity"},
+        {"id": "responder", "role": "Implements fix"},
+        {"id": "postmortem_writer", "role": "Documents incident"}
+      ],
+      "initial_context": "Alert: API error rate > 10% for 5 minutes",
+      "workflow": [
+        {"agent": "alerter", "output": "Alert acknowledged"},
+        {"agent": "triager", "output": "SEV2, affecting 30% users"},
+        {"agent": "responder", "output": "Rolled back bad deploy"},
+        {"agent": "postmortem_writer", "output": "Root cause: config error"}
+      ],
+      "assertions": [
+        "Severity correctly assessed",
+        "Fix restores service",
+        "Postmortem has timeline"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 420
+    }
+  ]
+}

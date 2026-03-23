@@ -1,0 +1,104 @@
+{
+  "category": "collaborative_coding_extended",
+  "description": "Extended collaborative coding scenarios with 3-4 specialized agents",
+  "scenarios": [
+    {
+      "id": "cc-006",
+      "name": "Distributed System Design",
+      "description": "Design a distributed cache system with multiple agents",
+      "agents": [
+        {"id": "architect", "role": "System architecture design"},
+        {"id": "backend", "role": "Core implementation"},
+        {"id": "devops", "role": "Deployment and scaling"}
+      ],
+      "initial_context": "Build a distributed cache supporting: get/set/delete, TTL, LRU eviction, replication",
+      "provided_code": "# Empty - design from scratch",
+      "assertions": [
+        "Architecture includes replication strategy",
+        "Implementation handles network partitions",
+        "Deployment includes health checks",
+        "Consistent hashing or similar for distribution"
+      ],
+      "difficulty": "hard",
+      "time_limit_seconds": 600
+    },
+    {
+      "id": "cc-007",
+      "name": "Legacy Code Refactoring",
+      "description": "Refactor legacy Python 2 code to modern Python 3",
+      "agents": [
+        {"id": "analyst", "role": "Identify refactoring targets"},
+        {"id": "refactorer", "role": "Apply refactoring"},
+        {"id": "tester", "role": "Write tests"},
+        {"id": "reviewer", "role": "Review changes"}
+      ],
+      "provided_code": "class UserManager:\n    def __init__(self):\n        self.users = {}\n    def add_user(self, name, data):\n        if self.users.has_key(name):\n            print 'User exists'\n            return\n        self.users[name] = data\n    def get_user(self, name):\n        return self.users.get(name, None)",
+      "assertions": [
+        "Removes Python 2 syntax (has_key, print)",
+        "Adds type hints",
+        "Includes unit tests",
+        "Review approves changes"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 420
+    },
+    {
+      "id": "cc-008",
+      "name": "Security Audit",
+      "description": "Audit code for security vulnerabilities and fix them",
+      "agents": [
+        {"id": "scanner", "role": "Identify vulnerabilities"},
+        {"id": "analyst", "role": "Assess severity and impact"},
+        {"id": "fixer", "role": "Implement secure fixes"}
+      ],
+      "provided_code": "import sqlite3\ndef get_user(user_id):\n    conn = sqlite3.connect('db.sqlite')\n    query = f\"SELECT * FROM users WHERE id = {user_id}\"\n    return conn.execute(query).fetchone()\n\ndef login(username, password):\n    if password == 'admin123':\n        return True\n    return username == password",
+      "assertions": [
+        "Identifies SQL injection vulnerability",
+        "Identifies hardcoded password",
+        "Fix uses parameterized queries",
+        "Fix removes hardcoded credentials"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 360
+    },
+    {
+      "id": "cc-009",
+      "name": "Performance Optimization",
+      "description": "Optimize slow code with profiling and fixes",
+      "agents": [
+        {"id": "profiler", "role": "Identify bottlenecks"},
+        {"id": "optimizer", "role": "Implement optimizations"},
+        {"id": "validator", "role": "Verify correctness"},
+        {"id": "documenter", "role": "Document changes"}
+      ],
+      "provided_code": "def find_duplicates(items):\n    duplicates = []\n    for i in range(len(items)):\n        for j in range(len(items)):\n            if i != j and items[i] == items[j]:\n                if items[i] not in duplicates:\n                    duplicates.append(items[i])\n    return duplicates",
+      "assertions": [
+        "Identifies O(n²) complexity",
+        "Optimizes to O(n) using set/dict",
+        "Validates same output",
+        "Documents time complexity improvement"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 360
+    },
+    {
+      "id": "cc-010",
+      "name": "API Versioning",
+      "description": "Add versioning to existing API without breaking clients",
+      "agents": [
+        {"id": "designer", "role": "Design versioning strategy"},
+        {"id": "implementer", "role": "Implement v2 endpoints"},
+        {"id": "migrator", "role": "Create migration guide"}
+      ],
+      "provided_code": "@app.route('/users/<id>')\ndef get_user(id):\n    user = db.get_user(id)\n    return {'name': user.name, 'email': user.email}\n\n@app.route('/users', methods=['POST'])\ndef create_user():\n    data = request.json\n    return db.create_user(data['name'], data['email'])",
+      "assertions": [
+        "v1 endpoints still work",
+        "v2 has enhanced schema",
+        "Versioning in URL or header",
+        "Migration guide is clear"
+      ],
+      "difficulty": "medium",
+      "time_limit_seconds": 420
+    }
+  ]
+}

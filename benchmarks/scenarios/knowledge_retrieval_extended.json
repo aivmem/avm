@@ -1,0 +1,268 @@
+{
+  "category": "knowledge_retrieval_extended",
+  "description": "Extended knowledge retrieval scenarios testing cross-agent memory lookup",
+  "scenarios": [
+    {
+      "id": "kr-006",
+      "name": "Incident Postmortem Lookup",
+      "description": "Find past incident with similar symptoms to current issue",
+      "agents": [
+        {"id": "on_call", "role": "Current on-call engineer facing an issue"},
+        {"id": "historian", "role": "Retrieves relevant past incidents"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"type": "postmortem", "id": "INC-2025-042", "symptom": "API latency spike to 5s", "cause": "Connection pool exhaustion", "fix": "Increased pool size from 10 to 50"},
+          {"type": "postmortem", "id": "INC-2025-089", "symptom": "Database timeout errors", "cause": "Missing index on user_id column", "fix": "Added composite index"},
+          {"type": "postmortem", "id": "INC-2026-003", "symptom": "Memory leak in worker", "cause": "Unclosed file handles in batch job", "fix": "Added context manager"},
+          {"type": "postmortem", "id": "INC-2026-017", "symptom": "API returning 503 errors", "cause": "Kubernetes pod OOM kills", "fix": "Increased memory limits"}
+        ]
+      },
+      "current_issue": "API latency has increased to 4.8s, users reporting timeouts",
+      "task": "Find the most relevant past incident and suggest the fix",
+      "assertions": [
+        "Retrieves INC-2025-042 (connection pool)",
+        "Identifies connection pool as likely cause",
+        "Suggests increasing pool size"
+      ],
+      "metrics": ["retrieval_precision", "time_to_diagnosis"],
+      "time_limit_seconds": 180,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-007",
+      "name": "Architecture Decision Records",
+      "description": "Retrieve relevant ADR for current architectural decision",
+      "agents": [
+        {"id": "architect", "role": "Making new architecture decision"},
+        {"id": "adr_finder", "role": "Finds relevant past decisions"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"type": "adr", "id": "ADR-001", "title": "Use PostgreSQL over MySQL", "context": "Need JSONB support", "decision": "PostgreSQL", "date": "2024-06"},
+          {"type": "adr", "id": "ADR-007", "title": "Microservices vs Monolith", "context": "Team size < 10", "decision": "Monolith for now", "date": "2024-09"},
+          {"type": "adr", "id": "ADR-012", "title": "Event-Driven vs Request-Response", "context": "Async processing needed", "decision": "Event-driven for batch ops", "date": "2025-02"},
+          {"type": "adr", "id": "ADR-015", "title": "REST vs GraphQL", "context": "Multiple clients, different data needs", "decision": "GraphQL for flexibility", "date": "2025-06"}
+        ]
+      },
+      "current_decision": "Should we split the monolith now that the team has grown to 25 people?",
+      "task": "Find relevant ADRs and assess if original decision should be revisited",
+      "assertions": [
+        "Retrieves ADR-007 (monolith decision)",
+        "Notes team size has changed (10 → 25)",
+        "Provides reasoned recommendation"
+      ],
+      "metrics": ["adr_relevance", "reasoning_quality"],
+      "time_limit_seconds": 240,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-008",
+      "name": "Customer Preference Recall",
+      "description": "Agent B needs Agent A's notes about customer preferences",
+      "agents": [
+        {"id": "account_manager", "role": "Has historical customer notes"},
+        {"id": "support_agent", "role": "Handling current customer request"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"customer": "Acme Corp", "preferences": "Prefers email over phone. Technical contact: jane@acme.com. Billing issues: escalate to CFO directly."},
+          {"customer": "TechStart Inc", "preferences": "Fast-growing startup. Budget-conscious. Likes self-service options."},
+          {"customer": "BigBank Ltd", "preferences": "Strict security requirements. All changes need 2-week notice. Contact via encrypted channel only."},
+          {"customer": "RetailGiant", "preferences": "High volume, needs SLA guarantees. Dedicated support preferred. Contact: ops-team@retailgiant.com"}
+        ]
+      },
+      "current_request": "BigBank Ltd is asking for an urgent feature change",
+      "task": "Retrieve customer preferences and advise on how to handle the request",
+      "assertions": [
+        "Retrieves BigBank preferences",
+        "Notes 2-week notice requirement",
+        "Suggests encrypted communication"
+      ],
+      "metrics": ["preference_recall", "advice_appropriateness"],
+      "time_limit_seconds": 120,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-009",
+      "name": "Codebase Conventions Lookup",
+      "description": "New developer needs to find team's coding standards",
+      "agents": [
+        {"id": "new_dev", "role": "Just joined, writing first PR"},
+        {"id": "docs_finder", "role": "Retrieves coding standards"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"doc": "STYLE_GUIDE.md", "content": "Use 2-space indentation. Max line length 100. Prefer functional style."},
+          {"doc": "COMMIT_CONVENTIONS.md", "content": "Use conventional commits: feat/fix/chore/docs. Max 72 chars in subject."},
+          {"doc": "PR_CHECKLIST.md", "content": "1. Tests pass 2. Linter clean 3. Two approvals required 4. Squash merge only"},
+          {"doc": "ERROR_HANDLING.md", "content": "Use Result types, not exceptions. Log errors with context. Never swallow errors."}
+        ]
+      },
+      "task": "New dev is about to submit a PR. What conventions should they follow?",
+      "assertions": [
+        "Mentions commit conventions",
+        "Mentions PR checklist",
+        "Mentions two approvals required"
+      ],
+      "metrics": ["convention_coverage", "clarity"],
+      "time_limit_seconds": 150,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-010",
+      "name": "Meeting Notes Synthesis",
+      "description": "Combine notes from multiple meetings into coherent summary",
+      "agents": [
+        {"id": "pm", "role": "Needs project status from multiple meetings"},
+        {"id": "synthesizer", "role": "Combines meeting notes"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"meeting": "Sprint Planning (Mar 18)", "notes": "Committed to 5 stories. Auth feature highest priority. Risk: external API dependency."},
+          {"meeting": "Tech Sync (Mar 19)", "notes": "Auth integration 60% done. Blocked on API keys from vendor. Fallback plan discussed."},
+          {"meeting": "Stakeholder Update (Mar 20)", "notes": "Demo scheduled for Mar 25. Need auth feature complete. Scope reduced if needed."},
+          {"meeting": "Daily Standup (Mar 21)", "notes": "API keys received. Auth integration resumed. On track for Mar 24 completion."}
+        ]
+      },
+      "task": "Synthesize the project status from these meetings for an executive summary",
+      "assertions": [
+        "Covers auth feature progress",
+        "Mentions the blocker was resolved",
+        "Notes demo deadline"
+      ],
+      "metrics": ["synthesis_completeness", "accuracy"],
+      "time_limit_seconds": 240,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-011",
+      "name": "Competitive Analysis",
+      "description": "Retrieve and synthesize competitor research",
+      "agents": [
+        {"id": "strategist", "role": "Planning product roadmap"},
+        {"id": "researcher", "role": "Has competitive intelligence"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"competitor": "CompetitorA", "strengths": "Strong enterprise sales, SOC2 compliant", "weaknesses": "Slow release cycle, outdated UI", "recent": "Raised Series C, expanding to APAC"},
+          {"competitor": "CompetitorB", "strengths": "Best mobile app, lowest price", "weaknesses": "Limited integrations, small team", "recent": "Acquired by BigCorp"},
+          {"competitor": "CompetitorC", "strengths": "AI features, developer-focused", "weaknesses": "No enterprise support, US-only", "recent": "Launched API marketplace"}
+        ]
+      },
+      "task": "We're planning AI features. What's the competitive landscape?",
+      "assertions": [
+        "Identifies CompetitorC as AI leader",
+        "Notes CompetitorC weaknesses (no enterprise)",
+        "Suggests differentiation opportunity"
+      ],
+      "metrics": ["analysis_depth", "actionability"],
+      "time_limit_seconds": 300,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-012",
+      "name": "Onboarding Knowledge",
+      "description": "New hire needs department-specific information",
+      "agents": [
+        {"id": "new_hire", "role": "Just joined the data team"},
+        {"id": "onboarder", "role": "Provides team-specific knowledge"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"team": "data", "topic": "tools", "content": "Primary: dbt, Snowflake, Airflow. BI: Metabase. All queries must go through approved views."},
+          {"team": "data", "topic": "access", "content": "Request via IT ticket. Prod read-only by default. Write access needs manager approval."},
+          {"team": "data", "topic": "oncall", "content": "Rotation every 2 weeks. PagerDuty for alerts. Runbooks in Notion."},
+          {"team": "engineering", "topic": "tools", "content": "GitHub, CircleCI, AWS. Different stack than data team."}
+        ]
+      },
+      "task": "New data team member asks: What tools do I need and how do I get access?",
+      "assertions": [
+        "Mentions dbt, Snowflake, Airflow",
+        "Explains access request process",
+        "Does NOT include engineering team info"
+      ],
+      "metrics": ["relevance", "completeness", "noise_filtering"],
+      "time_limit_seconds": 150,
+      "difficulty": "easy"
+    },
+    {
+      "id": "kr-013",
+      "name": "Regulatory Compliance",
+      "description": "Find relevant policies for handling customer data request",
+      "agents": [
+        {"id": "support", "role": "Received GDPR data deletion request"},
+        {"id": "compliance", "role": "Knows regulatory requirements"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"regulation": "GDPR", "topic": "deletion", "policy": "Must delete within 30 days. Notify customer. Keep audit log (anonymized)."},
+          {"regulation": "GDPR", "topic": "access", "policy": "Provide data export within 30 days. Machine-readable format."},
+          {"regulation": "CCPA", "topic": "deletion", "policy": "45 days to comply. Can verify identity first. Exceptions for legal holds."},
+          {"regulation": "SOC2", "topic": "logging", "policy": "All access logged. 1 year retention. Quarterly audit."}
+        ]
+      },
+      "task": "EU customer requests all their data deleted. What's the process?",
+      "assertions": [
+        "Cites GDPR (not CCPA)",
+        "Mentions 30-day deadline",
+        "Notes audit log requirement"
+      ],
+      "metrics": ["regulation_accuracy", "process_completeness"],
+      "time_limit_seconds": 180,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-014",
+      "name": "Technical Debt Tracker",
+      "description": "Retrieve and prioritize technical debt items",
+      "agents": [
+        {"id": "tech_lead", "role": "Planning debt reduction sprint"},
+        {"id": "debt_tracker", "role": "Maintains debt inventory"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"id": "DEBT-001", "title": "Upgrade Node.js to v20", "impact": "high", "effort": "low", "risk": "Security vulnerabilities in v16"},
+          {"id": "DEBT-002", "title": "Refactor auth module", "impact": "medium", "effort": "high", "risk": "Hard to test, slows new features"},
+          {"id": "DEBT-003", "title": "Remove deprecated API endpoints", "impact": "low", "effort": "medium", "risk": "Maintenance burden"},
+          {"id": "DEBT-004", "title": "Add database connection pooling", "impact": "high", "effort": "medium", "risk": "Connection exhaustion under load"}
+        ]
+      },
+      "task": "We have 2 weeks for debt reduction. What should we prioritize?",
+      "assertions": [
+        "Prioritizes DEBT-001 (high impact, low effort)",
+        "Considers DEBT-004 (high impact)",
+        "Provides reasoning for prioritization"
+      ],
+      "metrics": ["prioritization_quality", "reasoning"],
+      "time_limit_seconds": 240,
+      "difficulty": "medium"
+    },
+    {
+      "id": "kr-015",
+      "name": "Cross-Team Dependency",
+      "description": "Team A needs information about Team B's API",
+      "agents": [
+        {"id": "team_a_dev", "role": "Integrating with Team B's service"},
+        {"id": "knowledge_broker", "role": "Has cross-team documentation"}
+      ],
+      "setup": {
+        "preloaded_knowledge": [
+          {"team": "payments", "api": "/v2/charge", "owner": "team_b", "rate_limit": "100/min", "auth": "API key in header", "notes": "Idempotency key required"},
+          {"team": "payments", "api": "/v2/refund", "owner": "team_b", "rate_limit": "50/min", "auth": "API key + webhook signature", "notes": "Async, check webhook for result"},
+          {"team": "users", "api": "/users/{id}", "owner": "team_c", "rate_limit": "1000/min", "auth": "JWT", "notes": "Cached, 5min TTL"},
+          {"team": "notifications", "api": "/send", "owner": "team_d", "rate_limit": "500/min", "auth": "Service account", "notes": "Fire and forget"}
+        ]
+      },
+      "task": "Team A needs to integrate payment refunds. What do they need to know?",
+      "assertions": [
+        "Retrieves /v2/refund endpoint info",
+        "Mentions async nature and webhook",
+        "Notes authentication requirements"
+      ],
+      "metrics": ["retrieval_accuracy", "completeness"],
+      "time_limit_seconds": 180,
+      "difficulty": "easy"
+    }
+  ]
+}

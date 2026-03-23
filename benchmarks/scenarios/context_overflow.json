@@ -1,0 +1,181 @@
+{
+  "category": "context_overflow",
+  "description": "Scenarios testing AVM's value for preserving context beyond LLM limits",
+  "scenarios": [
+    {
+      "id": "co-001",
+      "name": "Long Conversation Recall",
+      "description": "Agent was compacted, needs to recall specific detail from 50 turns ago",
+      "setup": {
+        "accumulated_context": [
+          "Turn 1: User asked about project setup",
+          "Turn 5: Discussed database choice - decided PostgreSQL",
+          "Turn 12: Set API rate limit to 100/min",
+          "Turn 23: Agreed deployment would be on Fridays",
+          "Turn 34: User's timezone is PST",
+          "Turn 47: Password reset emails go to security@company.com"
+        ]
+      },
+      "compact_summary": "Discussed project setup and various configurations over multiple turns.",
+      "avm_stored": {
+        "/decisions/database.md": "Chose PostgreSQL for JSONB support",
+        "/decisions/rate_limit.md": "API rate limit: 100 requests/min",
+        "/decisions/deployment.md": "Deployments happen on Fridays",
+        "/user/preferences.md": "Timezone: PST. Security emails: security@company.com"
+      },
+      "test_question": "What email address should password reset notifications go to?",
+      "expected_answer": "security@company.com",
+      "difficulty": "easy",
+      "time_limit_seconds": 120
+    },
+    {
+      "id": "co-002",
+      "name": "Multi-Session Project",
+      "description": "Agent worked on project across 5 sessions, needs to continue",
+      "setup": {
+        "accumulated_context": [
+          "Session 1: Created project structure, chose FastAPI",
+          "Session 2: Implemented user auth with JWT",
+          "Session 3: Added database models, used SQLAlchemy",
+          "Session 4: Created REST endpoints for CRUD",
+          "Session 5: Started WebSocket implementation"
+        ]
+      },
+      "compact_summary": "Working on FastAPI project with auth and WebSocket features.",
+      "avm_stored": {
+        "/project/status.md": "Phase: WebSocket implementation\nComplete: auth, CRUD\nPending: real-time notifications",
+        "/project/tech_stack.md": "FastAPI, SQLAlchemy, JWT, PostgreSQL",
+        "/project/last_session.md": "Started WebSocket, need to add broadcast functionality"
+      },
+      "test_question": "What was the last thing we were working on and what's next?",
+      "expected_answer": "WebSocket implementation, specifically adding broadcast functionality",
+      "difficulty": "medium",
+      "time_limit_seconds": 180
+    },
+    {
+      "id": "co-003",
+      "name": "Interruption Recovery",
+      "description": "Agent was interrupted mid-task, needs to resume",
+      "setup": {
+        "accumulated_context": [
+          "Started refactoring auth module",
+          "Step 1: Extracted password validation - DONE",
+          "Step 2: Created token service - DONE",
+          "Step 3: Updated routes to use new service - IN PROGRESS (3/7 routes done)",
+          "Step 4: Add tests - NOT STARTED"
+        ]
+      },
+      "compact_summary": "Refactoring auth module, some steps completed.",
+      "avm_stored": {
+        "/tasks/auth_refactor.md": "Progress: Step 3 in progress\nRoutes updated: login, logout, refresh\nRemaining: register, reset_password, verify_email, change_password"
+      },
+      "test_question": "Where did we leave off with the auth refactoring?",
+      "expected_answer": "Step 3, updating routes. Completed: login, logout, refresh. Remaining: register, reset_password, verify_email, change_password",
+      "difficulty": "medium",
+      "time_limit_seconds": 180
+    },
+    {
+      "id": "co-004",
+      "name": "Knowledge Accumulation",
+      "description": "Agent learned 100 facts, needs to use specific one",
+      "setup": {
+        "accumulated_context": "100 random technical facts about the codebase",
+        "critical_fact": "The API uses custom header X-Request-ID for tracing"
+      },
+      "compact_summary": "Learned various facts about the codebase.",
+      "avm_stored": {
+        "/knowledge/tracing.md": "Request tracing uses custom header: X-Request-ID",
+        "/knowledge/auth.md": "Auth tokens expire after 1 hour",
+        "/knowledge/rate_limit.md": "Rate limit: 1000 req/min per API key"
+      },
+      "test_question": "How do we trace requests through the system?",
+      "expected_answer": "X-Request-ID header",
+      "difficulty": "easy",
+      "time_limit_seconds": 120
+    },
+    {
+      "id": "co-005",
+      "name": "Thread Context",
+      "description": "Multiple conversation threads, agent needs info from specific thread",
+      "setup": {
+        "accumulated_context": {
+          "thread_bugs": "Discussing bug fixes for payment module",
+          "thread_features": "Planning Q2 feature roadmap",
+          "thread_infra": "AWS migration discussion - decided on us-west-2"
+        }
+      },
+      "compact_summary": "Multiple ongoing discussions about bugs, features, and infrastructure.",
+      "avm_stored": {
+        "/threads/infra.md": "AWS migration: Region selected = us-west-2\nTimeline: Q2\nLead: @devops-team"
+      },
+      "test_question": "Which AWS region did we decide on for the migration?",
+      "expected_answer": "us-west-2",
+      "difficulty": "easy",
+      "time_limit_seconds": 120
+    },
+    {
+      "id": "co-006",
+      "name": "Temporal Reasoning",
+      "description": "Events happened in specific order, agent must recall sequence",
+      "setup": {
+        "accumulated_context": [
+          "Jan 15: Database schema v1 deployed",
+          "Feb 1: Added user_preferences table",
+          "Feb 15: Renamed users.name to users.full_name",
+          "Mar 1: Added soft delete (deleted_at column)",
+          "Mar 10: Created composite index on (user_id, created_at)"
+        ]
+      },
+      "compact_summary": "Multiple database migrations over several months.",
+      "avm_stored": {
+        "/migrations/timeline.md": "1. Jan 15: Schema v1\n2. Feb 1: user_preferences\n3. Feb 15: users.name → users.full_name\n4. Mar 1: soft delete\n5. Mar 10: composite index"
+      },
+      "test_question": "What was the third database migration we did?",
+      "expected_answer": "Renamed users.name to users.full_name (Feb 15)",
+      "difficulty": "medium",
+      "time_limit_seconds": 180
+    },
+    {
+      "id": "co-007",
+      "name": "Partial Information Synthesis",
+      "description": "Agent saw partial info multiple times, needs to synthesize complete picture",
+      "setup": {
+        "accumulated_context": [
+          "Mention 1: The bug affects users in Europe",
+          "Mention 2: Bug appears during checkout",
+          "Mention 3: Only happens with credit cards",
+          "Mention 4: Started after the March deploy"
+        ]
+      },
+      "compact_summary": "There's a checkout bug being discussed.",
+      "avm_stored": {
+        "/bugs/checkout_issue.md": "Affected: European users\nWhen: Checkout with credit cards\nSince: March deploy\nStatus: Investigating"
+      },
+      "test_question": "Can you describe the full scope of the checkout bug?",
+      "expected_answer": "European users, checkout, credit cards, started after March deploy",
+      "difficulty": "medium",
+      "time_limit_seconds": 180
+    },
+    {
+      "id": "co-008",
+      "name": "Contradiction Resolution",
+      "description": "Agent received conflicting info, needs to identify and resolve",
+      "setup": {
+        "accumulated_context": [
+          "Day 1: Max file size is 10MB",
+          "Day 3: Actually, max file size is 50MB for premium users",
+          "Day 5: We changed it back to 10MB for everyone",
+          "Day 7: Final decision: 10MB free, 100MB premium"
+        ]
+      },
+      "compact_summary": "File size limits were discussed multiple times.",
+      "avm_stored": {
+        "/config/file_limits.md": "FINAL (Day 7): Free users: 10MB, Premium users: 100MB\nHistory: Changed multiple times, this is the authoritative value"
+      },
+      "test_question": "What's the current file size limit for premium users?",
+      "expected_answer": "100MB",
+      "difficulty": "medium",
+      "time_limit_seconds": 180
+    }
+  ]
+}
