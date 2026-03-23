@@ -34,8 +34,30 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 
 try:
+    import fuse as _fuse_module
     from fuse import FUSE, FuseOSError, Operations
     HAS_FUSE = True
+    
+    # Monkey-patch fusepy for Python 3.13+ compatibility
+    # The original code has `self.__critical_exception = e` in a context
+    # where `self` is not defined (inside functools.partial callback)
+    import sys
+    if sys.version_info >= (3, 13):
+        import functools
+        _original_wrapper = _fuse_module.FUSE._wrapper
+        @functools.wraps(_original_wrapper)
+        def _patched_wrapper(self, func, *args, **kwargs):
+            try:
+                return func(*args, **kwargs) or 0
+            except OSError as e:
+                if e.errno and e.errno > 0:
+                    return -e.errno
+                # Silently ignore exceptions without errno (e.g., PermissionError)
+                return -errno.EINVAL
+            except Exception:
+                return -errno.EINVAL
+        _fuse_module.FUSE._wrapper = _patched_wrapper
+        
 except (ImportError, OSError):
     # ImportError: fusepy not installed
     # OSError: libfuse not found (common in CI environments)
