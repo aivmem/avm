@@ -140,20 +140,42 @@ class MountProcess:
     
     def stop(self):
         """Stop this mount"""
-        # Unmount
         import subprocess
+        import platform
+
+        # Kill child process first so FUSE stops serving requests
+        if self.pid:
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.kill(self.pid, sig)
+                    os.waitpid(self.pid, os.WNOHANG)
+                except (ProcessLookupError, ChildProcessError):
+                    break
+                import time; time.sleep(0.3)
+
+        # Unmount — use the right tool per platform
+        mp = self.mountpoint
         try:
-            subprocess.run(["/sbin/umount", self.mountpoint], 
-                         capture_output=True, timeout=5)
+            if platform.system() == "Darwin":
+                # macOS: diskutil unmount force is the reliable path
+                result = subprocess.run(
+                    ["/usr/sbin/diskutil", "unmount", "force", mp],
+                    capture_output=True, timeout=10
+                )
+                if result.returncode != 0:
+                    # Fallback: umount -f
+                    subprocess.run(["umount", "-f", mp],
+                                   capture_output=True, timeout=5)
+            else:
+                # Linux: try fusermount3 → fusermount → umount -f
+                for cmd in (["fusermount3", "-u", mp],
+                            ["fusermount", "-u", mp],
+                            ["umount", "-f", mp]):
+                    r = subprocess.run(cmd, capture_output=True, timeout=5)
+                    if r.returncode == 0:
+                        break
         except Exception:
             pass
-        
-        # Kill child process if still running
-        if self.pid:
-            try:
-                os.kill(self.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -430,20 +452,39 @@ def cmd_start(args):
 
 
 def cmd_stop(args):
-    """Stop the daemon"""
+    """Stop the daemon and wait for clean shutdown"""
+    import time
+
     if not DAEMON_PID.exists():
         print("Daemon not running")
         return 1
-    
+
     pid = int(DAEMON_PID.read_text().strip())
     try:
         os.kill(pid, signal.SIGTERM)
-        print(f"Stopped daemon (pid={pid})")
-        return 0
     except ProcessLookupError:
-        DAEMON_PID.unlink()
+        DAEMON_PID.unlink(missing_ok=True)
         print("Daemon not running (stale pid file removed)")
         return 1
+
+    # Wait for the process to exit (up to 8s)
+    for _ in range(16):
+        time.sleep(0.5)
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            break
+    else:
+        # Still alive — SIGKILL
+        try:
+            os.kill(pid, signal.SIGKILL)
+            time.sleep(0.5)
+        except ProcessLookupError:
+            pass
+
+    DAEMON_PID.unlink(missing_ok=True)
+    print(f"Stopped daemon (pid={pid})")
+    return 0
 
 
 def cmd_status(args):
