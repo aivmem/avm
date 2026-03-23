@@ -12,9 +12,12 @@ from avm.librarian import Librarian, PrivacyPolicy, AgentInfo
 @pytest.fixture
 def temp_env():
     """Setup temporary environment"""
+    import shutil
     with tempfile.TemporaryDirectory() as tmpdir:
         os.environ['XDG_DATA_HOME'] = tmpdir
         yield tmpdir
+        # Force cleanup any leftover files
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 @pytest.fixture
