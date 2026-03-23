@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-03-23T16:49:26.906540+00:00",
+  "results": [
+    {
+      "operation": "write",
+      "n_items": 10,
+      "total_ms": 838.4654521942139,
+      "avg_ms": 83.84654521942139,
+      "ops_per_sec": 11.926549834379697,
+      "success": true
+    },
+    {
+      "operation": "write",
+      "n_items": 50,
+      "total_ms": 4177.253007888794,
+      "avg_ms": 83.54506015777588,
+      "ops_per_sec": 11.96958860417944,
+      "success": true
+    },
+    {
+      "operation": "write",
+      "n_items": 100,
+      "total_ms": 8543.916463851929,
+      "avg_ms": 85.43916463851929,
+      "ops_per_sec": 11.704234284485985,
+      "success": true
+    },
+    {
+      "operation": "recall",
+      "n_items": 3,
+      "total_ms": 12959.816217422485,
+      "avg_ms": 4319.938739140828,
+      "ops_per_sec": 0.23148476411007743,
+      "success": true
+    },
+    {
+      "operation": "recall",
+      "n_items": 5,
+      "total_ms": 21479.56395149231,
+      "avg_ms": 4295.912790298462,
+      "ops_per_sec": 0.23277939958611782,
+      "success": true
+    },
+    {
+      "operation": "recall_empty",
+      "n_items": 3,
+      "total_ms": 12932.037830352783,
+      "avg_ms": 4310.679276784261,
+      "ops_per_sec": 0.23198200000302355,
+      "success": true
+    },
+    {
+      "operation": "recall_empty",
+      "n_items": 5,
+      "total_ms": 21586.40170097351,
+      "avg_ms": 4317.280340194702,
+      "ops_per_sec": 0.23162730265389753,
+      "success": true
+    },
+    {
+      "operation": "list",
+      "n_items": 10,
+      "total_ms": 494.4438934326172,
+      "avg_ms": 49.44438934326172,
+      "ops_per_sec": 20.22474163969587,
+      "success": true
+    },
+    {
+      "operation": "list",
+      "n_items": 20,
+      "total_ms": 993.4165477752686,
+      "avg_ms": 49.67082738876343,
+      "ops_per_sec": 20.132541625956904,
+      "success": true
+    },
+    {
+      "operation": "stats",
+      "n_items": 10,
+      "total_ms": 710.777997970581,
+      "avg_ms": 71.0777997970581,
+      "ops_per_sec": 14.069090529746388,
+      "success": true
+    },
+    {
+      "operation": "stats",
+      "n_items": 20,
+      "total_ms": 1426.1095523834229,
+      "avg_ms": 71.30547761917114,
+      "ops_per_sec": 14.024168035740647,
+      "success": true
+    },
+    {
+      "operation": "write_x10",
+      "n_items": 10,
+      "total_ms": 851.787805557251,
+      "avg_ms": 85.1787805557251,
+      "ops_per_sec": 11.740013105092373,
+      "success": true
+    },
+    {
+      "operation": "write_x50",
+      "n_items": 50,
+      "total_ms": 4272.590160369873,
+      "avg_ms": 85.45180320739746,
+      "ops_per_sec": 11.702503194378831,
+      "success": true
+    }
+  ]
+}

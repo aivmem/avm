@@ -60,6 +60,13 @@ class MemoryConfig:
     # Results below this score are filtered out (reduces noise)
     min_relevance: float = 0.3
     
+    # Batch operations
+    batch_size: int = 50  # Max items per batch write
+    
+    # Cache settings
+    cache_ttl: int = 300  # 5 minutes
+    cache_max_size: int = 1000
+    
     @classmethod
     def from_dict(cls, data: Dict) -> "MemoryConfig":
         return cls(
@@ -496,6 +503,37 @@ class AgentMemory:
             
             t["results"] = 1
             return RememberResult(node=node, similar=similar)
+    
+    def batch_remember(self, items: List[Dict[str, Any]]) -> List[AVMNode]:
+        """
+        Batch write multiple memories efficiently.
+        
+        Args:
+            items: List of dicts with keys: content, title, importance, tags
+        
+        Returns:
+            List of created nodes
+        """
+        telemetry = get_telemetry()
+        results = []
+        
+        with telemetry.track("batch_remember", self.agent_id, count=len(items)) as t:
+            for item in items[:self.config.batch_size]:
+                try:
+                    result = self.remember(
+                        content=item.get("content", ""),
+                        title=item.get("title"),
+                        importance=item.get("importance", 0.5),
+                        tags=item.get("tags"),
+                    )
+                    results.append(result.node)
+                except Exception as e:
+                    # Continue on individual failures
+                    pass
+            
+            t["results"] = len(results)
+        
+        return results
     
     def _find_similar(self, content: str, exclude_path: str = None, 
                        limit: int = 3) -> List[SimilarMatch]:
