@@ -208,6 +208,15 @@ Benchmarked on Apple M2 Pro, 16GB RAM, macOS 15.7, Python 3.13, SQLite 3.45 (WAL
 
 See [detailed benchmarks and ablation study](https://bkmashiro.moe/posts/projects/avm-performance-analysis) for full analysis.
 
+### Multi-Agent Discovery
+
+| Method | Hops | Latency | Architecture |
+|--------|------|---------|--------------|
+| Traditional recall | 4 | ~3.5ms | Per-agent search |
+| TopicIndex | 1 | ~0.5ms | Pre-computed index |
+| Librarian | 1 | ~1.7ms | Centralized router |
+| Gossip | 1 | ~0.5ms | Decentralized bloom filters |
+
 ## Features
 
 - **FUSE Mount** - Mount as filesystem, use `ls`, `cat`, `echo`
@@ -218,6 +227,10 @@ See [detailed benchmarks and ablation study](https://bkmashiro.moe/posts/project
 - **Tell System** - Cross-agent messaging with priority levels (urgent/normal/low)
 - **Full-Text Search** - FTS5 (English recommended; Chinese lacks tokenizer support)
 - **Semantic Search** - Local embedding (all-MiniLM-L6-v2), zero API cost, auto-index on write
+- **TopicIndex** - O(1) recall for known topics, reduces hop count from 4 to 1
+- **Librarian** - Global knowledge router for multi-agent discovery (95% hop reduction)
+- **Gossip Protocol** - Decentralized agent discovery using bloom filter digests
+- **Memory Consolidation** - Sleep-like memory processing: decay, merge, summarize
 
 ## Install
 
