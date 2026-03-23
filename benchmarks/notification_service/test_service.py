@@ -5,8 +5,8 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
-from .main import app
-from .models import (
+from notification_service.main import app
+from notification_service.models import (
     NotificationMessage,
     NotificationType,
     NotificationPriority,
@@ -15,10 +15,10 @@ from .models import (
     NotificationResult,
     HealthStatus,
 )
-from .handlers import EmailHandler, get_handler, HANDLERS
-from .processor import NotificationProcessor
-from .redis_client import RedisQueue
-from .config import Settings
+from notification_service.handlers import EmailHandler, get_handler, HANDLERS
+from notification_service.processor import NotificationProcessor
+from notification_service.redis_client import RedisQueue
+from notification_service.config import Settings
 
 
 @pytest.fixture
@@ -400,6 +400,90 @@ class TestConfig:
         assert settings.redis_port == 6380
 
 
+class TestCircuitBreaker:
+    """Tests for circuit breaker functionality."""
+
+    def test_circuit_starts_closed(self):
+        from notification_service.redis_client import CircuitBreaker
+
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=10.0)
+        assert cb.state == "closed"
+        assert cb.can_execute() is True
+
+    def test_circuit_opens_after_threshold(self):
+        from notification_service.redis_client import CircuitBreaker
+
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=10.0)
+        cb.record_failure()
+        cb.record_failure()
+        assert cb.state == "closed"
+        cb.record_failure()
+        assert cb.state == "open"
+        assert cb.can_execute() is False
+
+    def test_circuit_resets_on_success(self):
+        from notification_service.redis_client import CircuitBreaker
+
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=10.0)
+        cb.record_failure()
+        cb.record_failure()
+        assert cb.failure_count == 2
+        cb.record_success()
+        assert cb.failure_count == 0
+        assert cb.state == "closed"
+
+    def test_circuit_half_open_after_timeout(self):
+        from notification_service.redis_client import CircuitBreaker
+        import time
+
+        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.1)
+        cb.record_failure()
+        cb.record_failure()
+        assert cb.state == "open"
+        time.sleep(0.15)
+        assert cb.can_execute() is True
+        assert cb.state == "half-open"
+
+    def test_circuit_reopens_on_failure_in_half_open(self):
+        from notification_service.redis_client import CircuitBreaker
+        import time
+
+        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.1)
+        cb.record_failure()
+        cb.record_failure()
+        time.sleep(0.15)
+        cb.can_execute()  # Transitions to half-open
+        cb.record_failure()
+        assert cb.state == "open"
+
+
+class TestLogger:
+    """Tests for logging functionality."""
+
+    def test_setup_logger(self):
+        from notification_service.logger import setup_logger
+        import logging
+
+        logger = setup_logger("test_logger")
+        assert isinstance(logger, logging.Logger)
+        assert logger.name == "test_logger"
+
+    def test_log_notification_event(self):
+        from notification_service.logger import log_notification_event
+
+        # Should not raise
+        log_notification_event("TEST_EVENT", "test-123", {"key": "value"})
+        log_notification_event("TEST_EVENT_NO_DETAILS", "test-456")
+
+    def test_log_error(self):
+        from notification_service.logger import log_error
+
+        # Should not raise
+        log_error("Test error message")
+        log_error("Error with ID", notification_id="test-123")
+        log_error("Error with exception", error=ValueError("test error"))
+
+
 class TestHandlerRegistry:
     """Tests for notification handler registry."""
 
@@ -411,3 +495,119 @@ class TestHandlerRegistry:
         with pytest.raises(ValueError, match="No handler for notification type"):
             # Temporarily mock an unknown type
             get_handler("unknown")
+
+
+class TestNotificationService:
+    """Tests for the high-level notification service."""
+
+    @patch("notification_service.service.queue")
+    def test_submit_email(self, mock_queue):
+        """Test submitting an email via service layer."""
+        from notification_service.service import NotificationService
+
+        mock_queue.enqueue.return_value = True
+
+        service = NotificationService()
+        notification_id = service.submit_email(
+            to="service@example.com",
+            subject="Service Test",
+            body="Testing service layer",
+        )
+
+        assert notification_id is not None
+        assert mock_queue.enqueue.called
+        call_args = mock_queue.enqueue.call_args[0][0]
+        assert call_args.type == NotificationType.EMAIL
+        assert call_args.payload["to"] == "service@example.com"
+
+    @patch("notification_service.service.queue")
+    def test_submit_email_with_options(self, mock_queue):
+        """Test email submission with all options."""
+        from notification_service.service import NotificationService
+
+        mock_queue.enqueue.return_value = True
+
+        service = NotificationService()
+        notification_id = service.submit_email(
+            to="test@example.com",
+            subject="Full Options",
+            body="Plain body",
+            html_body="<p>HTML body</p>",
+            cc=["cc@example.com"],
+            bcc=["bcc@example.com"],
+            priority=NotificationPriority.HIGH,
+            metadata={"source": "test"},
+        )
+
+        assert notification_id is not None
+        call_args = mock_queue.enqueue.call_args[0][0]
+        assert call_args.priority == NotificationPriority.HIGH
+        assert call_args.payload["html_body"] == "<p>HTML body</p>"
+        assert call_args.metadata == {"source": "test"}
+
+    @patch("notification_service.service.queue")
+    def test_submit_email_failure(self, mock_queue):
+        """Test email submission when queue fails."""
+        from notification_service.service import NotificationService
+
+        mock_queue.enqueue.return_value = False
+
+        service = NotificationService()
+        notification_id = service.submit_email(
+            to="fail@example.com",
+            subject="Fail Test",
+            body="Should fail",
+        )
+
+        assert notification_id is None
+
+    @patch("notification_service.service.queue")
+    def test_get_queue_status(self, mock_queue):
+        """Test getting queue status."""
+        from notification_service.service import NotificationService
+
+        mock_queue.is_connected.return_value = True
+        mock_queue.queue_length.return_value = 10
+        mock_queue._circuit_breaker.state = "closed"
+
+        service = NotificationService()
+        status = service.get_queue_status()
+
+        assert status["connected"] is True
+        assert status["queue_length"] == 10
+        assert status["circuit_breaker_state"] == "closed"
+
+    @patch("notification_service.service.queue")
+    def test_is_healthy(self, mock_queue):
+        """Test health check via service."""
+        from notification_service.service import NotificationService
+
+        mock_queue.is_connected.return_value = True
+
+        service = NotificationService()
+        assert service.is_healthy() is True
+
+        mock_queue.is_connected.return_value = False
+        assert service.is_healthy() is False
+
+    @patch("notification_service.service.processor")
+    def test_process_sync(self, mock_processor):
+        """Test synchronous processing."""
+        from notification_service.service import NotificationService
+
+        mock_result = NotificationResult(
+            notification_id="sync-test",
+            status=NotificationStatus.SENT,
+        )
+        mock_processor.process_one.return_value = mock_result
+
+        service = NotificationService()
+        message = NotificationMessage(
+            id="sync-test",
+            type=NotificationType.EMAIL,
+            payload={"to": "sync@example.com", "subject": "Sync", "body": "Test"},
+        )
+
+        result = service.process_sync(message)
+        assert result.status == NotificationStatus.SENT
+        mock_processor.process_one.assert_called_once_with(message)
