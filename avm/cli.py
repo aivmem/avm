@@ -553,6 +553,50 @@ def cmd_who_knows(args):
         print(f"  • {agent.id} ({caps}) - {agent.memory_count} memories")
 
 
+def cmd_gossip(args):
+    """Gossip protocol commands"""
+    vfs = get_vfs(args.config, args.db)
+    
+    from .topic_index import TopicIndex
+    from .gossip import GossipStore
+    
+    topic_index = TopicIndex(vfs.store)
+    gossip = GossipStore(vfs.store, topic_index, args.agent)
+    
+    if args.gossip_action == "publish":
+        digest = gossip.publish_digest()
+        print(f"Published digest v{digest.version} with {len(digest.topics)} topics")
+    
+    elif args.gossip_action == "refresh":
+        gossip.refresh()
+        print(f"Refreshed. Known agents: {len(gossip.agents())}")
+        for agent in gossip.agents():
+            d = gossip.get_digest(agent)
+            print(f"  • {agent} (v{d.version}, {len(d.topics)} topics)")
+    
+    elif args.gossip_action == "who-knows":
+        results = gossip.who_knows(args.topic)
+        if not results:
+            print(f"No agents found for topic: {args.topic}")
+        else:
+            print(f"Agents who might know about '{args.topic}':")
+            for agent, confidence in results:
+                print(f"  • {agent} ({confidence:.0%} confidence)")
+    
+    elif args.gossip_action == "stats":
+        stats = gossip.stats()
+        print(f"Gossip Protocol Stats")
+        print(f"=====================")
+        print(f"Known agents: {stats['known_agents']}")
+        print(f"Own version: {stats['own_version']}")
+        print()
+        for a in stats['agents']:
+            print(f"  • {a['id']}: v{a['version']}, {a['topics']} topics, {a['memories']} memories, {a['age_hours']:.1f}h old")
+    
+    else:
+        print("Usage: avm gossip {publish|refresh|who-knows|stats}")
+
+
 def cmd_agents(args):
     """List all agents in the system."""
     vfs = get_vfs(args.config, args.db)
@@ -1263,6 +1307,25 @@ def main():
     # Librarian: agents
     p_agents = subparsers.add_parser("agents", help="List all agents and their capabilities")
     p_agents.set_defaults(func=cmd_agents)
+    
+    # Gossip protocol
+    p_gossip = subparsers.add_parser("gossip", help="Gossip protocol for decentralized discovery")
+    p_gossip_sub = p_gossip.add_subparsers(dest="gossip_action")
+    
+    p_gossip_publish = p_gossip_sub.add_parser("publish", help="Publish own digest")
+    p_gossip_publish.add_argument("--agent", "-a", default="default", help="Agent ID")
+    
+    p_gossip_refresh = p_gossip_sub.add_parser("refresh", help="Refresh known digests")
+    p_gossip_refresh.add_argument("--agent", "-a", default="default", help="Agent ID")
+    
+    p_gossip_who = p_gossip_sub.add_parser("who-knows", help="Find agents who know a topic")
+    p_gossip_who.add_argument("topic", help="Topic to search")
+    p_gossip_who.add_argument("--agent", "-a", default="default", help="Agent ID")
+    
+    p_gossip_stats = p_gossip_sub.add_parser("stats", help="Show gossip stats")
+    p_gossip_stats.add_argument("--agent", "-a", default="default", help="Agent ID")
+    
+    p_gossip.set_defaults(func=cmd_gossip)
     
     # memory stats
     p_mem_stats = subparsers.add_parser("memory-stats", help="Agent memory stats")
