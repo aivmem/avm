@@ -294,7 +294,12 @@ class AgentMemory:
             sn.importance_score = node.meta.get("importance", 0.5)
             
             # Recency score (exponential decay)
-            age_hours = (now - node.updated_at).total_seconds() / 3600
+            # Handle timezone-naive datetimes
+            node_time = node.updated_at
+            if node_time.tzinfo is None:
+                from datetime import timezone
+                node_time = node_time.replace(tzinfo=timezone.utc)
+            age_hours = (now - node_time).total_seconds() / 3600
             sn.recency_score = math.exp(-age_hours / 168)  # half-life 1 week
             
             # Calculate final score
