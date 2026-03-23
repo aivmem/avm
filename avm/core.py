@@ -481,6 +481,62 @@ class AVM:
             nodes = [n for n in nodes if self._check_private_access(n.path)]
         return nodes
     
+    # ─── rename / move ──────────────────────────────────────────────────────────
+
+    def rename(self, src: str, dst: str, *, hard: bool = False) -> int:
+        """Rename / move a single node or an entire prefix tree.
+
+        If *src* ends with ``/`` or matches multiple nodes as a prefix, all
+        matching nodes are moved (prefix replacement).  Otherwise only the
+        exact node is moved.
+
+        Returns the number of nodes renamed.
+        """
+        if not self.config.check_permission(src, "write"):
+            raise PermissionError(f"No write permission for {src}")
+        if not self.config.check_permission(dst, "write"):
+            raise PermissionError(f"No write permission for {dst}")
+
+        # Normalise trailing slash on source prefix
+        src_prefix = src.rstrip("/")
+
+        # Gather candidates: exact match first, then prefix tree
+        candidates: list = []
+        exact = self.store.get_node(src_prefix)
+        if exact:
+            candidates.append(exact)
+
+        # Also collect everything under src_prefix/
+        subtree = self.store.list_nodes(src_prefix + "/", limit=10_000)
+        candidates.extend(subtree)
+
+        if not candidates:
+            raise FileNotFoundError(f"No node found at {src!r}")
+
+        moved = 0
+        for node in candidates:
+            old_path = node.path
+            if old_path == src_prefix:
+                new_path = dst.rstrip("/")
+            else:
+                # Replace prefix
+                rel = old_path[len(src_prefix):]   # starts with "/"
+                new_path = dst.rstrip("/") + rel
+
+            new_node = AVMNode(
+                path=new_path,
+                content=node.content,
+                meta={**node.meta, "renamed_from": old_path},
+                node_type=node.node_type,
+            )
+            self.store.put_node(new_node)
+            self.store.delete_node(old_path)
+            self._cache_invalidate(old_path)
+            self._cache_invalidate(new_path)
+            moved += 1
+
+        return moved
+
     # ─── search ─────────────────────────────────────────────
     
     def search(self, query: str, limit: int = 10) -> List[Tuple[AVMNode, float]]:

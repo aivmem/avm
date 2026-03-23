@@ -148,6 +148,20 @@ def cmd_delete(args):
     print(f"🗑️  deleted: {args.path}")
 
 
+def cmd_mv(args):
+    from avm.core import AVM
+    vfs = AVM()
+    try:
+        n = vfs.rename(args.src, args.dst)
+        print(f"✅ moved {n} node(s): {args.src} → {args.dst}")
+    except FileNotFoundError as e:
+        print(f"[mv] {e}", file=sys.stderr)
+        sys.exit(1)
+    except PermissionError as e:
+        print(f"[mv] permission denied: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_stats(args):
     s = engine.stats()
     print(f"nodes : {s['nodes']}")
@@ -209,6 +223,11 @@ def main():
     tc = sub.add_parser('touch', help='Create an empty node if missing')
     tc.add_argument('path')
 
+    # mv
+    mv_p = sub.add_parser('mv', aliases=['move', 'rename'], help='Move/rename a node or prefix tree')
+    mv_p.add_argument('src', help='Source path or prefix')
+    mv_p.add_argument('dst', help='Destination path or prefix')
+
     # stats
     sub.add_parser('stats', help='Show database statistics')
 
@@ -225,6 +244,7 @@ def main():
         'link': cmd_link,
         'search': cmd_search, 'find': cmd_search,
         'delete': cmd_delete, 'rm': cmd_delete,
+        'mv': cmd_mv, 'move': cmd_mv, 'rename': cmd_mv,
         'touch': cmd_touch,
         'stats': cmd_stats,
     }

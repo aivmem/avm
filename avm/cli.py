@@ -101,6 +101,21 @@ def cmd_write(args):
     return 0
 
 
+def cmd_mv(args):
+    """Move/rename a node or an entire prefix tree."""
+    vfs = get_vfs(args.config, args.db)
+    try:
+        n = vfs.rename(args.src, args.dst)
+        print(f"Moved {n} node(s): {args.src} → {args.dst}")
+        return 0
+    except FileNotFoundError as e:
+        print(f"mv: {e}", file=sys.stderr)
+        return 1
+    except PermissionError as e:
+        print(f"mv: permission denied: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_delete(args):
     """deletenode"""
     vfs = get_vfs(args.config, args.db)
@@ -1374,7 +1389,13 @@ def main():
     p_delete = subparsers.add_parser("delete", help="Delete a node")
     p_delete.add_argument("path", help="Node path")
     p_delete.set_defaults(func=cmd_delete)
-    
+
+    # mv / move / rename
+    p_mv = subparsers.add_parser("mv", aliases=["move", "rename"], help="Move/rename a node or prefix tree")
+    p_mv.add_argument("src", help="Source path (use trailing / for prefix move)")
+    p_mv.add_argument("dst", help="Destination path")
+    p_mv.set_defaults(func=cmd_mv)
+
     # list
     p_list = subparsers.add_parser("list", help="List nodes")
     p_list.add_argument("prefix", nargs="?", default="/", help="Path prefix")
