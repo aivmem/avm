@@ -150,7 +150,30 @@ class LocalEmbedding(EmbeddingBackend):
                 self._model, self._dimension = LocalEmbedding._model_cache[self.model_name]
             else:
                 from sentence_transformers import SentenceTransformer
-                self._model = SentenceTransformer(self.model_name)
+                import os
+                # On macOS, MPS (Apple GPU) uses XPC which becomes invalid
+                # after os.fork().  Detect this by checking whether the current
+                # process is a fork child (different PID from the stored
+                # "original" PID), or by an explicit env flag set by the daemon.
+                # Fall back to CPU in either case.
+                force_cpu = (
+                    os.environ.get("AVM_EMBED_CPU") == "1"
+                    or os.environ.get("AVM_FUSE_WORKER") == "1"
+                )
+                if not force_cpu:
+                    import platform
+                    try:
+                        import torch
+                        if platform.system() == "Darwin" and torch.backends.mps.is_available():
+                            # Use MPS only in the original process; workers set AVM_FUSE_WORKER=1
+                            device = "mps"
+                        else:
+                            device = "cpu"
+                    except Exception:
+                        device = "cpu"
+                else:
+                    device = "cpu"
+                self._model = SentenceTransformer(self.model_name, device=device)
                 self._dimension = self._model.get_sentence_embedding_dimension()
                 # Cache at class level
                 LocalEmbedding._model_cache[self.model_name] = (self._model, self._dimension)

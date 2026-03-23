@@ -132,17 +132,14 @@ class MountProcess:
     def _run_fuse(self):
         """Run FUSE in child process"""
         _lazy_imports()
+        # Signal to LocalEmbedding that we are inside a fork()ed worker.
+        # MPS (Apple GPU) XPC connection is invalid after fork, so the embedding
+        # backend will fall back to CPU automatically when this flag is set.
+        import os as _os
+        _os.environ["AVM_FUSE_WORKER"] = "1"
         try:
-            # FUSE workers don't need semantic search — disable embedding to
-            # avoid loading the ML model in every fork (causes GPU/MPS crashes
-            # when multiple workers initialise concurrently after a restart).
-            from .config import load_config
-            cfg = load_config()
-            if hasattr(cfg, 'embedding') and isinstance(cfg.embedding, dict):
-                cfg.embedding['enabled'] = False
-
-            # Create agent-scoped AVM (embedding disabled in this worker)
-            agent_avm = AVM(agent_id=self.agent_id, config=cfg)
+            # Create agent-scoped AVM
+            agent_avm = AVM(agent_id=self.agent_id)
             
             # Ensure mountpoint exists
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
