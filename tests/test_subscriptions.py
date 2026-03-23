@@ -180,3 +180,49 @@ class TestRealtimeNotification:
         assert len(notified) == 1
         assert notified[0][0] == "agent1"
         assert "/urgent/alert.md" in notified[0][1]
+
+
+class TestWebhookNotification:
+    """Test webhook notification"""
+    
+    def test_subscribe_with_webhook(self, sub_store):
+        """Test creating subscription with webhook URL"""
+        sub = sub_store.subscribe(
+            "agent1", "/memory/shared/*",
+            mode=SubscriptionMode.REALTIME,
+            webhook_url="http://localhost:9999/test"
+        )
+        assert sub.webhook_url == "http://localhost:9999/test"
+        assert sub.mode == SubscriptionMode.REALTIME
+    
+    def test_webhook_stored_and_retrieved(self, sub_store):
+        """Test webhook URL is persisted"""
+        sub_store.subscribe(
+            "agent1", "/memory/shared/*",
+            mode=SubscriptionMode.THROTTLED,
+            throttle_seconds=60,
+            webhook_url="http://example.com/webhook"
+        )
+        
+        subs = sub_store.list_subscriptions("agent1")
+        assert len(subs) == 1
+        assert subs[0].webhook_url == "http://example.com/webhook"
+    
+    def test_update_webhook(self, sub_store):
+        """Test updating webhook URL"""
+        sub_store.subscribe(
+            "agent1", "/memory/*",
+            mode=SubscriptionMode.REALTIME,
+            webhook_url="http://old.example.com"
+        )
+        
+        # Update with new webhook
+        sub_store.subscribe(
+            "agent1", "/memory/*",
+            mode=SubscriptionMode.REALTIME,
+            webhook_url="http://new.example.com"
+        )
+        
+        subs = sub_store.list_subscriptions("agent1")
+        assert len(subs) == 1
+        assert subs[0].webhook_url == "http://new.example.com"

@@ -47,6 +47,7 @@ class Subscription:
     mode: SubscriptionMode
     throttle_seconds: int = 60
     digest_cron: Optional[str] = None
+    webhook_url: Optional[str] = None  # HTTP POST endpoint
     enabled: bool = True
     created_at: str = ""
     
@@ -96,11 +97,16 @@ class SubscriptionStore:
                     mode TEXT NOT NULL DEFAULT 'batched',
                     throttle_seconds INTEGER DEFAULT 60,
                     digest_cron TEXT,
+                    webhook_url TEXT,
                     enabled INTEGER DEFAULT 1,
                     created_at TEXT NOT NULL,
                     UNIQUE(agent_id, pattern)
                 )
             """)
+            # Migration: add webhook_url if missing
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(subscriptions)")]
+            if 'webhook_url' not in cols:
+                conn.execute("ALTER TABLE subscriptions ADD COLUMN webhook_url TEXT")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS pending_events (
                     id INTEGER PRIMARY KEY,
@@ -121,29 +127,31 @@ class SubscriptionStore:
     def subscribe(self, agent_id: str, pattern: str, 
                   mode: SubscriptionMode = SubscriptionMode.BATCHED,
                   throttle_seconds: int = 60,
-                  digest_cron: str = None) -> Subscription:
+                  digest_cron: str = None,
+                  webhook_url: str = None) -> Subscription:
         """Create or update a subscription"""
         now = utcnow().isoformat()
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT INTO subscriptions (agent_id, pattern, mode, throttle_seconds, digest_cron, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO subscriptions (agent_id, pattern, mode, throttle_seconds, digest_cron, webhook_url, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(agent_id, pattern) DO UPDATE SET
                     mode = excluded.mode,
                     throttle_seconds = excluded.throttle_seconds,
                     digest_cron = excluded.digest_cron,
+                    webhook_url = excluded.webhook_url,
                     enabled = 1
-            """, (agent_id, pattern, mode.value, throttle_seconds, digest_cron, now))
+            """, (agent_id, pattern, mode.value, throttle_seconds, digest_cron, webhook_url, now))
             
             row = conn.execute(
-                "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, enabled, created_at FROM subscriptions WHERE agent_id = ? AND pattern = ?",
+                "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, webhook_url, enabled, created_at FROM subscriptions WHERE agent_id = ? AND pattern = ?",
                 (agent_id, pattern)
             ).fetchone()
         
         return Subscription(
             id=row[0], agent_id=row[1], pattern=row[2],
             mode=row[3], throttle_seconds=row[4],
-            digest_cron=row[5], enabled=bool(row[6]), created_at=row[7]
+            digest_cron=row[5], webhook_url=row[6], enabled=bool(row[7]), created_at=row[8]
         )
     
     def unsubscribe(self, agent_id: str, pattern: str):
@@ -159,18 +167,18 @@ class SubscriptionStore:
         with sqlite3.connect(self.db_path) as conn:
             if agent_id:
                 rows = conn.execute(
-                    "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, enabled, created_at FROM subscriptions WHERE agent_id = ? AND enabled = 1",
+                    "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, webhook_url, enabled, created_at FROM subscriptions WHERE agent_id = ? AND enabled = 1",
                     (agent_id,)
                 ).fetchall()
             else:
                 rows = conn.execute(
-                    "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, enabled, created_at FROM subscriptions WHERE enabled = 1"
+                    "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, webhook_url, enabled, created_at FROM subscriptions WHERE enabled = 1"
                 ).fetchall()
         
         return [
             Subscription(id=r[0], agent_id=r[1], pattern=r[2], mode=r[3],
-                        throttle_seconds=r[4], digest_cron=r[5], 
-                        enabled=bool(r[6]), created_at=r[7])
+                        throttle_seconds=r[4], digest_cron=r[5], webhook_url=r[6],
+                        enabled=bool(r[7]), created_at=r[8])
             for r in rows
         ]
     
@@ -206,8 +214,17 @@ class SubscriptionStore:
                 self._store_pending(sub.id, path, now)
     
     def _send_immediate(self, sub: Subscription, path: str):
-        """Send notification immediately"""
-        if self._notify_callback:
+        """Send notification immediately via callback or webhook"""
+        # Try webhook first if configured
+        if sub.webhook_url:
+            self._send_webhook(sub.webhook_url, {
+                "event": "write",
+                "path": path,
+                "pattern": sub.pattern,
+                "agent_id": sub.agent_id,
+                "timestamp": utcnow().isoformat(),
+            })
+        elif self._notify_callback:
             self._notify_callback(sub.agent_id, f"[update] {path}")
     
     def _add_to_throttle(self, sub: Subscription, path: str, timestamp: str):
@@ -240,7 +257,24 @@ class SubscriptionStore:
             pending = self._pending.pop(sub_id, None)
             self._throttle_timers.pop(sub_id, None)
         
-        if pending and self._notify_callback:
+        if not pending:
+            return
+        
+        # Get subscription for webhook URL
+        sub = self._get_subscription_by_id(sub_id)
+        
+        if sub and sub.webhook_url:
+            # Send webhook with batched updates
+            self._send_webhook(sub.webhook_url, {
+                "event": "batch_update",
+                "paths": pending.paths,
+                "count": pending.count,
+                "pattern": sub.pattern if sub else None,
+                "agent_id": pending.agent_id,
+                "first_event": pending.first_event,
+                "last_event": pending.last_event,
+            })
+        elif self._notify_callback:
             if pending.count == 1:
                 msg = f"[update] {pending.paths[0]}"
             else:
@@ -248,6 +282,46 @@ class SubscriptionStore:
                 if len(pending.paths) > 3:
                     msg += f" +{len(pending.paths) - 3} more"
             self._notify_callback(pending.agent_id, msg)
+    
+    def _get_subscription_by_id(self, sub_id: int) -> Optional[Subscription]:
+        """Get subscription by ID"""
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                "SELECT id, agent_id, pattern, mode, throttle_seconds, digest_cron, webhook_url, enabled, created_at FROM subscriptions WHERE id = ?",
+                (sub_id,)
+            ).fetchone()
+        
+        if row:
+            return Subscription(
+                id=row[0], agent_id=row[1], pattern=row[2], mode=row[3],
+                throttle_seconds=row[4], digest_cron=row[5], webhook_url=row[6],
+                enabled=bool(row[7]), created_at=row[8]
+            )
+        return None
+    
+    def _send_webhook(self, url: str, payload: dict, timeout: int = 10):
+        """Send webhook POST request (fire-and-forget in thread)"""
+        import urllib.request
+        import urllib.error
+        
+        def _send():
+            try:
+                data = json.dumps(payload).encode('utf-8')
+                req = urllib.request.Request(
+                    url,
+                    data=data,
+                    headers={'Content-Type': 'application/json'},
+                    method='POST'
+                )
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    pass  # Fire and forget
+            except Exception as e:
+                # Log but don't fail
+                print(f"[subscription webhook] Failed to POST to {url}: {e}")
+        
+        # Send in background thread
+        thread = threading.Thread(target=_send, daemon=True)
+        thread.start()
     
     def _store_pending(self, sub_id: int, path: str, timestamp: str):
         """Store for later retrieval (batched/digest)"""

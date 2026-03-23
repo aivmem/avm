@@ -734,18 +734,28 @@ def cmd_subscribe(args):
     
     store = get_subscription_store()
     mode = SubscriptionMode(args.mode)
-    sub = store.subscribe(args.agent, args.pattern, mode=mode, throttle_seconds=args.throttle)
+    webhook_url = getattr(args, 'webhook', None)
+    
+    sub = store.subscribe(
+        args.agent, args.pattern, 
+        mode=mode, 
+        throttle_seconds=args.throttle,
+        webhook_url=webhook_url,
+    )
     
     if args.json:
         print(json.dumps({
             "id": sub.id, "agent": sub.agent_id, "pattern": sub.pattern,
-            "mode": sub.mode.value, "throttle": sub.throttle_seconds
+            "mode": sub.mode.value, "throttle": sub.throttle_seconds,
+            "webhook": sub.webhook_url,
         }, indent=2))
     else:
         print(f"Subscribed: {sub.agent_id} → {sub.pattern}")
         print(f"  Mode: {sub.mode.value}")
         if sub.mode == SubscriptionMode.THROTTLED:
             print(f"  Throttle: {sub.throttle_seconds}s")
+        if sub.webhook_url:
+            print(f"  Webhook: {sub.webhook_url}")
     return 0
 
 
@@ -1475,6 +1485,7 @@ def main():
                              choices=["realtime", "throttled", "batched", "digest"],
                              help="Notification mode")
     p_subscribe.add_argument("--throttle", "-t", type=int, default=60, help="Throttle window (seconds)")
+    p_subscribe.add_argument("--webhook", "-w", help="Webhook URL for push notifications")
     p_subscribe.set_defaults(func=cmd_subscribe)
     
     # subscriptions list
