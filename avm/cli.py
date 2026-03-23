@@ -398,8 +398,8 @@ def cmd_memory_recall(args):
     import contextlib
     from .agent_memory import ScoringStrategy
     
-    # Suppress stdout/stderr if quiet mode (for machine consumption)
-    if getattr(args, 'quiet', False):
+    # Suppress progress bars by default (unless --verbose)
+    if not getattr(args, 'verbose', False):
         # Redirect stderr to suppress progress bars and warnings
         import warnings
         warnings.filterwarnings('ignore')
@@ -413,8 +413,8 @@ def cmd_memory_recall(args):
     
     strategy = ScoringStrategy(args.strategy) if args.strategy else None
     
-    # Capture and filter output if quiet
-    if getattr(args, 'quiet', False):
+    # Capture and filter output if not verbose
+    if not getattr(args, 'verbose', False):
         # Run with stderr suppressed
         with contextlib.redirect_stderr(io.StringIO()):
             result = memory.recall(
@@ -1410,8 +1410,8 @@ def main():
     p_mem_recall.add_argument("--strategy", "-s", 
                               choices=["importance", "recency", "relevance", "balanced"])
     p_mem_recall.add_argument("--private-only", action="store_true")
-    p_mem_recall.add_argument("--quiet", "-q", action="store_true", 
-                              help="Suppress progress bars and warnings (for machine consumption)")
+    p_mem_recall.add_argument("--verbose", "-v", action="store_true", 
+                              help="Show progress bars and warnings (default: quiet)")
     p_mem_recall.set_defaults(func=cmd_memory_recall)
     
     # memory remember

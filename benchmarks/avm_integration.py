@@ -40,7 +40,6 @@ def avm_recall(query: str, agent_id: str, max_tokens: int = 500) -> AVMResult:
         "avm", "recall",
         "-a", agent_id,
         "-t", str(max_tokens),
-        "--quiet",  # Suppress progress bars for machine consumption
         query
     ]
     
