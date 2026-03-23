@@ -271,7 +271,7 @@ def run_claude_opus(task: str, workdir: str = None, timeout: int = 120) -> Agent
         "claude",
         "--print",
         "--dangerously-skip-permissions",
-        "--model", "claude-sonnet-4-6",  # Use sonnet to save quota
+        "--model", "claude-opus-4-5",  # Use Opus for complex tasks
         task
     ]
     

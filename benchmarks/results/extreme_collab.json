@@ -1,0 +1,166 @@
+{
+  "timestamp": "2026-03-23T13:59:08.506405+00:00",
+  "task": {
+    "name": "User Notification Service",
+    "description": "Build a microservice that handles user notifications (email, push, SMS)",
+    "requirements": [
+      "Store notification templates in database",
+      "Expose REST API for sending notifications",
+      "Support multiple channels (email, push, sms)",
+      "Rate limiting per user",
+      "Retry failed notifications"
+    ]
+  },
+  "agents": [
+    {
+      "id": "db_architect",
+      "type": "codex",
+      "role": "Database Architect",
+      "context": "You're designing the database schema for a notification service.\nRequirements:\n- Store notification templates\n- Track sent notifications (status, retries)\n- Support multiple channels\n- Enable rate limiting queries",
+      "task": "Design the PostgreSQL schema. Output CREATE TABLE statements only."
+    },
+    {
+      "id": "api_designer",
+      "type": "claude",
+      "role": "API Designer",
+      "context": "You're designing REST API endpoints for a notification service.\nThe service needs to:\n- Send notifications via multiple channels\n- Check notification status\n- Manage templates\n- Support rate limiting",
+      "task": "Design the API endpoints. Output OpenAPI-style endpoint definitions."
+    },
+    {
+      "id": "logic_implementer",
+      "type": "codex",
+      "role": "Business Logic Developer",
+      "context": "You're implementing the core notification service logic.\nRequirements:\n- Channel abstraction (email, push, sms)\n- Retry mechanism with exponential backoff\n- Rate limiting per user",
+      "task": "Write the core Python service class with send_notification() method."
+    },
+    {
+      "id": "integrator",
+      "type": "claude",
+      "role": "Integration Engineer",
+      "context": "You're integrating all components of the notification service.\nNeed to:\n- Wire up API \u2192 Service \u2192 Database\n- Add error handling\n- Write integration test",
+      "task": "Write a FastAPI endpoint that uses the service. Include one integration test."
+    }
+  ],
+  "baseline": {
+    "agents": [
+      {
+        "agent_id": "db_architect",
+        "agent_type": "codex",
+        "role": "Database Architect",
+        "success": true,
+        "tokens": 845,
+        "latency_ms": 19505.353212356567,
+        "output_len": 3016,
+        "output_preview": "CREATE TABLE notification_templates (\n    id BIGSERIAL PRIMARY KEY,\n    template_key VARCHAR(100) NOT NULL,\n    channel VARCHAR(20) NOT NULL CHECK (channel IN ('email', 'push', 'sms')),\n    name VARCH",
+        "error": ""
+      },
+      {
+        "agent_id": "api_designer",
+        "agent_type": "claude",
+        "role": "API Designer",
+        "success": true,
+        "tokens": 2114,
+        "latency_ms": 22729.30884361267,
+        "output_len": 9198,
+        "output_preview": "```yaml\nopenapi: 3.0.3\ninfo:\n  title: User Notification Service API\n  version: 1.0.0\n  description: Microservice for sending notifications via email, push, and SMS\n\npaths:\n  /notifications:\n    post:\n",
+        "error": ""
+      },
+      {
+        "agent_id": "logic_implementer",
+        "agent_type": "codex",
+        "role": "Business Logic Developer",
+        "success": true,
+        "tokens": 1410,
+        "latency_ms": 26184.21244621277,
+        "output_len": 5605,
+        "output_preview": "from __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import datetime, timedelta, timezone\nfrom enum import Enum\nfrom typing import Any, Dict, Optional, Protocol\nimport t",
+        "error": ""
+      },
+      {
+        "agent_id": "integrator",
+        "agent_type": "claude",
+        "role": "Integration Engineer",
+        "success": true,
+        "tokens": 498,
+        "latency_ms": 56145.6561088562,
+        "output_len": 961,
+        "output_preview": "Created:\n\n1. **`notification_service.py`** - Core service with:\n   - `NotificationDatabase` - In-memory storage for templates/notifications\n   - `RateLimiter` - Per-user per-channel rate limiting (10 ",
+        "error": ""
+      }
+    ],
+    "total_tokens": 4867,
+    "avm_overhead": 0,
+    "grand_total": 4867,
+    "success_rate": 1.0
+  },
+  "baseline_coherence": {
+    "checks": {
+      "has_notifications_table": true,
+      "has_send_endpoint": true,
+      "has_send_method": false,
+      "has_integration": false
+    },
+    "coherence_score": 0.5
+  },
+  "avm": {
+    "agents": [
+      {
+        "agent_id": "db_architect",
+        "agent_type": "codex",
+        "role": "Database Architect",
+        "success": true,
+        "tokens": 1173,
+        "latency_ms": 19120.94807624817,
+        "output_len": 2344,
+        "output_preview": "```sql\nCREATE TABLE notification_templates (\n    id BIGSERIAL PRIMARY KEY,\n    template_key TEXT NOT NULL,\n    channel TEXT NOT NULL CHECK (channel IN ('email', 'push', 'sms')),\n    locale TEXT NOT NU",
+        "error": ""
+      },
+      {
+        "agent_id": "api_designer",
+        "agent_type": "claude",
+        "role": "API Designer",
+        "success": true,
+        "tokens": 1956,
+        "latency_ms": 16403.02324295044,
+        "output_len": 6646,
+        "output_preview": "```yaml\nopenapi: 3.0.3\ninfo:\n  title: User Notification Service API\n  version: 1.0.0\n\npaths:\n  /notifications:\n    post:\n      summary: Send a notification\n      requestBody:\n        required: true\n  ",
+        "error": ""
+      },
+      {
+        "agent_id": "logic_implementer",
+        "agent_type": "codex",
+        "role": "Business Logic Developer",
+        "success": true,
+        "tokens": 2145,
+        "latency_ms": 46741.5030002594,
+        "output_len": 7099,
+        "output_preview": "from __future__ import annotations\n\nimport random\nimport time\nfrom collections import defaultdict, deque\nfrom dataclasses import dataclass, field\nfrom datetime import datetime, timedelta, timezone\nfro",
+        "error": ""
+      },
+      {
+        "agent_id": "integrator",
+        "agent_type": "claude",
+        "role": "Integration Engineer",
+        "success": true,
+        "tokens": 812,
+        "latency_ms": 52664.3807888031,
+        "output_len": 711,
+        "output_preview": "Created the notification service with:\n\n**Files:**\n- `models.py` - SQLAlchemy models (NotificationTemplate, Notification) + Pydantic schemas\n- `service.py` - NotificationService with rate limiting, te",
+        "error": ""
+      }
+    ],
+    "total_tokens": 6086,
+    "avm_overhead": 1634,
+    "grand_total": 7720,
+    "success_rate": 1.0
+  },
+  "avm_coherence": {
+    "checks": {
+      "has_notifications_table": true,
+      "has_send_endpoint": true,
+      "has_send_method": false,
+      "has_integration": false
+    },
+    "coherence_score": 0.5
+  }
+}
