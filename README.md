@@ -279,6 +279,11 @@ avm write /memory/lesson.md --content "New lesson"
 # Full-text search
 avm search "RSI"
 
+# Move / rename (DB-level, no FUSE required)
+avm mv /memory/old-name.md /memory/new-name.md        # single node
+avm mv /memory/news- /memory/archive/news-            # prefix tree (all children)
+avm mv /memory/2024/ /archive/2024/                   # directory-style move
+
 # Semantic search (embedding)
 avm semantic "Iran conflict news"           # semantic similarity
 avm semantic "BTC market" --limit 5         # limit results
@@ -304,7 +309,9 @@ Mount AVM as a filesystem for shell access.
 #       agent_id: myagent
 
 # Start daemon (manages all mounts)
-avm-daemon start --daemon
+# Recommended: use launchd/systemd for auto-start on login
+avm-daemon start --daemon   # background (double-fork)
+avm-daemon start            # foreground (for launchd/systemd managed processes)
 
 # Check status
 avm-daemon status
@@ -667,10 +674,34 @@ avm --db /path/to/custom.db read /memory/note.md
 XDG_DATA_HOME=/custom/path avm read /memory/note.md
 ```
 
+## FUSE Daemon Architecture
+
+The daemon manages multiple FUSE mounts as separate `fork()`ed child processes.
+Each child gets its own `/dev/macfuseN` slot and is started serially (the parent
+polls `stat().st_dev` to confirm the previous mount is live before forking the next).
+
+**GPU Embedding (macOS MPS)**
+
+`os.fork()` invalidates the Apple GPU (MPS/XPC) context in the child.  AVM
+solves this with a per-child `multiprocessing.Pipe` proxy:
+
+```
+parent (MPS GPU)                    child(akashi)
+  LocalEmbedding(MPS)  ←──────────  PipeEmbeddingProxy(child_conn)
+  EmbeddingPipeServer  ──send/recv──  encode("text") → [0.1, -0.3, ...]
+```
+
+- Model loaded **once** in the parent, shared across all children
+- Each child has its own isolated Pipe fd pair — no cross-agent access
+- `avm recall` / `avm semantic` run in the main process and use MPS directly
+
 ## Versions
 
+- **v1.3.0** - GPU Pipe proxy, `avm mv`, fork-based daemon with st_dev polling
+- **v1.2.0** - FAISS vector search (21x speedup), webhooks, hybrid search
+- **v1.1.0** - TopicIndex O(1) recall, Gossip protocol, memory consolidation
 - **v0.9.0** - Rename to AVM, FUSE mount with virtual nodes
-- **v0.8.0** - Two-pe retrieval (browse + fetch)
+- **v0.8.0** - Two-phase retrieval (browse + fetch)
 - **v0.7.0** - Linux-style permissions, MCP server
 - **v0.6.0** - Advanced features (sync, tags, export)
 - **v0.5.0** - Multi-agent support
