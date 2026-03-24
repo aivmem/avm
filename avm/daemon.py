@@ -270,15 +270,14 @@ class AVMDaemon:
         # and provides a queue-based proxy that FUSE threads can call safely.
         self._start_embedding_server()
 
-        # Start all enabled mounts serially.
-        # Concurrent FUSE thread startup can exhaust macFUSE device slots
-        # (/dev/macfuse0..N) and trigger "Resource temporarily unavailable".
-        # A short gap between each mount avoids contention.
-        import time as _time
+        # Start mounts one at a time, waiting for each to become accessible
+        # before starting the next.  macFUSE allocates /dev/macfuseN slots
+        # sequentially; starting the next mount before the previous device is
+        # fully ready triggers "Resource temporarily unavailable".
         for mount_config in self.config.mounts:
             if mount_config.enabled:
                 self._start_mount(mount_config)
-                _time.sleep(1.5)   # let macFUSE device settle before next mount
+                self._wait_for_mount(mount_config.path)
         
         print(f"Daemon started (pid={os.getpid()})")
         print(f"Mounts: {len(self.mounts)}")
@@ -362,6 +361,21 @@ class AVMDaemon:
                     break
                 time.sleep(60)
     
+    def _wait_for_mount(self, mountpoint: str, timeout: float = 15.0):
+        """Block until the mountpoint is actually accessible (ls works) or timeout."""
+        import time as _time
+        deadline = _time.monotonic() + timeout
+        path = Path(mountpoint)
+        while _time.monotonic() < deadline:
+            try:
+                list(path.iterdir())   # triggers a VFS call into the FUSE layer
+                return   # success — mount is live
+            except OSError:
+                pass
+            _time.sleep(0.2)
+        print(f"  ⚠ Mount {mountpoint} did not become ready within {timeout}s",
+              file=sys.stderr)
+
     def _start_mount(self, mount_config: MountConfig):
         """Start a single mount, with zombie cleanup on failure."""
         import subprocess, platform
