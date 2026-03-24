@@ -103,10 +103,12 @@ class MountProcess:
     after fork() do not occur.
     """
 
-    def __init__(self, mountpoint: str, agent_id: str, embed_server=None):
+    def __init__(self, mountpoint: str, agent_id: str,
+                 embed_server=None, child_conn=None):
         self.mountpoint = mountpoint
         self.agent_id = agent_id
-        self.embed_server = embed_server  # reserved for future use
+        self.embed_server = embed_server  # legacy / unused in fork mode
+        self.child_conn = child_conn      # multiprocessing.Pipe child end
         self.pid: Optional[int] = None
 
     def start(self) -> bool:
@@ -151,13 +153,29 @@ class MountProcess:
         return mp.stat().st_dev != normal_dev
 
     def _run_fuse(self):
-        """Run FUSE in forked child (CPU embedding, no GPU/XPC)."""
+        """Run FUSE in forked child.
+
+        If a child_conn Pipe was provided, GPU embedding is routed through
+        the parent process (MPS-safe).  Otherwise falls back to CPU.
+        """
         _lazy_imports()
         import os as _os
-        _os.environ["AVM_FUSE_WORKER"] = "1"
         _os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+        if self.child_conn is None:
+            # No GPU proxy — force CPU embedding in this fork
+            _os.environ["AVM_FUSE_WORKER"] = "1"
+
         try:
             agent_avm = AVM(agent_id=self.agent_id)
+
+            if self.child_conn is not None:
+                # Inject GPU proxy backed by the parent's embedding server
+                from .embedding import EmbeddingStore, PipeEmbeddingProxy
+                proxy = PipeEmbeddingProxy(self.child_conn)
+                agent_avm._embedding_store = EmbeddingStore(agent_avm.store, proxy)
+                agent_avm._auto_index_embedding = True
+
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
             FUSE(
                 AVMFuse(agent_avm, self.agent_id),
@@ -171,6 +189,9 @@ class MountProcess:
             )
         except Exception as e:
             print(f"FUSE error for {self.mountpoint}: {e}", file=sys.stderr)
+        finally:
+            if self.child_conn is not None:
+                self.child_conn.close()
 
     def stop(self):
         """Kill child and force-unmount."""
@@ -218,8 +239,8 @@ class AVMDaemon:
         self.config = DaemonConfig.load()
         self.mounts: Dict[str, MountProcess] = {}
         self._running = False
-        # embed_server not used in fork-based mode (each child loads CPU model)
-        self._embed_server = None
+        self._embed_backend = None   # shared LocalEmbedding (GPU/MPS, parent only)
+        self._pipe_servers: list = []  # EmbeddingPipeServer instances
 
     def start(self):
         """Start the daemon and all configured mounts"""
@@ -363,8 +384,35 @@ class AVMDaemon:
         mp = mount_config.path
         Path(mp).mkdir(parents=True, exist_ok=True)
 
-        proc = MountProcess(mp, mount_config.agent, embed_server=self._embed_server)
+        # Set up GPU embedding pipe (fork-safe: Pipe created before fork,
+        # each child gets its own fd pair → no cross-agent access).
+        child_conn = None
+        from .config import load_config as _lc
+        _cfg = _lc()
+        _emb_cfg = getattr(_cfg, 'embedding', None) or {}
+        if isinstance(_emb_cfg, dict) and _emb_cfg.get('enabled'):
+            import multiprocessing as _mp
+            from .embedding import EmbeddingPipeServer, LocalEmbedding
+
+            # Load the shared GPU backend once (lazy)
+            if self._embed_backend is None:
+                _model = _emb_cfg.get('model', 'all-MiniLM-L6-v2')
+                print(f"  Loading embedding model ({_model}, MPS)...")
+                self._embed_backend = LocalEmbedding(_model)
+                self._embed_backend._load_model()
+                print(f"  Embedding model ready (dim={self._embed_backend.dimension})")
+
+            parent_conn, child_conn = _mp.Pipe()
+            server = EmbeddingPipeServer(parent_conn, backend=self._embed_backend)
+            server.start()
+            self._pipe_servers.append(server)
+
+        proc = MountProcess(mp, mount_config.agent, child_conn=child_conn)
         ok = proc.start()
+
+        # Close parent's copy of child_conn (child has its own fd)
+        if child_conn is not None:
+            child_conn.close()
 
         if not ok:
             # Mount failed — clean up any partial macFUSE state immediately

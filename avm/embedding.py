@@ -531,3 +531,99 @@ class SharedEmbeddingProxy(EmbeddingBackend):
 
     def warmup(self):
         self._server.encode_batch(["warmup"])
+
+
+# ─── Fork-safe GPU proxy via multiprocessing.Pipe ────────────────────────────
+
+class PipeEmbeddingProxy(EmbeddingBackend):
+    """
+    Drop-in EmbeddingBackend that forwards encode() calls through a
+    ``multiprocessing.Pipe`` to an EmbeddingServer running in the parent
+    process (which holds the GPU/MPS context).
+
+    Each forked child gets its own dedicated Pipe fd pair — no sharing
+    between agents, no socket authentication needed.
+
+    Usage (parent side)::
+
+        parent_conn, child_conn = multiprocessing.Pipe()
+        # pass child_conn to the child *before* fork
+        # parent runs: EmbeddingPipeServer(parent_conn, model).start()
+
+    Usage (child side)::
+
+        proxy = PipeEmbeddingProxy(child_conn, dimension=384)
+        # use as a normal EmbeddingBackend
+    """
+
+    def __init__(self, conn, dimension: int = 384):
+        self._conn = conn
+        self._dim = dimension
+        self._query_cache: Dict[str, List[float]] = {}
+        self._cache_max = 200
+
+    @property
+    def dimension(self) -> int:
+        return self._dim
+
+    def embeend(self, text: str) -> List[float]:
+        key = text[:200]
+        if key in self._query_cache:
+            return self._query_cache[key]
+        result = self._request([text])[0]
+        if len(self._query_cache) >= self._cache_max:
+            del self._query_cache[next(iter(self._query_cache))]
+        self._query_cache[key] = result
+        return result
+
+    def embeend_batch(self, texts: List[str]) -> List[List[float]]:
+        return self._request(texts)
+
+    def warmup(self):
+        self._request(["warmup"])
+
+    def _request(self, texts: List[str]) -> List[List[float]]:
+        self._conn.send(texts)
+        result = self._conn.recv()
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+class EmbeddingPipeServer:
+    """
+    Runs in the parent process; serves encode requests that arrive on
+    *conn* (the parent end of a Pipe).  One instance per forked child.
+    """
+
+    def __init__(self, conn, model_name: str = "all-MiniLM-L6-v2",
+                 backend: "LocalEmbedding | None" = None):
+        self._conn = conn
+        self._model_name = model_name
+        self._backend = backend   # shared pre-loaded backend
+        self._thread: Optional["__import__('threading').Thread"] = None
+
+    def start(self):
+        import threading
+        self._thread = threading.Thread(
+            target=self._run, daemon=True,
+            name=f"embed-pipe-server"
+        )
+        self._thread.start()
+
+    def _run(self):
+        if self._backend is None:
+            self._backend = LocalEmbedding(self._model_name)
+        while True:
+            try:
+                texts = self._conn.recv()
+            except EOFError:
+                break   # child closed its end
+            try:
+                result = self._backend.embeend_batch(texts)
+                self._conn.send(result)
+            except Exception as exc:
+                try:
+                    self._conn.send(exc)
+                except Exception:
+                    break
