@@ -105,9 +105,10 @@ class MountProcess:
     this automatically).
     """
 
-    def __init__(self, mountpoint: str, agent_id: str):
+    def __init__(self, mountpoint: str, agent_id: str, embed_server=None):
         self.mountpoint = mountpoint
         self.agent_id = agent_id
+        self.embed_server = embed_server  # EmbeddingServer or None
         self.pid: Optional[int] = None   # kept for API compatibility (= os.getpid())
         self._thread: Optional["threading.Thread"] = None
         self._started = threading.Event()
@@ -139,8 +140,17 @@ class MountProcess:
         """Run FUSE in the current thread (blocks until unmounted)."""
         _lazy_imports()
         try:
-            # Create agent-scoped AVM
+            # Create agent-scoped AVM.
+            # If a shared EmbeddingServer is available, inject a proxy so this
+            # thread routes all encode() calls through the main-thread GPU worker
+            # instead of loading its own model (which would be GPU-unsafe in a
+            # thread that didn't initialise the MPS context).
             agent_avm = AVM(agent_id=self.agent_id)
+            if self.embed_server is not None:
+                from .embedding import EmbeddingStore
+                proxy = self.embed_server.make_proxy()
+                agent_avm._embedding_store = EmbeddingStore(agent_avm.store, proxy)
+                agent_avm._auto_index_embedding = True
 
             # Ensure mountpoint exists
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
@@ -211,7 +221,22 @@ class AVMDaemon:
         self.config = DaemonConfig.load()
         self.mounts: Dict[str, MountProcess] = {}
         self._running = False
-    
+        self._embed_server: Optional["EmbeddingServer"] = None  # type: ignore[name-defined]
+
+    def _start_embedding_server(self):
+        """Start the shared embedding server on this thread (GPU-safe)."""
+        from .embedding import EmbeddingServer
+        from .config import load_config
+        cfg = load_config()
+        emb_cfg = getattr(cfg, 'embedding', None) or {}
+        if not (isinstance(emb_cfg, dict) and emb_cfg.get('enabled')):
+            return  # embedding disabled — nothing to start
+        model = emb_cfg.get('model', 'all-MiniLM-L6-v2')
+        print(f"  Starting embedding server (model={model}, GPU=MPS)...")
+        self._embed_server = EmbeddingServer(model)
+        self._embed_server.start()
+        print(f"  Embedding server ready (dim={self._embed_server.dimension})")
+
     def start(self):
         """Start the daemon and all configured mounts"""
         if DAEMON_PID.exists():
@@ -228,7 +253,12 @@ class AVMDaemon:
         DAEMON_PID.write_text(str(os.getpid()))
         
         self._running = True
-        
+
+        # Start the shared embedding server BEFORE spawning FUSE threads.
+        # This loads the model on the main thread (GPU context valid here),
+        # and provides a queue-based proxy that FUSE threads can call safely.
+        self._start_embedding_server()
+
         # Start all enabled mounts
         for mount_config in self.config.mounts:
             if mount_config.enabled:
@@ -323,7 +353,7 @@ class AVMDaemon:
         mp = mount_config.path
         Path(mp).mkdir(parents=True, exist_ok=True)
 
-        proc = MountProcess(mp, mount_config.agent)
+        proc = MountProcess(mp, mount_config.agent, embed_server=self._embed_server)
         ok = proc.start()
 
         if not ok:
@@ -394,7 +424,11 @@ class AVMDaemon:
         # Stop all mounts
         for mount in self.mounts.values():
             mount.stop()
-        
+
+        # Stop the embedding server
+        if self._embed_server is not None:
+            self._embed_server.stop()
+
         # Remove PID file
         if DAEMON_PID.exists():
             DAEMON_PID.unlink()

@@ -382,3 +382,131 @@ class EmbeddingStore:
             "backend": type(self.backend).__name__,
             "dimension": self.backend.dimension,
         }
+
+
+# ─── Shared Embedding Server (main-thread GPU, per-thread proxy) ─────────────
+
+class EmbeddingRequest:
+    """A single encode request passed through the shared queue."""
+    __slots__ = ("texts", "result_event", "result", "error")
+
+    def __init__(self, texts: List[str]):
+        self.texts = texts
+        self.result_event = __import__("threading").Event()
+        self.result: Optional[List[List[float]]] = None
+        self.error: Optional[Exception] = None
+
+
+class EmbeddingServer:
+    """
+    Runs the SentenceTransformer model on the daemon's main thread (or any
+    single designated thread) so that the GPU / MPS context is never touched
+    from a forked or worker thread.
+
+    Usage::
+
+        server = EmbeddingServer("all-MiniLM-L6-v2")
+        server.start()                        # spawns worker thread
+        proxy  = server.make_proxy()          # lightweight, thread-safe proxy
+        vec    = proxy.embeend("hello world") # routed through the server
+        server.stop()
+    """
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        import queue, threading
+        self.model_name = model_name
+        self._queue: "queue.Queue[Optional[EmbeddingRequest]]" = queue.Queue()
+        self._thread: Optional["threading.Thread"] = None
+        self._backend: Optional[LocalEmbedding] = None
+        self._started = threading.Event()
+
+    # ── lifecycle ────────────────────────────────────────────────────────────
+
+    def start(self):
+        """Start the background encoding thread."""
+        import threading
+        self._thread = threading.Thread(
+            target=self._run,
+            name="avm-embed-server",
+            daemon=True,
+        )
+        self._thread.start()
+        self._started.wait(timeout=30)   # wait for model to load
+
+    def stop(self):
+        """Shut down gracefully."""
+        self._queue.put(None)
+        if self._thread:
+            self._thread.join(timeout=5)
+
+    def make_proxy(self) -> "SharedEmbeddingProxy":
+        """Return a thread-safe proxy that routes requests through this server."""
+        return SharedEmbeddingProxy(self)
+
+    # ── internal ─────────────────────────────────────────────────────────────
+
+    def _run(self):
+        # Load the model here — on the designated thread, GPU context intact.
+        self._backend = LocalEmbedding(self.model_name)
+        self._backend._load_model()
+        self._started.set()
+
+        while True:
+            req = self._queue.get()
+            if req is None:
+                break
+            try:
+                req.result = self._backend.embeend_batch(req.texts)
+            except Exception as exc:
+                req.error = exc
+            finally:
+                req.result_event.set()
+
+    def encode_batch(self, texts: List[str]) -> List[List[float]]:
+        """Synchronous encode from any thread (blocks until done)."""
+        req = EmbeddingRequest(texts)
+        self._queue.put(req)
+        req.result_event.wait()
+        if req.error:
+            raise req.error
+        return req.result  # type: ignore[return-value]
+
+    @property
+    def dimension(self) -> int:
+        if self._backend is None:
+            raise RuntimeError("EmbeddingServer not started yet")
+        return self._backend.dimension
+
+
+class SharedEmbeddingProxy(EmbeddingBackend):
+    """
+    Drop-in EmbeddingBackend that forwards all work to an EmbeddingServer
+    running on another thread.  Safe to call from any thread/process that
+    shares the same interpreter (i.e. threads — not forks).
+    """
+
+    def __init__(self, server: EmbeddingServer):
+        self._server = server
+        self._query_cache: Dict[str, List[float]] = {}
+        self._cache_max = 200
+
+    @property
+    def dimension(self) -> int:
+        return self._server.dimension
+
+    def embeend(self, text: str) -> List[float]:
+        key = text[:200]
+        if key in self._query_cache:
+            return self._query_cache[key]
+        result = self._server.encode_batch([text])[0]
+        # Simple LRU eviction
+        if len(self._query_cache) >= self._cache_max:
+            del self._query_cache[next(iter(self._query_cache))]
+        self._query_cache[key] = result
+        return result
+
+    def embeend_batch(self, texts: List[str]) -> List[List[float]]:
+        return self._server.encode_batch(texts)
+
+    def warmup(self):
+        self._server.encode_batch(["warmup"])
