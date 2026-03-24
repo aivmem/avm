@@ -191,7 +191,10 @@ class LocalEmbedding(EmbeddingBackend):
             return self._query_cache[cache_key]
         
         self._load_model()
-        result = self._model.encode(text).tolist()
+        # show_progress_bar=False + convert_to_numpy avoids joblib/loky workers
+        result = self._model.encode(
+            text, show_progress_bar=False, convert_to_numpy=True
+        ).tolist()
         
         # Update cache (LRU eviction)
         if len(self._query_cache) >= self._cache_max:
@@ -204,7 +207,10 @@ class LocalEmbedding(EmbeddingBackend):
     
     def embeend_batch(self, texts: List[str]) -> List[List[float]]:
         self._load_model()
-        return self._model.encode(texts).tolist()
+        # pool_size=0 / single-process encode — no loky semaphores leaked
+        return self._model.encode(
+            texts, show_progress_bar=False, convert_to_numpy=True
+        ).tolist()
     
     def warmup(self):
         """Pre-load model (call once to avoid cold start)"""
@@ -446,6 +452,21 @@ class EmbeddingServer:
     # ── internal ─────────────────────────────────────────────────────────────
 
     def _run(self):
+        # Disable joblib/loky parallel workers globally for this process.
+        # sentence_transformers uses joblib internally for batch encoding;
+        # loky workers leave leaked semaphores when the process forks or exits
+        # abnormally.  Single-threaded encode is fine for our throughput needs.
+        try:
+            import joblib
+            joblib.parallel_config(backend="sequential")
+        except Exception:
+            pass
+        try:
+            import os as _os
+            _os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+        except Exception:
+            pass
+
         # Load the model here — on the designated thread, GPU context intact.
         self._backend = LocalEmbedding(self.model_name)
         self._backend._load_model()

@@ -129,8 +129,9 @@ class MountProcess:
             daemon=True,
         )
         self._thread.start()
-        # Give the FUSE loop a moment to come up (or fail fast)
-        self._started.wait(timeout=3.0)
+        # Give the FUSE loop a moment to come up (or fail fast).
+        # 8 s accounts for cold-start embedding model loading on the first mount.
+        self._started.wait(timeout=8.0)
         if self._error is not None:
             return False
         self.pid = os.getpid()   # threads live in the same process
