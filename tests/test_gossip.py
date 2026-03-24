@@ -17,7 +17,7 @@ from avm.gossip import (
 def gossip_env():
     """Create a gossip environment with multiple agents"""
     import os
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         # Set XDG_DATA_HOME so AVMStore uses temp dir
         old_xdg = os.environ.get('XDG_DATA_HOME')
         os.environ['XDG_DATA_HOME'] = tmpdir

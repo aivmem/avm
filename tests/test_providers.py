@@ -11,7 +11,7 @@ from avm.providers.base import AVMProvider
 @pytest.fixture
 def temp_env():
     """Create temp environment."""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         os.environ["XDG_DATA_HOME"] = tmpdir
         yield tmpdir
 

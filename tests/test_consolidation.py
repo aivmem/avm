@@ -15,7 +15,7 @@ from avm.consolidation import MemoryConsolidator, ConsolidationConfig, MemoryClu
 @pytest.fixture
 def temp_env():
     """Setup temporary environment"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         os.environ['XDG_DATA_HOME'] = tmpdir
         yield tmpdir
         shutil.rmtree(tmpdir, ignore_errors=True)

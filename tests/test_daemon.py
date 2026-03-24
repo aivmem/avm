@@ -64,7 +64,7 @@ class TestDaemonConfig:
         from avm.daemon import DaemonConfig, MountConfig, CONFIG_DIR
         import yaml
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             config_dir = Path(tmpdir) / "config"
             
             with patch('avm.daemon.CONFIG_DIR', config_dir):

@@ -14,7 +14,7 @@ from avm import AVM, AVMNode
 def avm():
     """Create temp AVM instance"""
     import shutil
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         db_path = os.path.join(tmpdir, "test.db")
         from avm.config import AVMConfig, PermissionRule
         config = AVMConfig(
@@ -311,7 +311,7 @@ class TestSync:
         akashi = avm.agent_memory("akashi")
         akashi.remember("Sync test content")
         
-        with tempfile.TemporaryDirectory() as sync_dir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as sync_dir:
             result = avm.sync(sync_dir, prefix="/memory")
             
             assert result["exported"] >= 1

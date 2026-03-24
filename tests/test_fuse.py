@@ -41,7 +41,7 @@ pytestmark = pytest.mark.skipif(not HAS_FUSE, reason="FUSE not available (fusepy
 @pytest.fixture
 def temp_db():
     """Create a temporary database."""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         os.environ["XDG_DATA_HOME"] = tmpdir
         yield tmpdir
 

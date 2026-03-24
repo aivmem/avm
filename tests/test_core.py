@@ -14,7 +14,7 @@ from avm.node import AVMNode
 def temp_env():
     """Create temp environment."""
     import shutil
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         old_xdg = os.environ.get("XDG_DATA_HOME")
         os.environ["XDG_DATA_HOME"] = tmpdir
         yield tmpdir

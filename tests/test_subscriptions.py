@@ -13,7 +13,7 @@ from avm.subscriptions import (
 @pytest.fixture
 def temp_sub_db():
     """Create a temporary subscription database"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         db_path = os.path.join(tmpdir, "subs.db")
         yield db_path
 

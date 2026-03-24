@@ -13,7 +13,7 @@ from avm.librarian import Librarian, PrivacyPolicy, AgentInfo
 def temp_env():
     """Setup temporary environment"""
     import shutil
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         os.environ['XDG_DATA_HOME'] = tmpdir
         yield tmpdir
         # Force cleanup any leftover files

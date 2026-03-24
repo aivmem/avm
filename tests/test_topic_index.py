@@ -11,7 +11,7 @@ from avm.topic_index import TopicIndex, STOP_WORDS
 @pytest.fixture
 def topic_index():
     """Create a topic index with temp database"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         db_path = Path(tmpdir) / "test.db"
         store = AVMStore(str(db_path))
         yield TopicIndex(store)
@@ -178,7 +178,7 @@ class TestPersistence:
     """Test SQLite persistence"""
     
     def test_index_persists(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = Path(tmpdir) / "test.db"
             
             # Create and populate index

@@ -50,7 +50,7 @@ class MockBackend:
 @pytest.fixture
 def temp_env():
     """Setup temporary environment"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         yield tmpdir
 
 
