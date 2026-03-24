@@ -278,7 +278,7 @@ class AVMDaemon:
         for mount_config in self.config.mounts:
             if mount_config.enabled:
                 self._start_mount(mount_config)
-                _time.sleep(0.5)   # let macFUSE settle before next mount
+                _time.sleep(1.5)   # let macFUSE device settle before next mount
         
         print(f"Daemon started (pid={os.getpid()})")
         print(f"Mounts: {len(self.mounts)}")
