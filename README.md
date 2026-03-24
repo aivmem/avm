@@ -8,7 +8,7 @@
 - **零成本** — 本地 sentence-transformers (all-MiniLM-L6-v2)，无需任何 API key，无网络依赖
 - **语义搜索** — 不是关键词匹配，是向量相似度。"伊朗军事冲突" 能找到 "中东局势紧张"
 - **FUSE 挂载** — `cat`/`echo`/`ls` 直接操作记忆，shell 脚本和任何工具都能用
-- **多 Agent 隔离** — 私有空间 (`/memory/private/{agent}/`) + 共享空间 (`/memory/shared/`)，协作不混淆
+- **多 Agent 隔离** — 私有空间 (`/private/`) + 共享空间 (`/memory/shared/`)，协作不混淆
 
 ## Why You Need AVM
 
@@ -54,7 +54,7 @@ trader.recall("market patterns")  # sees analyst's shared memory
 - 📄 **Code indexing** — IDEs and LSP do this better
 - 📝 **Ephemeral notes** — Use TTL or just don't store
 
-**Rule of thumb:** If only one agent needs it, use the agent's native memory. If multiple agents need it, put it in AVM `/memory/shared/`.
+**Rule of thumb:** If only one agent needs it, use `/private/` (auto-scoped to your agent). If multiple agents need it, put it in `/memory/shared/`.
 
 ## AVM vs MemGPT
 

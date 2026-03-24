@@ -81,7 +81,7 @@ class AVMFuse(Operations):
     
     # Virtual node suffixes
     VIRTUAL_SUFFIXES = {':meta', ':links', ':tags', ':history', ':shared', ':data', ':info', ':path', ':ttl', ':delta', ':mark'}
-    VIRTUAL_DIR_FILES = {':list', ':stats', ':inbox', ':topics'}
+    VIRTUAL_DIR_FILES = {':list', ':stats', ':inbox', ':topics', ':help'}
     VIRTUAL_QUERY_PATTERNS = {':search', ':recall', ':changes'}
     
     def __init__(self, vfs, user=None):
@@ -446,6 +446,57 @@ class AVMFuse(Operations):
         elif suffix == ':stats':
             stats = self.vfs.stats()
             return json.dumps(stats, indent=2, default=str) + '\n'
+
+        elif suffix == ':help':
+            agent = self.user or 'agent'
+            return f"""\
+AVM — AI Virtual Memory  (agent: {agent})
+==========================================
+
+QUICK START
+  cat /avm/:help                 This help
+  cat /avm/:stats                Storage statistics
+  cat /avm/:inbox                Incoming messages (tell)
+
+PRIVATE SPACE  (only visible to you)
+  ls   /avm/private/             Your private files
+  cat  /avm/private/note.md      Read a private file
+  echo "text" > /avm/private/note.md   Write a private file
+  → Automatically stored as /memory/private/{agent}/note.md
+
+SHARED SPACE  (all agents can read)
+  ls   /avm/memory/shared/       Shared files
+  echo "text" > /avm/memory/shared/report.md
+
+VIRTUAL SUFFIXES  (append to any file path)
+  file.md:meta        Metadata (JSON)
+  file.md:tags        Tags
+  file.md:links       Related nodes
+  file.md:history     Version history
+  file.md:delta       Changes since last read
+  file.md:ttl         Time-to-live
+  file.md:shared      Who can see this file (set with echo "agent1,agent2" > ...)
+
+DIRECTORY VIRTUAL FILES
+  :list               List all nodes under this path
+  :stats              Statistics
+  :inbox              Messages sent to you (tell system)
+  :search?q=<query>   Full-text search
+  :recall?q=<query>   Semantic recall (token-aware)
+  :changes?minutes=5  Recent changes
+
+SHORTCUTS
+  ls /avm/memory/       Shows @abc shortcuts next to filenames
+  cat /avm/@abc         Access file by shortcut
+
+CLI  (outside FUSE)
+  avm read /memory/note.md
+  avm write /memory/note.md --content "text"
+  avm recall "NVDA risk" --max-tokens 500
+  avm search "BTC"
+  avm mv /old/path /new/path
+  avm-daemon status
+"""
         
         elif suffix == ':inbox':
             # Show all tells for this agent
@@ -966,7 +1017,7 @@ class AVMFuse(Operations):
         entries = ['.', '..']
         
         # Add virtual directory files
-        entries.extend([':list', ':stats', ':inbox'])
+        entries.extend([':list', ':stats', ':inbox', ':help'])
         
         # Add /tell and /hooks directories at root
         if real_path == '/':
