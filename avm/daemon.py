@@ -95,57 +95,65 @@ class DaemonConfig:
 # ═══════════════════════════════════════════════════════════════
 
 class MountProcess:
-    """Child process managing a single FUSE mount"""
-    
+    """Thread managing a single FUSE mount.
+
+    Previously used os.fork() which caused MPS/XPC crashes on macOS when
+    multiple workers initialised concurrently (XPC connection is invalid after
+    fork).  Threads share the same process address space, so there is no
+    fork-safety issue, and embedding models loaded in one thread are reused
+    across all mounts (the class-level _model_cache in LocalEmbedding handles
+    this automatically).
+    """
+
     def __init__(self, mountpoint: str, agent_id: str):
         self.mountpoint = mountpoint
         self.agent_id = agent_id
-        self.pid: Optional[int] = None
-    
-    def start(self) -> bool:
-        """Fork a child process to run the FUSE mount.
+        self.pid: Optional[int] = None   # kept for API compatibility (= os.getpid())
+        self._thread: Optional["threading.Thread"] = None
+        self._started = threading.Event()
+        self._error: Optional[Exception] = None
 
-        Returns True if the child appears to have started successfully
-        (still alive after a short grace period), False otherwise.
+    def start(self) -> bool:
+        """Spawn a daemon thread to run the FUSE mount.
+
+        Returns True if the thread started without immediate error,
+        False otherwise.
         """
+        import threading as _threading
         import time
-        pid = os.fork()
-        if pid == 0:
-            # Child process
-            self._run_fuse()
-            os._exit(0)
-        else:
-            # Parent: wait briefly so we can detect immediate startup failures
-            self.pid = pid
-            time.sleep(2.5)
-            try:
-                rc = os.waitpid(pid, os.WNOHANG)
-                if rc[0] != 0:
-                    # Child already exited — mount failed
-                    self.pid = None
-                    return False
-            except ChildProcessError:
-                self.pid = None
-                return False
-            return True
-    
+
+        self._thread = _threading.Thread(
+            target=self._run_fuse,
+            name=f"avm-fuse-{self.agent_id}",
+            daemon=True,
+        )
+        self._thread.start()
+        # Give the FUSE loop a moment to come up (or fail fast)
+        self._started.wait(timeout=3.0)
+        if self._error is not None:
+            return False
+        self.pid = os.getpid()   # threads live in the same process
+        return self._thread.is_alive()
+
     def _run_fuse(self):
-        """Run FUSE in child process"""
+        """Run FUSE in the current thread (blocks until unmounted)."""
         _lazy_imports()
-        # Signal to LocalEmbedding that we are inside a fork()ed worker.
-        # MPS (Apple GPU) XPC connection is invalid after fork, so the embedding
-        # backend will fall back to CPU automatically when this flag is set.
-        import os as _os
-        _os.environ["AVM_FUSE_WORKER"] = "1"
         try:
             # Create agent-scoped AVM
             agent_avm = AVM(agent_id=self.agent_id)
-            
+
             # Ensure mountpoint exists
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
-            
-            # Run FUSE (blocks until unmounted)
-            # Disable caching for virtual files that change dynamically
+
+            # Signal to the parent thread that we are about to enter the FUSE
+            # loop (i.e. initialisation succeeded so far).
+            self._started.set()
+
+            # Run FUSE (blocks this thread until unmounted).
+            # foreground=True: keeps FUSE in this process (required when
+            # running inside a thread — foreground=False would fork again
+            # which creates double-fork zombie mounts).
+            # "cannot register signal source" warnings are harmless in threads.
             FUSE(
                 AVMFuse(agent_avm, self.agent_id),
                 self.mountpoint,
@@ -154,49 +162,41 @@ class MountProcess:
                 allow_other=False,
                 attr_timeout=0,
                 entry_timeout=0,
-                direct_io=True,  # Bypass kernel page cache
+                direct_io=True,
             )
         except Exception as e:
+            self._error = e
+            self._started.set()   # unblock start() so it can report failure
             print(f"FUSE error for {self.mountpoint}: {e}", file=sys.stderr)
     
     def stop(self):
-        """Stop this mount"""
+        """Stop this mount by unmounting; the FUSE thread will exit on its own."""
         import subprocess
         import platform
 
-        # Kill child process first so FUSE stops serving requests
-        if self.pid:
-            for sig in (signal.SIGTERM, signal.SIGKILL):
-                try:
-                    os.kill(self.pid, sig)
-                    os.waitpid(self.pid, os.WNOHANG)
-                except (ProcessLookupError, ChildProcessError):
-                    break
-                import time; time.sleep(0.3)
-
-        # Unmount — use the right tool per platform
         mp = self.mountpoint
         try:
             if platform.system() == "Darwin":
-                # macOS: diskutil unmount force is the reliable path
                 result = subprocess.run(
                     ["/usr/sbin/diskutil", "unmount", "force", mp],
-                    capture_output=True, timeout=10
+                    capture_output=True, timeout=10,
                 )
                 if result.returncode != 0:
-                    # Fallback: umount -f
-                    subprocess.run(["umount", "-f", mp],
+                    subprocess.run(["/sbin/umount", "-f", mp],
                                    capture_output=True, timeout=5)
             else:
-                # Linux: try fusermount3 → fusermount → umount -f
                 for cmd in (["fusermount3", "-u", mp],
                             ["fusermount", "-u", mp],
-                            ["umount", "-f", mp]):
+                            ["/sbin/umount", "-f", mp]):
                     r = subprocess.run(cmd, capture_output=True, timeout=5)
                     if r.returncode == 0:
                         break
         except Exception:
             pass
+
+        # Wait for the thread to finish (up to 5 s)
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=5)
 
 
 # ═══════════════════════════════════════════════════════════════
