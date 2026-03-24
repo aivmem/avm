@@ -148,6 +148,19 @@ class AVM:
             except Exception:
                 pass  # silently skip if sentence-transformers not installed
     
+    def _resolve_path(self, path: str) -> str:
+        """Resolve /private/... shorthand to /memory/private/{agent_id}/...
+
+        When an agent accesses /private/foo, it automatically maps to
+        /memory/private/{agent_id}/foo so agent_id never needs to be typed
+        explicitly. Paths not starting with /private/ pass through unchanged.
+        """
+        if self.agent_id and path.startswith("/private/"):
+            return f"/memory/private/{self.agent_id}/{path[len('/private/'):]}"
+        if self.agent_id and path == "/private":
+            return f"/memory/private/{self.agent_id}"
+        return path
+
     def _check_private_access(self, path: str) -> bool:
         """Check if current agent can access path (private space isolation)"""
         if not self.agent_id:
@@ -292,6 +305,7 @@ class AVM:
         3. Fetch via provider (with TTL cache)
         4. Or read directly from store
         """
+        path = self._resolve_path(path)
         # Virtual paths for skill discovery
         if path == "/:handlers":
             from .handlers import get_handlers_skill_info
@@ -351,6 +365,7 @@ class AVM:
         1. Check write permission
         2. Create or update node
         """
+        path = self._resolve_path(path)
         if not self.config.check_permission(path, "write"):
             raise PermissionError(f"No write permission for {path}")
         
@@ -418,6 +433,7 @@ class AVM:
     
     def delete(self, path: str, hard: bool = False) -> bool:
         """Delete node (soft delete to /trash/ by default)"""
+        path = self._resolve_path(path)
         if not self.config.check_permission(path, "write"):
             raise PermissionError(f"No write permission for {path}")
         
@@ -475,6 +491,7 @@ class AVM:
     
     def list(self, prefix: str = "/", limit: int = 100) -> List[AVMNode]:
         """listnode"""
+        prefix = self._resolve_path(prefix)
         nodes = self.store.list_nodes(prefix, limit)
         # Filter by private access
         if self.agent_id:
@@ -492,6 +509,8 @@ class AVM:
 
         Returns the number of nodes renamed.
         """
+        src = self._resolve_path(src)
+        dst = self._resolve_path(dst)
         if not self.config.check_permission(src, "write"):
             raise PermissionError(f"No write permission for {src}")
         if not self.config.check_permission(dst, "write"):

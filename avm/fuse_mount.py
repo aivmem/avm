@@ -167,8 +167,19 @@ class AVMFuse(Operations):
                     real_path = real_path[:-1]
                 return (real_path or '/', suffix, params)
         
+        # Resolve /private/... shorthand → /memory/private/{agent_id}/...
+        base = self._resolve_private(base)
         return (base, None, params)
-    
+
+    def _resolve_private(self, path: str) -> str:
+        """Map /private/... to /memory/private/{user}/... for the current agent."""
+        if self.user:
+            if path.startswith("/private/"):
+                return f"/memory/private/{self.user}/{path[len('/private/'):]}"
+            if path == "/private":
+                return f"/memory/private/{self.user}"
+        return path
+
     def _is_virtual(self, path: str) -> bool:
         """Check if path is a virtual node."""
         _, suffix, _ = self._parse_path(path)
