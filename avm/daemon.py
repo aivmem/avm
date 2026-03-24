@@ -140,6 +140,12 @@ class MountProcess:
     def _run_fuse(self):
         """Run FUSE in the current thread (blocks until unmounted)."""
         _lazy_imports()
+        # Silence the "cannot register signal source" warning that FUSE emits
+        # when running outside the main thread (harmless but noisy).
+        import os as _os, sys as _sys
+        _devnull = open(_os.devnull, "w")
+        _old_stderr = _sys.stderr
+        _sys.stderr = _devnull
         try:
             # Create agent-scoped AVM.
             # If a shared EmbeddingServer is available, inject a proxy so this
@@ -178,7 +184,11 @@ class MountProcess:
         except Exception as e:
             self._error = e
             self._started.set()   # unblock start() so it can report failure
+            _sys.stderr = _old_stderr
             print(f"FUSE error for {self.mountpoint}: {e}", file=sys.stderr)
+        finally:
+            _sys.stderr = _old_stderr
+            _devnull.close()
     
     def stop(self):
         """Stop this mount by unmounting; the FUSE thread will exit on its own."""
@@ -260,10 +270,15 @@ class AVMDaemon:
         # and provides a queue-based proxy that FUSE threads can call safely.
         self._start_embedding_server()
 
-        # Start all enabled mounts
+        # Start all enabled mounts serially.
+        # Concurrent FUSE thread startup can exhaust macFUSE device slots
+        # (/dev/macfuse0..N) and trigger "Resource temporarily unavailable".
+        # A short gap between each mount avoids contention.
+        import time as _time
         for mount_config in self.config.mounts:
             if mount_config.enabled:
                 self._start_mount(mount_config)
+                _time.sleep(0.5)   # let macFUSE settle before next mount
         
         print(f"Daemon started (pid={os.getpid()})")
         print(f"Mounts: {len(self.mounts)}")
