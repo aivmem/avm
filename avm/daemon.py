@@ -95,82 +95,70 @@ class DaemonConfig:
 # ═══════════════════════════════════════════════════════════════
 
 class MountProcess:
-    """Thread managing a single FUSE mount.
+    """Child process managing a single FUSE mount (fork-based).
 
-    Previously used os.fork() which caused MPS/XPC crashes on macOS when
-    multiple workers initialised concurrently (XPC connection is invalid after
-    fork).  Threads share the same process address space, so there is no
-    fork-safety issue, and embedding models loaded in one thread are reused
-    across all mounts (the class-level _model_cache in LocalEmbedding handles
-    this automatically).
+    Uses os.fork() for isolation — each mount is a separate process so
+    macFUSE device slots are claimed sequentially and never race.
+    GPU/MPS is disabled in the child via AVM_FUSE_WORKER=1 so XPC issues
+    after fork() do not occur.
     """
 
     def __init__(self, mountpoint: str, agent_id: str, embed_server=None):
         self.mountpoint = mountpoint
         self.agent_id = agent_id
-        self.embed_server = embed_server  # EmbeddingServer or None
-        self.pid: Optional[int] = None   # kept for API compatibility (= os.getpid())
-        self._thread: Optional["threading.Thread"] = None
-        self._started = threading.Event()
-        self._error: Optional[Exception] = None
+        self.embed_server = embed_server  # reserved for future use
+        self.pid: Optional[int] = None
 
     def start(self) -> bool:
-        """Spawn a daemon thread to run the FUSE mount.
-
-        Returns True if the thread started without immediate error,
-        False otherwise.
-        """
-        import threading as _threading
+        """Fork and block until the mount is live (st_dev changes) or 12 s."""
         import time
 
-        self._thread = _threading.Thread(
-            target=self._run_fuse,
-            name=f"avm-fuse-{self.agent_id}",
-            daemon=True,
-        )
-        self._thread.start()
-        # Give the FUSE loop a moment to come up (or fail fast).
-        # 8 s accounts for cold-start embedding model loading on the first mount.
-        self._started.wait(timeout=8.0)
-        if self._error is not None:
+        normal_dev = Path(self.mountpoint).parent.stat().st_dev
+        pid = os.fork()
+        if pid == 0:
+            self._run_fuse()
+            os._exit(0)
+
+        self.pid = pid
+        mp = Path(self.mountpoint)
+        deadline = time.monotonic() + 12.0
+        while time.monotonic() < deadline:
+            try:
+                rc = os.waitpid(pid, os.WNOHANG)
+                if rc[0] != 0:          # child exited early → mount failed
+                    self.pid = None
+                    return False
+            except ChildProcessError:
+                self.pid = None
+                return False
+            try:
+                if mp.stat().st_dev != normal_dev:
+                    return True         # mount is live
+            except OSError:
+                pass
+            time.sleep(0.3)
+
+        # 12 s elapsed — check one last time
+        try:
+            rc = os.waitpid(pid, os.WNOHANG)
+            if rc[0] != 0:
+                self.pid = None
+                return False
+        except ChildProcessError:
+            self.pid = None
             return False
-        self.pid = os.getpid()   # threads live in the same process
-        return self._thread.is_alive()
+        # Child alive but mount didn't appear — proceed anyway
+        return mp.stat().st_dev != normal_dev
 
     def _run_fuse(self):
-        """Run FUSE in the current thread (blocks until unmounted)."""
+        """Run FUSE in forked child (CPU embedding, no GPU/XPC)."""
         _lazy_imports()
-        # Silence the "cannot register signal source" warning that FUSE emits
-        # when running outside the main thread (harmless but noisy).
-        import os as _os, sys as _sys
-        _devnull = open(_os.devnull, "w")
-        _old_stderr = _sys.stderr
-        _sys.stderr = _devnull
+        import os as _os
+        _os.environ["AVM_FUSE_WORKER"] = "1"
+        _os.environ["TOKENIZERS_PARALLELISM"] = "false"
         try:
-            # Create agent-scoped AVM.
-            # If a shared EmbeddingServer is available, inject a proxy so this
-            # thread routes all encode() calls through the main-thread GPU worker
-            # instead of loading its own model (which would be GPU-unsafe in a
-            # thread that didn't initialise the MPS context).
             agent_avm = AVM(agent_id=self.agent_id)
-            if self.embed_server is not None:
-                from .embedding import EmbeddingStore
-                proxy = self.embed_server.make_proxy()
-                agent_avm._embedding_store = EmbeddingStore(agent_avm.store, proxy)
-                agent_avm._auto_index_embedding = True
-
-            # Ensure mountpoint exists
             Path(self.mountpoint).mkdir(parents=True, exist_ok=True)
-
-            # Signal to the parent thread that we are about to enter the FUSE
-            # loop (i.e. initialisation succeeded so far).
-            self._started.set()
-
-            # Run FUSE (blocks this thread until unmounted).
-            # foreground=True: keeps FUSE in this process (required when
-            # running inside a thread — foreground=False would fork again
-            # which creates double-fork zombie mounts).
-            # "cannot register signal source" warnings are harmless in threads.
             FUSE(
                 AVMFuse(agent_avm, self.agent_id),
                 self.mountpoint,
@@ -182,27 +170,29 @@ class MountProcess:
                 direct_io=True,
             )
         except Exception as e:
-            self._error = e
-            self._started.set()   # unblock start() so it can report failure
-            _sys.stderr = _old_stderr
             print(f"FUSE error for {self.mountpoint}: {e}", file=sys.stderr)
-        finally:
-            _sys.stderr = _old_stderr
-            _devnull.close()
-    
+
     def stop(self):
-        """Stop this mount by unmounting; the FUSE thread will exit on its own."""
-        import subprocess
-        import platform
+        """Kill child and force-unmount."""
+        import subprocess, platform, time as _t
+
+        if self.pid:
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.kill(self.pid, sig)
+                    _t.sleep(0.5)
+                    os.waitpid(self.pid, os.WNOHANG)
+                except (ProcessLookupError, ChildProcessError):
+                    break
 
         mp = self.mountpoint
         try:
             if platform.system() == "Darwin":
-                result = subprocess.run(
+                r = subprocess.run(
                     ["/usr/sbin/diskutil", "unmount", "force", mp],
                     capture_output=True, timeout=10,
                 )
-                if result.returncode != 0:
+                if r.returncode != 0:
                     subprocess.run(["/sbin/umount", "-f", mp],
                                    capture_output=True, timeout=5)
             else:
@@ -214,10 +204,6 @@ class MountProcess:
                         break
         except Exception:
             pass
-
-        # Wait for the thread to finish (up to 5 s)
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=5)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -232,21 +218,8 @@ class AVMDaemon:
         self.config = DaemonConfig.load()
         self.mounts: Dict[str, MountProcess] = {}
         self._running = False
-        self._embed_server: Optional["EmbeddingServer"] = None  # type: ignore[name-defined]
-
-    def _start_embedding_server(self):
-        """Start the shared embedding server on this thread (GPU-safe)."""
-        from .embedding import EmbeddingServer
-        from .config import load_config
-        cfg = load_config()
-        emb_cfg = getattr(cfg, 'embedding', None) or {}
-        if not (isinstance(emb_cfg, dict) and emb_cfg.get('enabled')):
-            return  # embedding disabled — nothing to start
-        model = emb_cfg.get('model', 'all-MiniLM-L6-v2')
-        print(f"  Starting embedding server (model={model}, GPU=MPS)...")
-        self._embed_server = EmbeddingServer(model)
-        self._embed_server.start()
-        print(f"  Embedding server ready (dim={self._embed_server.dimension})")
+        # embed_server not used in fork-based mode (each child loads CPU model)
+        self._embed_server = None
 
     def start(self):
         """Start the daemon and all configured mounts"""
@@ -265,19 +238,13 @@ class AVMDaemon:
         
         self._running = True
 
-        # Start the shared embedding server BEFORE spawning FUSE threads.
-        # This loads the model on the main thread (GPU context valid here),
-        # and provides a queue-based proxy that FUSE threads can call safely.
-        self._start_embedding_server()
-
-        # Start mounts one at a time, waiting for each to become accessible
-        # before starting the next.  macFUSE allocates /dev/macfuseN slots
-        # sequentially; starting the next mount before the previous device is
-        # fully ready triggers "Resource temporarily unavailable".
+        # Start mounts one at a time.  macFUSE allocates /dev/macfuseN slots
+        # sequentially; launching multiple FUSE threads simultaneously causes
+        # "Resource temporarily unavailable" on all but the first device.
+        # _start_mount now blocks until the mount is accessible before returning.
         for mount_config in self.config.mounts:
             if mount_config.enabled:
                 self._start_mount(mount_config)
-                self._wait_for_mount(mount_config.path)
         
         print(f"Daemon started (pid={os.getpid()})")
         print(f"Mounts: {len(self.mounts)}")
@@ -361,18 +328,31 @@ class AVMDaemon:
                     break
                 time.sleep(60)
     
-    def _wait_for_mount(self, mountpoint: str, timeout: float = 15.0):
-        """Block until the mountpoint is actually accessible (ls works) or timeout."""
+    def _wait_for_mount(self, mountpoint: str, timeout: float = 10.0):
+        """Block until the mountpoint is actually serving FUSE requests.
+
+        Exits early if:
+        - iterdir() succeeds (mount is live)
+        - the MountProcess thread has died (mount failed)
+        - timeout is reached
+        """
         import time as _time
         deadline = _time.monotonic() + timeout
         path = Path(mountpoint)
+        proc = self.mounts.get(mountpoint)
+
         while _time.monotonic() < deadline:
+            # If the thread died, don't wait any longer
+            if proc is not None and proc._thread is not None and not proc._thread.is_alive():
+                print(f"  ⚠ Mount thread for {mountpoint} exited early", file=sys.stderr)
+                return
             try:
-                list(path.iterdir())   # triggers a VFS call into the FUSE layer
-                return   # success — mount is live
+                list(path.iterdir())
+                return   # mount is live
             except OSError:
                 pass
-            _time.sleep(0.2)
+            _time.sleep(0.5)
+
         print(f"  ⚠ Mount {mountpoint} did not become ready within {timeout}s",
               file=sys.stderr)
 
@@ -403,6 +383,10 @@ class AVMDaemon:
 
         self.mounts[mp] = proc
         print(f"  Mounted: {mp} (agent={mount_config.agent}, pid={proc.pid})")
+
+        # Wait for this mount to become accessible before starting the next one.
+        # Note: start() already blocked until the mount was live (st_dev check),
+        # so by the time we reach here macFUSE has fully registered the device.
     
     def _auto_trash_cleanup(self):
         """Background thread that cleans up old trash items"""
@@ -456,9 +440,6 @@ class AVMDaemon:
             mount.stop()
 
         # Stop the embedding server
-        if self._embed_server is not None:
-            self._embed_server.stop()
-
         # Remove PID file
         if DAEMON_PID.exists():
             DAEMON_PID.unlink()

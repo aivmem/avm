@@ -91,6 +91,13 @@ class AVMFuse(Operations):
         self._open_files: Dict[int, str] = {}
         self._write_buffers: Dict[int, bytes] = {}
         self._tell_store = None  # Lazy init
+        self._mount_ready_event = None  # Set by daemon to signal mount is live
+
+    def init(self, path):
+        """Called by FUSE when the filesystem is mounted and ready."""
+        # Note: on macFUSE this may not be called reliably; daemon.py uses
+        # iterdir() polling instead.
+        return None
     
     def _get_tell_store(self):
         """Lazy initialization of TellStore"""
