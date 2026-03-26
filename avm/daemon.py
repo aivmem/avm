@@ -245,13 +245,27 @@ class AVMDaemon:
     def start(self):
         """Start the daemon and all configured mounts"""
         if DAEMON_PID.exists():
-            pid = int(DAEMON_PID.read_text().strip())
             try:
-                os.kill(pid, 0)
-                print(f"Daemon already running (pid={pid})")
-                return False
-            except ProcessLookupError:
-                pass  # Stale pid file
+                pid = int(DAEMON_PID.read_text().strip())
+                os.kill(pid, 0)  # Check if process exists
+                # Also verify it's actually an AVM daemon (not a recycled PID)
+                try:
+                    import subprocess
+                    cmdline = subprocess.check_output(
+                        ["ps", "-p", str(pid), "-o", "command="],
+                        timeout=3, text=True
+                    ).strip()
+                    if "avm" in cmdline.lower() or "AVMDaemon" in cmdline:
+                        print(f"Daemon already running (pid={pid})")
+                        return False
+                    else:
+                        print(f"  Stale pid file (pid={pid} is '{cmdline[:40]}'), ignoring")
+                except Exception:
+                    # Can't verify cmdline — trust the pid
+                    print(f"Daemon already running (pid={pid})")
+                    return False
+            except (ProcessLookupError, ValueError):
+                pass  # Stale pid file — process gone
         
         # Write PID
         DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -284,7 +298,12 @@ class AVMDaemon:
         self._trash_thread = threading.Thread(target=self._auto_trash_cleanup, daemon=True)
         self._trash_thread.start()
         print("  Trash cleanup enabled (daily, 30d retention)")
-        
+
+        # Start mount watchdog thread — checks every 30s, remounts dead mounts
+        self._watchdog_thread = threading.Thread(target=self._watchdog_loop, daemon=True)
+        self._watchdog_thread.start()
+        print("  Mount watchdog enabled (every 30s)")
+
         # Wait for stop
         try:
             while self._running:
@@ -293,6 +312,42 @@ class AVMDaemon:
             pass
         
         return True
+
+    def _watchdog_loop(self):
+        """Periodically verify mounts are alive, remount if dead."""
+        import time, subprocess, platform
+        while self._running:
+            time.sleep(30)
+            for mp, proc in list(self.mounts.items()):
+                try:
+                    entries = os.listdir(mp)
+                    if not entries:
+                        raise OSError("empty mount — likely stale")
+                except OSError:
+                    # Mount is dead — try to recover
+                    print(f"  [watchdog] Dead mount detected: {mp}, remounting...", flush=True)
+                    # Kill stale FUSE process
+                    if proc.pid:
+                        try:
+                            os.kill(proc.pid, 9)
+                        except ProcessLookupError:
+                            pass
+                    # Force unmount
+                    if platform.system() == "Darwin":
+                        subprocess.run(["/usr/sbin/diskutil", "unmount", "force", mp],
+                                       capture_output=True, timeout=5)
+                    else:
+                        for cmd in (["fusermount3", "-u", mp],
+                                    ["fusermount", "-u", mp],
+                                    ["/sbin/umount", "-f", mp]):
+                            r = subprocess.run(cmd, capture_output=True, timeout=5)
+                            if r.returncode == 0:
+                                break
+                    # Find config for this mount and remount
+                    for mc in self.config.mounts:
+                        if mc.path == mp and mc.enabled:
+                            self._start_mount(mc)
+                            break
     
     def _auto_archive_loop(self):
         """Background thread that archives cold memories periodically"""

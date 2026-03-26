@@ -15,6 +15,7 @@ usage:
 import argparse
 import json
 import sys
+import platform
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +23,8 @@ from .core import AVM
 from .config import load_config
 from .node import AVMNode, NodeType
 from .graph import EdgeType
+
+IS_WINDOWS = sys.platform == "win32"
 
 # Alias for backwards compatibility
 VFS = AVM
@@ -1329,6 +1332,16 @@ def cmd_consolidate(args):
     return 0
 
 
+def _cmd_serve(args):
+    """Start HTTP API server."""
+    import os
+    os.environ.setdefault("AVM_AGENT", args.agent)
+    # Patch sys.argv so api_server.main() sees the right args
+    sys.argv = ["avm-serve", "--agent", args.agent, "--host", args.host, "--port", str(args.port)]
+    from .api_server import main as serve_main
+    serve_main()
+
+
 def cmd_digest(args):
     """Generate memory digest"""
     from .consolidation import generate_digest
@@ -1678,9 +1691,26 @@ def main():
     p_digest.add_argument("--max-items", "-n", type=int, default=10, help="Max items per category")
     p_digest.add_argument("--output", "-o", help="Save to file instead of stdout")
     p_digest.set_defaults(func=cmd_digest)
-    
+
+    # serve - HTTP API server (for Docker / Windows / no-FUSE environments)
+    p_serve = subparsers.add_parser("serve", help="Start HTTP API server (no FUSE required)")
+    p_serve.add_argument("--agent", default="default", help="Agent ID")
+    p_serve.add_argument("--host", default="0.0.0.0", help="Bind host")
+    p_serve.add_argument("--port", type=int, default=8765, help="Port")
+    p_serve.set_defaults(func=lambda a: _cmd_serve(a))
+
     args = parser.parse_args()
     
+    # On Windows, FUSE-related commands are not supported
+    FUSE_COMMANDS = {"mount", "unmount", "daemon"}
+    if IS_WINDOWS and getattr(args, "command", None) in FUSE_COMMANDS:
+        print(
+            f"Error: '{args.command}' is not supported on Windows (FUSE unavailable).\n"
+            "Use 'avm serve' to start the HTTP API server and access memories via HTTP.",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         return args.func(args)
     except Exception as e:

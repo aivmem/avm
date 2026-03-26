@@ -1,0 +1,15 @@
+[Unit]
+Description=AVM FUSE Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/opt/avm
+ExecStart=/usr/bin/python3 -c "import sys; sys.path.insert(0, '.'); from avm.daemon import AVMDaemon; AVMDaemon().start()"
+Restart=on-failure
+RestartSec=10
+Environment=TOKENIZERS_PARALLELISM=false
+
+[Install]
+WantedBy=default.target

@@ -21,15 +21,19 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["pyyaml>=6.0", "rich>=13.0", "fusepy>=3.0"]
+dependencies = ["pyyaml>=6.0", "rich>=13.0"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
+fuse-mac = ["fusepy>=3.0"]
+fuse-linux = ["fusepy>=3.0"]
+server = ["fastapi>=0.100", "uvicorn>=0.20"]
 
 [project.scripts]
 avm = "avm.cli:main"
 avm-mcp = "avm.mcp_server:main"
 avm-daemon = "avm.daemon:main"
+avm-serve = "avm.api_server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["avm"]

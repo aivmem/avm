@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  avm:
+    build: .
+    ports:
+      - "8765:8765"
+    volumes:
+      - avm-data:/root/.local/share/avm
+    environment:
+      - AVM_AGENT=default
+    restart: unless-stopped
+
+volumes:
+  avm-data:
