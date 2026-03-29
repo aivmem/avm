@@ -320,9 +320,17 @@ class AVMDaemon:
             time.sleep(30)
             for mp, proc in list(self.mounts.items()):
                 try:
+                    # Check if FUSE process is alive first
+                    if proc.pid:
+                        try:
+                            os.kill(proc.pid, 0)  # signal 0 = existence check
+                        except ProcessLookupError:
+                            raise OSError("FUSE process dead")
+                    # Also verify mount responds (use stat instead of listdir to avoid empty-dir false positives)
+                    os.stat(mp)
                     entries = os.listdir(mp)
-                    if not entries:
-                        raise OSError("empty mount — likely stale")
+                    # Empty directory is OK for FUSE mounts (virtual files may not appear in listdir)
+                    # Only treat as dead if the FUSE process is gone
                 except OSError:
                     # Mount is dead — try to recover
                     print(f"  [watchdog] Dead mount detected: {mp}, remounting...", flush=True)
