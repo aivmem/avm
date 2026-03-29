@@ -431,8 +431,9 @@ class AVMDaemon:
                 print(f"  ⚠ Mount thread for {mountpoint} exited early", file=sys.stderr)
                 return
             try:
-                list(path.iterdir())
-                return   # mount is live
+                entries = list(path.iterdir())
+                if entries:  # wait until FUSE is fully initialized and serving entries
+                    return   # mount is live
             except OSError:
                 pass
             _time.sleep(0.5)
